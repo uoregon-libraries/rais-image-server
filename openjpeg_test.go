@@ -32,5 +32,11 @@ func TestTile(t *testing.T) {
 	height := 432
 	if err, i := NewImageTile(path, r, width, height); err == nil {
 		log.Println(i.Bounds())
+		if i.Bounds().Max.X < 10 {
+			t.FailNow()
+		}
+
+	} else {
+		log.Fatal("error creating image tile:", err)
 	}
 }
