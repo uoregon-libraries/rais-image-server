@@ -3,6 +3,25 @@ package main
 // #cgo LDFLAGS: -lopenjp2
 // #include <stdio.h>
 // #include <openjpeg-2.0/openjpeg.h>
+/*
+static void info_callback(const char *msg, void *client_data) {
+        (void)client_data;
+        fprintf(stdout, "[INFO] %s", msg);
+}
+static void warning_callback(const char *msg, void *client_data) {
+        (void)client_data;
+        fprintf(stdout, "[WARNING] %s", msg);
+}
+static void error_callback(const char *msg, void *client_data) {
+        (void)client_data;
+        fprintf(stdout, "[ERROR] %s", msg);
+}
+void set_handlers(opj_codec_t * p_codec) {
+    opj_set_info_handler(p_codec, info_callback, 00);
+    opj_set_warning_handler(p_codec, warning_callback, 00);
+    opj_set_error_handler(p_codec, error_callback, 00);
+}
+*/
 import "C"
 
 import (
@@ -52,6 +71,8 @@ func NewImageTile(filename string, r image.Rectangle, width, height int) (err er
 	level := desired_progression_level(r, width, height)
 	log.Println("desired level:", level)
 	//(parameters).cp_reduce = C.OPJ_UINT32(level)
+
+	C.set_handlers(l_codec)
 
 	if err == nil && C.opj_setup_decoder(l_codec, &parameters) == C.OPJ_FALSE {
 		err = errors.New("failed to setup decoder")
