@@ -66,8 +66,10 @@ func NewImageTile(filename string, r image.Rectangle, width, height int) (err er
 		err = errors.New("failed to read the header")
 	}
 
-	log.Println("num comps:", img.numcomps)
-	log.Println("x0:", img.x0, "x1:", img.x1, "y0:", img.y0, "y1:", img.y1)
+	if err == nil {
+		log.Println("num comps:", img.numcomps)
+		log.Println("x0:", img.x0, "x1:", img.x1, "y0:", img.y0, "y1:", img.y1)
+	}
 
 	if err == nil && C.opj_set_decode_area(l_codec, img, C.OPJ_INT32(r.Min.X), C.OPJ_INT32(r.Min.Y), C.OPJ_INT32(r.Max.X), C.OPJ_INT32(r.Max.Y)) == C.OPJ_FALSE {
 		err = errors.New("failed to set the decoded area")
