@@ -26,7 +26,6 @@ import "C"
 
 import (
 	"errors"
-	"fmt"
 	"image"
 	"image/color"
 	"log"
@@ -50,16 +49,7 @@ func desired_progression_level(r image.Rectangle, width, height int) uint {
 }
 
 func NewImageTile(filename string, r image.Rectangle, width, height int) (err error, tile *ImageTile) {
-	fsrc := C.fopen(C.CString(filename), C.CString("rb"))
-	if fsrc == nil {
-		return fmt.Errorf("failed to open '%s' for reading", filename), nil
-	}
-	defer func() {
-		if fsrc != nil {
-			C.fclose(fsrc)
-		}
-	}()
-	l_stream := C.opj_stream_create_default_file_stream(fsrc, 1)
+	l_stream := C.opj_stream_create_default_file_stream_v3(C.CString(filename), 1)
 	if l_stream == nil {
 		return errors.New("failed to create stream"), nil
 	}
@@ -103,7 +93,7 @@ func NewImageTile(filename string, r image.Rectangle, width, height int) (err er
 		err = errors.New("failed to decode image")
 	}
 
-	C.opj_stream_destroy(l_stream)
+	C.opj_stream_destroy_v3(l_stream)
 	if l_codec != nil {
 		C.opj_destroy_codec(l_codec)
 	}
