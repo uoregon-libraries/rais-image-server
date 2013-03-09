@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"runtime"
 	"strconv"
 )
 
@@ -37,6 +38,8 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	Address := flag.String("address", ":8888", "http service address")
 	flag.Parse()
 
