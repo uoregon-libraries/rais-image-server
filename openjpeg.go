@@ -43,7 +43,7 @@ func scaled_dimension(progression_level uint, dimension int) int {
 
 func desired_progression_level(r image.Rectangle, width, height int) uint {
 	level := MAX_PROGRESSION_LEVEL
-	for ; level > 1 && width > scaled_dimension(level, r.Dx()) && height > scaled_dimension(level, r.Dy()); level-- {
+	for ; level > 0 && width > scaled_dimension(level, r.Dx()) && height > scaled_dimension(level, r.Dy()); level-- {
 	}
 	return level
 }
