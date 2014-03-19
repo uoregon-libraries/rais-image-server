@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"runtime"
 	"strconv"
+
+	"github.com/eikeon/brikker/openjpeg"
 )
 
 var e = regexp.MustCompile(`/images/tiles/(?P<path>.+)/image_(?P<width>\d+)x(?P<height>\d+)_from_(?P<x1>\d+),(?P<y1>\d+)_to_(?P<x2>\d+),(?P<y2>\d+).jpg`)
@@ -28,7 +30,7 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	r := image.Rect(x1, y1, x2, y2)
 	width, _ := strconv.Atoi(d["width"])
 	height, _ := strconv.Atoi(d["height"])
-	if err, i := NewImageTile(path, r, width, height); err == nil {
+	if err, i := openjpeg.NewImageTile(path, r, width, height); err == nil {
 		if err = jpeg.Encode(w, i, nil); err != nil {
 			log.Println(err)
 		}

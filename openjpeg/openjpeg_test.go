@@ -1,4 +1,4 @@
-package main
+package openjpeg
 
 import (
 	"crypto/md5"

@@ -1,4 +1,4 @@
-package main
+package openjpeg
 
 // #cgo LDFLAGS: -lopenjp2
 // #include <stdio.h>
