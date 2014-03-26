@@ -12,7 +12,14 @@ import (
 	"reflect"
 	"runtime"
 	"unsafe"
+	"fmt"
 )
+
+//export GoLog
+func GoLog(level C.int, message *C.char) {
+	levels := []string{"EMERG", "ALERT", "CRIT", "ERROR", "WARN", "NOTICE", "INFO", "DEBUG"}
+	fmt.Printf("[%s] %s", levels[int(level)], C.GoString(message))
+}
 
 const MAX_PROGRESSION_LEVEL = uint(6)
 
