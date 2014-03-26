@@ -15,10 +15,16 @@ import (
 	"fmt"
 )
 
+// Debug by default
+var LogLevel = 7
+var LogLevels = []string{"EMERG", "ALERT", "CRIT", "ERROR", "WARN", "NOTICE", "INFO", "DEBUG"}
+
 //export GoLog
-func GoLog(level C.int, message *C.char) {
-	levels := []string{"EMERG", "ALERT", "CRIT", "ERROR", "WARN", "NOTICE", "INFO", "DEBUG"}
-	fmt.Printf("[%s] %s", levels[int(level)], C.GoString(message))
+func GoLog(clevel C.int, message *C.char) {
+	level := int(clevel)
+	if level <= LogLevel {
+		fmt.Printf("[%s] %s", LogLevels[level], C.GoString(message))
+	}
 }
 
 const MAX_PROGRESSION_LEVEL = uint(6)
