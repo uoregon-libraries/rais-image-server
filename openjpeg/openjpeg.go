@@ -8,7 +8,6 @@ import (
 	"errors"
 	"image"
 	"image/color"
-	"log"
 	"reflect"
 	"runtime"
 	"unsafe"
@@ -20,10 +19,17 @@ var LogLevel = 7
 var LogLevels = []string{"EMERG", "ALERT", "CRIT", "ERROR", "WARN", "NOTICE", "INFO", "DEBUG"}
 
 //export GoLog
-func GoLog(clevel C.int, message *C.char) {
+func GoLog(clevel C.int, cmessage *C.char) {
 	level := int(clevel)
+	message := C.GoString(cmessage)
+
+	goLog(level, message)
+}
+
+// Internal go-specific version of logger
+func goLog(level int, message string) {
 	if level <= LogLevel {
-		fmt.Printf("[%s] %s", LogLevels[level], C.GoString(message))
+		fmt.Printf("[%s] %s", LogLevels[level], message)
 	}
 }
 
@@ -52,7 +58,7 @@ func NewImageTile(filename string, r image.Rectangle, width, height int) (err er
 	var parameters C.opj_dparameters_t
 	C.opj_set_default_decoder_parameters(&parameters)
 	level := desired_progression_level(r, width, height)
-	log.Println("desired level:", level)
+	goLog(6, fmt.Sprintf("desired level: %d", level))
 	//(parameters).cp_reduce = C.OPJ_UINT32(level)
 
 	C.set_handlers(l_codec)
@@ -71,8 +77,8 @@ func NewImageTile(filename string, r image.Rectangle, width, height int) (err er
 	}
 
 	if err == nil {
-		log.Println("num comps:", img.numcomps)
-		log.Println("x0:", img.x0, "x1:", img.x1, "y0:", img.y0, "y1:", img.y1)
+		goLog(6, fmt.Sprintf("num comps: %d", img.numcomps))
+		goLog(6, fmt.Sprintf("x0: %d, x1: %d, y0: %d, y1: %d", img.x0, img.x1, img.y0, img.y1))
 	}
 
 	if err == nil && C.opj_set_decode_area(l_codec, img, C.OPJ_INT32(r.Min.X), C.OPJ_INT32(r.Min.Y), C.OPJ_INT32(r.Max.X), C.OPJ_INT32(r.Max.Y)) == C.OPJ_FALSE {
