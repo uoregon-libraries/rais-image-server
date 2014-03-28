@@ -9,11 +9,15 @@ import (
 	"regexp"
 	"runtime"
 	"strconv"
+	"fmt"
+	"os"
 
 	"github.com/eikeon/brikker/openjpeg"
 )
 
 var e = regexp.MustCompile(`/images/tiles/(?P<path>.+)/image_(?P<width>\d+)x(?P<height>\d+)_from_(?P<x1>\d+),(?P<y1>\d+)_to_(?P<x2>\d+),(?P<y2>\d+).jpg`)
+
+var tilePath string
 
 func TileHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "image/jpeg")
@@ -30,7 +34,7 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	r := image.Rect(x1, y1, x2, y2)
 	width, _ := strconv.Atoi(d["width"])
 	height, _ := strconv.Atoi(d["height"])
-	if err, i := openjpeg.NewImageTile(path, r, width, height); err == nil {
+	if err, i := openjpeg.NewImageTile(tilePath + "/" + path, r, width, height); err == nil {
 		if err = jpeg.Encode(w, i, nil); err != nil {
 			log.Println(err)
 		}
@@ -42,12 +46,21 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	Address := flag.String("address", ":8888", "http service address")
+	var address string
+
+	flag.StringVar(&address, "address", ":8888", "http service address")
+	flag.StringVar(&tilePath, "tile-path", "", "Base path for JP2 images")
 	flag.Parse()
+
+	if tilePath == "" {
+		fmt.Println("ERROR: --tile-path is required")
+		flag.Usage()
+		os.Exit(1)
+	}
 
 	http.Handle("/", http.HandlerFunc(TileHandler))
 
-	if err := http.ListenAndServe(*Address, nil); err != nil {
+	if err := http.ListenAndServe(address, nil); err != nil {
 		log.Print("ListenAndServe:", err)
 	}
 }
