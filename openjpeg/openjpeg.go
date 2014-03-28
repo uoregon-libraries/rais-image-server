@@ -50,7 +50,7 @@ func desired_progression_level(r image.Rectangle, width, height int) uint {
 func NewImageTile(filename string, r image.Rectangle, width, height int) (err error, tile *ImageTile) {
 	l_stream := C.opj_stream_create_default_file_stream_v3(C.CString(filename), 1)
 	if l_stream == nil {
-		return errors.New("failed to create stream"), nil
+		return errors.New(fmt.Sprintf("Failed to create stream in %#v", filename)), nil
 	}
 
 	l_codec := C.opj_create_decompress(C.OPJ_CODEC_JP2)
