@@ -3,7 +3,6 @@ package main
 import(
 	"fmt"
 	"os"
-	"runtime"
 	"github.com/eikeon/brikker/openjpeg"
 )
 
