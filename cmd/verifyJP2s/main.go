@@ -3,6 +3,7 @@ package main
 import(
 	"fmt"
 	"os"
+	"runtime"
 	"github.com/eikeon/brikker/openjpeg"
 )
 
@@ -15,7 +16,9 @@ var jp2Files chan string
 func main() {
 	// This seems like a solid value based on various bits of testing, but it may
 	// make sense to do something smarter here
-	maxWorkers := 8
+	cpuCount := runtime.NumCPU()
+	maxWorkers := 4 * cpuCount
+	runtime.GOMAXPROCS(cpuCount)
 
 	// Set up channels with big enough buffers that one goroutine isn't holding
 	// up another
