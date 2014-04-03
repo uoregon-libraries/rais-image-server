@@ -3,6 +3,7 @@ package main
 import(
 	"fmt"
 	"image"
+	"os"
 	"github.com/eikeon/brikker/openjpeg"
 )
 
@@ -11,27 +12,32 @@ var r image.Rectangle = image.Rect(100, 100, 358, 358)
 var width int = 127
 var height int = 127
 
-// Wrapper to doVerify which sets up channel stuff so we can let the main app
-// know when processing of this file is done
-func verifyJP2(path string) {
-	message := doVerify(path)
-	if message != "" {
-		jp2Messages <- message
-	}
+// Verifies that file exists
+func checkFile(path string) error {
+	_, err := os.Stat(path)
+	return err
 }
 
-func doVerify(path string) string {
-	message := fmt.Sprintf("Opening %#v: ", path)
+// Wrapper to doVerify which tests file prior to doVerify call, and pushes any
+// errors onto the jp2Messages channel
+func verifyJP2(path string) {
+	if err := checkFile(path); err != nil {
+		jp2Messages <- fmt.Sprintf("ERROR reading JP2 file: %s", err)
+		return
+	}
 
+	jp2Messages <- doVerify(path)
+}
+
+// Verifies a JP2 file can have a tile read by Brikker and openjpeg
+func doVerify(path string) string {
 	err, _ := openjpeg.NewImageTile(path, r, width, height)
 
 	if (err != nil) {
-		message += fmt.Sprintf("Error creating image tile: %s", err)
-		return message
+		return fmt.Sprintf("ERROR creating image tile from %#v: %s", path, err)
 	}
 
-	message += "Success!"
-	return message
+	return fmt.Sprintf("SUCCESS: %#v", path)
 }
 
 func createWorker() {

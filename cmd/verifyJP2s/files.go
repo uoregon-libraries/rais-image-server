@@ -7,20 +7,6 @@ import(
 	"strings"
 )
 
-func checkFile(path string) bool {
-	if (path == "") {
-		return false
-	}
-
-	_, err := os.Stat(path)
-	if err != nil {
-		fmt.Println("Error opening file:", err)
-		return false
-	}
-
-	return true
-}
-
 // Populates the jp2Files channel
 func pushJP2Filenames(filenames []string) {
 	for _, file := range filenames {
@@ -41,8 +27,9 @@ func readJP2FileList(jp2ListFile string) (count int) {
 
 	fileList := strings.Split(string(content), "\n")
 	validFiles := make([]string, 0)
+
 	for _, file := range fileList {
-		if checkFile(file) {
+		if file != "" {
 			validFiles = append(validFiles, file)
 		}
 	}
