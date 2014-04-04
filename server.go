@@ -62,9 +62,11 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	var address string
+	var logLevel int
 
 	flag.StringVar(&address, "address", ":8888", "http service address")
 	flag.StringVar(&tilePath, "tile-path", "", "Base path for JP2 images")
+	flag.IntVar(&logLevel, "log-level", 4, "Log level: 0-7 (lower is less verbose)")
 	flag.Parse()
 
 	if tilePath == "" {
@@ -72,6 +74,8 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
+
+	openjpeg.LogLevel = logLevel
 
 	http.Handle("/", http.HandlerFunc(TileHandler))
 
