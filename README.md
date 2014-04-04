@@ -3,19 +3,90 @@ brikker
 
 A server for generating and serving image tiles from a jp2 source image(s).
 
-Example userdata for spinning up an ec2 instance running Brikker (tested with Ubuntu Server 12.10 from quick start):
+Technically brikker could be used for a variety of systems, but is built with a
+few [chronam](https://github.com/LibraryOfCongress/chronam) rules hard-coded.
+It may be worthwhile to consider making it more configurable, but that's not
+our goal at this time.
 
-[brikker-userdata.txt](https://gist.github.com/eikeon/5124717)
+Setup
+-----
 
-To use with [chronam](https://github.com/LibraryOfCongress/chronam) change your tile source to point at your brikker instance along the lines of:
+- Install cmake 2.8 or later
+- Install subversion
+- Install openjpeg *from source* (see below)
+- [Install go](http://golang.org/doc/install)
+- Set up the [`GOPATH` environment variable](http://golang.org/doc/code.html#GOPATH)
+  - This tells go where to put brikker
+- Install brikker:
+  - `go get -u github.com/eikeon/brikker`
+  - `go install github.com/eikeon/brikker`
 
-[data-tile_url.diff](https://gist.github.com/eikeon/5124779)
+### Openjpeg installation
 
-with this setup Brikker is currently expecting jp2 files in the directory:
+Openjpeg has to be installed from source until a new 2.x release is available.
+2.0 will not work.  The following bash checks out the latest version of 2.0
+from trunk (brikker is currently hard-coded to use 2.0, and the bleeding edge
+openjpeg code is set to be version 2.1):
 
-    /mnt
+```bash
+cd /usr/local/src
+svn checkout http://openjpeg.googlecode.com/svn/trunk/ openjpeg
+cd openjpeg
+svn update -r 2722
+cmake .                     # This might be "cmake28 ."
+sudo make install
+sudo ldconfig
+```
 
- in a location like:
+Running brikker
+-----
 
-    batch_dlc_jamaica_ver01/data/sn83030214/00175039259/1907100101/0002.jp2
+`$GOPATH/bin/brikker --address=":8888" --tile-path="/path/to/data/batches"`
 
+It is probably a good idea to set up brikker to run on server startup, and to
+respawn if it dies unexpectedly.
+
+Here's an example for an Amazon EC2 instance:
+[brikker-userdata.txt](https://gist.github.com/eikeon/5124717) (tested with
+Ubuntu Server 12.10 from quick start).
+
+*Note* that this was for an older version of brikker and openjpeg.  The scripts
+should be based on the latest information in this README.
+
+Using with chronam
+-----
+
+To make this tile server work with
+[chronam](https://github.com/LibraryOfCongress/chronam), you have two options.
+
+You can [modify chronam directly](https://gist.github.com/eikeon/5124779),
+which is easier for a quick test, but can make it tougher when chronam is
+updated.
+
+For a longer-term solution, you can instead make your web server proxy all
+traffic for `/images/tiles/` to brikker.  In Apache, you'd need to enable proxy
+and proxy_http mods, and add this to your config:
+
+`ProxyPass /images/tiles/ http://localhost:8888/images/tiles/`
+
+Caching
+-----
+
+Brikker doesn't inherently cache the generated JPGs, which means every hit will
+read the source JP2, extract tiles using openjpeg, and send them back to the
+browser.  Depending on the amount of data and server horsepower, it may be
+worth caching the tiles explicitly.
+
+Brikker returns a valid Last-Modified header based on the last time the JP2
+file changed, which Apache can use to create a simple disk-based cache:
+
+```
+CacheRoot /var/cache/apache2/mod_disk_cache
+CacheEnable disk /images/tiles/
+```
+
+This won't be the smartest cache, but it will help in the case of a large
+influx of people accessing the same newspaper.  It is highly advisable that the
+`htcacheclean` tool be used in tandem with Apache cache directives, and it's
+probably worth reading
+[the Apache caching guide](http://httpd.apache.org/docs/2.2/caching.html).
