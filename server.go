@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/eikeon/brikker/openjpeg"
 )
@@ -20,7 +21,7 @@ var e = regexp.MustCompile(`/images/tiles/(?P<path>.+)/image_(?P<width>\d+)x(?P<
 var tilePath string
 
 func TileHandler(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Content-Type", "image/jpeg")
+	// Extract request path's regex parts into local variables
 	parts := e.FindStringSubmatch(req.URL.Path)
 	d := map[string]string{}
 	for i, name := range e.SubexpNames() {
@@ -34,7 +35,21 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	r := image.Rect(x1, y1, x2, y2)
 	width, _ := strconv.Atoi(d["width"])
 	height, _ := strconv.Atoi(d["height"])
-	if err, i := openjpeg.NewImageTile(tilePath + "/" + path, r, width, height); err == nil {
+
+	// Get file's last modified time, returning a 404 if we can't stat the file
+	filepath := tilePath + "/" + path
+	info, err := os.Stat(filepath)
+	if err != nil {
+		http.NotFound(w, req)
+		return
+	}
+
+	// Set headers
+	w.Header().Set("Content-Type", "image/jpeg")
+	w.Header().Set("Last-Modified", info.ModTime().Format(time.RFC1123))
+
+	// Serve generated JPG file
+	if err, i := openjpeg.NewImageTile(filepath, r, width, height); err == nil {
 		if err = jpeg.Encode(w, i, nil); err != nil {
 			log.Println(err)
 		}
