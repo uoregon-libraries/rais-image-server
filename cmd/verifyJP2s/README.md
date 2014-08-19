@@ -2,16 +2,17 @@ verifyJP2s
 =====
 
 This command-line utility can be useful for a sanity test against your JP2s and
-the versions of brikker and openjpeg installed.
+the versions of the JP2 viewer and openjpeg installed.
 
 Installation
 -----
 
-Follow the directions for [installing brikker](/README.md), as the dependencies
+Follow the directions for [installing the project](/README.md), as the dependencies
 are the same.
 
-After brikker is installed, run `go install github.com/eikeon/brikker/cmd/...`.
-All commands in brikker will be installed at `$GOPATH/bin`.
+After it's installed, run `go install
+github.com/uoregon-libraries/newspaper-jp2-viewer/cmd/...`.  All commands in
+the project will be installed at `$GOPATH/bin`.
 
 Usage
 -----
