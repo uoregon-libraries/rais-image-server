@@ -1,7 +1,13 @@
 Newspaper JP2 viewer
 =======
 
-A server for generating and serving image tiles from a jp2 source image(s).
+The JP2 viewer was originally built by [eikeon](https://github.com/eikeon) as a
+proof of concept of a tile server for JP2 images within
+[chronam](https://github.com/LibraryOfCongress/chronam).  It has been updated
+to allow more command-line options as well as a special command-line
+application for verifying JP2 images can be served.  The University of Oregon's
+primary use case is the [Historic Oregon
+Newspapers](http://oregonnews.uoregon.edu/) project.
 
 Technically the jp2 viewer could be used for a variety of systems, but is built
 with a few [chronam](https://github.com/LibraryOfCongress/chronam) rules
@@ -51,7 +57,7 @@ Here's an example for running the original brikker on an Amazon EC2 instance:
 Ubuntu Server 12.10 from quick start).
 
 *Note* that this was for an older version of the tile server and openjpeg.  The
-scripts should be based on the latest information in this README.
+scripts may need updates based on the latest information in this README.
 
 Using with chronam
 -----
