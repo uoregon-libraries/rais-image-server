@@ -29,7 +29,8 @@ func verifyJP2(path string) {
 	jp2Messages <- doVerify(path)
 }
 
-// Verifies a JP2 file can have a tile read by Brikker and openjpeg
+// Verifies that we can read and serve tiles for the given JP2.  This
+// effectively determines if the installed openjpeg libs will work.
 func doVerify(path string) string {
 	err, _ := openjpeg.NewImageTile(path, r, width, height)
 
