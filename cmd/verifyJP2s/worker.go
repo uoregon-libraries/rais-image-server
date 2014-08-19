@@ -4,7 +4,7 @@ import(
 	"fmt"
 	"image"
 	"os"
-	"github.com/eikeon/brikker/openjpeg"
+	"github.com/uoregon-libraries/newspaper-jp2-viewer/openjpeg"
 )
 
 // Image tile-pulling values

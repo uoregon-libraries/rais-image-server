@@ -4,7 +4,7 @@ import(
 	"fmt"
 	"os"
 	"runtime"
-	"github.com/eikeon/brikker/openjpeg"
+	"github.com/uoregon-libraries/newspaper-jp2-viewer/openjpeg"
 )
 
 // Buffer for holding all the output information as jp2s are examined
