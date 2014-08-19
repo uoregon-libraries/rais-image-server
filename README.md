@@ -25,7 +25,7 @@ Setup
   - This tells go where to put the project
 - Install the project:
   - `go get -u github.com/uoregon-libraries/newspaper-jp2-viewer`
-  - `go install github.com/uoregon-libraries/newspaper-jp2-viewer`
+  - `go install github.com/uoregon-libraries/newspaper-jp2-viewer/cmd/jp2tileserver`
 
 ### Openjpeg installation
 
@@ -47,7 +47,7 @@ sudo ldconfig
 Running the tile server
 -----
 
-`$GOPATH/bin/newspaper-jp2-viewer --address=":8888" --tile-path="/path/to/data/batches"`
+`$GOPATH/bin/jp2tileserver --address=":8888" --tile-path="/path/to/data/batches"`
 
 It is probably a good idea to set this up to run on server startup, and to
 respawn if it dies unexpectedly.
