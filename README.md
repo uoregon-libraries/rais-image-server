@@ -50,8 +50,8 @@ Here's an example for running the original brikker on an Amazon EC2 instance:
 [brikker-userdata.txt](https://gist.github.com/eikeon/5124717) (tested with
 Ubuntu Server 12.10 from quick start).
 
-*Note* that this was for an older version of the tile server and openjpeg.  The scripts
-should be based on the latest information in this README.
+*Note* that this was for an older version of the tile server and openjpeg.  The
+scripts should be based on the latest information in this README.
 
 Using with chronam
 -----
@@ -72,9 +72,9 @@ enable proxy and proxy_http mods, and add this to your config:
 Caching
 -----
 
-The server doesn't inherently cache the generated JPGs, which means every hit will
-read the source JP2, extract tiles using openjpeg, and send them back to the
-browser.  Depending on the amount of data and server horsepower, it may be
+The server doesn't inherently cache the generated JPGs, which means every hit
+will read the source JP2, extract tiles using openjpeg, and send them back to
+the browser.  Depending on the amount of data and server horsepower, it may be
 worth caching the tiles explicitly.
 
 The server returns a valid Last-Modified header based on the last time the JP2
@@ -88,5 +88,5 @@ CacheEnable disk /images/tiles/
 This won't be the smartest cache, but it will help in the case of a large
 influx of people accessing the same newspaper.  It is highly advisable that the
 `htcacheclean` tool be used in tandem with Apache cache directives, and it's
-probably worth reading
-[the Apache caching guide](http://httpd.apache.org/docs/2.2/caching.html).
+probably worth reading [the Apache caching
+guide](http://httpd.apache.org/docs/2.2/caching.html).
