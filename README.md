@@ -1,12 +1,12 @@
-brikker
+Newspaper JP2 viewer
 =======
 
 A server for generating and serving image tiles from a jp2 source image(s).
 
-Technically brikker could be used for a variety of systems, but is built with a
-few [chronam](https://github.com/LibraryOfCongress/chronam) rules hard-coded.
-It may be worthwhile to consider making it more configurable, but that's not
-our goal at this time.
+Technically the jp2 viewer could be used for a variety of systems, but is built
+with a few [chronam](https://github.com/LibraryOfCongress/chronam) rules
+hard-coded.  It may be worthwhile to consider making it more configurable, but
+that's not our goal at this time.
 
 Setup
 -----
@@ -16,17 +16,17 @@ Setup
 - Install openjpeg *from source* (see below)
 - [Install go](http://golang.org/doc/install)
 - Set up the [`GOPATH` environment variable](http://golang.org/doc/code.html#GOPATH)
-  - This tells go where to put brikker
-- Install brikker:
-  - `go get -u github.com/eikeon/brikker`
-  - `go install github.com/eikeon/brikker`
+  - This tells go where to put the project
+- Install the project:
+  - `go get -u github.com/uoregon-libraries/newspaper-jp2-viewer`
+  - `go install github.com/uoregon-libraries/newspaper-jp2-viewer`
 
 ### Openjpeg installation
 
 Openjpeg has to be installed from source until a new 2.x release is available.
 2.0 will not work.  The following bash checks out the latest version of 2.0
-from trunk (brikker is currently hard-coded to use 2.0, and the bleeding edge
-openjpeg code is set to be version 2.1):
+from trunk (this project is currently hard-coded to use 2.0, and the bleeding
+edge openjpeg code is set to be version 2.1):
 
 ```bash
 cd /usr/local/src
@@ -38,19 +38,19 @@ sudo make install
 sudo ldconfig
 ```
 
-Running brikker
+Running the tile server
 -----
 
-`$GOPATH/bin/brikker --address=":8888" --tile-path="/path/to/data/batches"`
+`$GOPATH/bin/newspaper-jp2-viewer --address=":8888" --tile-path="/path/to/data/batches"`
 
-It is probably a good idea to set up brikker to run on server startup, and to
+It is probably a good idea to set this up to run on server startup, and to
 respawn if it dies unexpectedly.
 
-Here's an example for an Amazon EC2 instance:
+Here's an example for running the original brikker on an Amazon EC2 instance:
 [brikker-userdata.txt](https://gist.github.com/eikeon/5124717) (tested with
 Ubuntu Server 12.10 from quick start).
 
-*Note* that this was for an older version of brikker and openjpeg.  The scripts
+*Note* that this was for an older version of the tile server and openjpeg.  The scripts
 should be based on the latest information in this README.
 
 Using with chronam
@@ -64,20 +64,20 @@ which is easier for a quick test, but can make it tougher when chronam is
 updated.
 
 For a longer-term solution, you can instead make your web server proxy all
-traffic for `/images/tiles/` to brikker.  In Apache, you'd need to enable proxy
-and proxy_http mods, and add this to your config:
+traffic for `/images/tiles/` to the tile server.  In Apache, you'd need to
+enable proxy and proxy_http mods, and add this to your config:
 
 `ProxyPass /images/tiles/ http://localhost:8888/images/tiles/`
 
 Caching
 -----
 
-Brikker doesn't inherently cache the generated JPGs, which means every hit will
+The server doesn't inherently cache the generated JPGs, which means every hit will
 read the source JP2, extract tiles using openjpeg, and send them back to the
 browser.  Depending on the amount of data and server horsepower, it may be
 worth caching the tiles explicitly.
 
-Brikker returns a valid Last-Modified header based on the last time the JP2
+The server returns a valid Last-Modified header based on the last time the JP2
 file changed, which Apache can use to create a simple disk-based cache:
 
 ```
