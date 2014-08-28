@@ -25,7 +25,6 @@ Setup
   - This tells go where to put the project
 - Install the project:
   - `go get -u github.com/uoregon-libraries/newspaper-jp2-viewer/cmd/jp2tileserver`
-  - `go install github.com/uoregon-libraries/newspaper-jp2-viewer/cmd/jp2tileserver`
 
 ### Openjpeg installation
 
