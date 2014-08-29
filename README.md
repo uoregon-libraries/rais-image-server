@@ -43,6 +43,21 @@ sudo make install
 sudo ldconfig
 ```
 
+*NOTE*: You may get an error trying to run the server (see below) that looks
+like this:
+
+    error while loading shared libraries: libopenjp2.so.6: cannot open shared object file: No such file or directory
+
+In this case, you probably have to add the openjp2 library to your ldconfig
+search path.  The easiest wayt to do this (at least on a RedHat-based system)
+is by creating a file called `/etc/ld.so.conf.d/openjp2.conf` and putting in
+the following line:
+
+    /usr/local/lib/
+
+This isn't optimal, but hopefully the process is better once the next release
+of openjpeg hits.
+
 Running the tile server
 -----
 
