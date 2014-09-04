@@ -49,7 +49,7 @@ like this:
     error while loading shared libraries: libopenjp2.so.6: cannot open shared object file: No such file or directory
 
 In this case, you probably have to add the openjp2 library to your ldconfig
-search path.  The easiest wayt to do this (at least on a RedHat-based system)
+search path.  The easiest way to do this (at least on a Red Hat system)
 is by creating a file called `/etc/ld.so.conf.d/openjp2.conf` and putting in
 the following line:
 
