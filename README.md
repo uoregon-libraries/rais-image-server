@@ -61,10 +61,19 @@ of openjpeg hits.
 Running the tile server
 -----
 
+### Manually
+
 `$GOPATH/bin/jp2tileserver --address=":8888" --tile-path="/path/to/data/batches"`
 
 It is probably a good idea to set this up to run on server startup, and to
 respawn if it dies unexpectedly.
+
+### Red Hat 6
+
+Read the provided [documentation for systems based on Red
+Hat](rh_config/README.md).
+
+### Ubuntu
 
 Here's an example for running the original brikker on an Amazon EC2 instance:
 [brikker-userdata.txt](https://gist.github.com/eikeon/5124717) (tested with
