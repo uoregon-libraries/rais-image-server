@@ -20,16 +20,12 @@ var tilePathRegex = regexp.MustCompile(`/images/tiles/(?P<path>.+)/image_(?P<wid
 
 var tilePath string
 
-func ErrorHandler404(w http.ResponseWriter, req *http.Request) {
-	http.NotFound(w, req)
-}
-
 func TileHandler(w http.ResponseWriter, req *http.Request) {
 	// Extract request path's regex parts into local variables
 	parts := tilePathRegex.FindStringSubmatch(req.URL.Path)
 
 	if parts == nil {
-		ErrorHandler404(w, req)
+		http.Error(w, "Invalid tile request", 400)
 		return
 	}
 
@@ -50,7 +46,7 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	filepath := tilePath + "/" + path
 	info, err := os.Stat(filepath)
 	if err != nil {
-		http.NotFound(w, req)
+		http.Error(w, "Unable to find the file " + path, 404)
 		return
 	}
 
