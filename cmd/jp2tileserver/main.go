@@ -83,7 +83,7 @@ func main() {
 
 	openjpeg.LogLevel = logLevel
 
-	http.Handle("/images/tiles", http.HandlerFunc(TileHandler))
+	http.HandleFunc("/images/tiles/", TileHandler)
 
 	if err := http.ListenAndServe(address, nil); err != nil {
 		log.Print("ListenAndServe:", err)
