@@ -16,7 +16,7 @@ import (
 	"github.com/uoregon-libraries/newspaper-jp2-viewer/openjpeg"
 )
 
-var e = regexp.MustCompile(`/images/tiles/(?P<path>.+)/image_(?P<width>\d+)x(?P<height>\d+)_from_(?P<x1>\d+),(?P<y1>\d+)_to_(?P<x2>\d+),(?P<y2>\d+).jpg`)
+var tilePathRegex = regexp.MustCompile(`/images/tiles/(?P<path>.+)/image_(?P<width>\d+)x(?P<height>\d+)_from_(?P<x1>\d+),(?P<y1>\d+)_to_(?P<x2>\d+),(?P<y2>\d+).jpg`)
 
 var tilePath string
 
@@ -26,7 +26,7 @@ func ErrorHandler404(w http.ResponseWriter, req *http.Request) {
 
 func TileHandler(w http.ResponseWriter, req *http.Request) {
 	// Extract request path's regex parts into local variables
-	parts := e.FindStringSubmatch(req.URL.Path)
+	parts := tilePathRegex.FindStringSubmatch(req.URL.Path)
 
 	if parts == nil {
 		ErrorHandler404(w, req)
@@ -34,7 +34,7 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	d := map[string]string{}
-	for i, name := range e.SubexpNames() {
+	for i, name := range tilePathRegex.SubexpNames() {
 		d[name] = parts[i]
 	}
 	path := d["path"]
