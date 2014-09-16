@@ -20,9 +20,19 @@ var e = regexp.MustCompile(`/images/tiles/(?P<path>.+)/image_(?P<width>\d+)x(?P<
 
 var tilePath string
 
+func ErrorHandler404(w http.ResponseWriter, req *http.Request) {
+	http.NotFound(w, req)
+}
+
 func TileHandler(w http.ResponseWriter, req *http.Request) {
 	// Extract request path's regex parts into local variables
 	parts := e.FindStringSubmatch(req.URL.Path)
+
+	if parts == nil {
+		ErrorHandler404(w, req)
+		return
+	}
+
 	d := map[string]string{}
 	for i, name := range e.SubexpNames() {
 		d[name] = parts[i]
