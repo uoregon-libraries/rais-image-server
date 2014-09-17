@@ -37,7 +37,7 @@ func TestTile(t *testing.T) {
 		r := image.Rect(2547, 447, 4298, 1559)
 		width := 681
 		height := 432
-		if err, i := NewImageTile(path, r, width, height); err == nil {
+		if i, err := NewImageTile(path, r, width, height); err == nil {
 			log.Println(i.Bounds())
 			if i.Bounds().Max.X < 10 {
 				t.FailNow()

@@ -55,7 +55,7 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Last-Modified", info.ModTime().Format(time.RFC1123))
 
 	// Serve generated JPG file
-	if err, i := openjpeg.NewImageTile(filepath, r, width, height); err == nil {
+	if i, err := openjpeg.NewImageTile(filepath, r, width, height); err != nil {
 		if err = jpeg.Encode(w, i, &jpeg.Options{Quality: 80}); err != nil {
 			log.Println(err)
 		}
