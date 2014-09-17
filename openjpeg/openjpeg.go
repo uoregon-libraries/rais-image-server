@@ -9,67 +9,46 @@ import (
 	"image"
 	"image/color"
 	"reflect"
-	"runtime"
 	"unsafe"
 	"fmt"
 )
 
 func NewImageTile(filename string, r image.Rectangle, width, height int) (tile *ImageTile, err error) {
-	l_stream := C.opj_stream_create_default_file_stream_v3(C.CString(filename), 1)
-	if l_stream == nil {
-		return nil, errors.New(fmt.Sprintf("Failed to create stream in %#v", filename))
-	}
+	jp2, err := NewJP2Image(filename)
 
-	l_codec := C.opj_create_decompress(C.OPJ_CODEC_JP2)
-
-	var parameters C.opj_dparameters_t
-	C.opj_set_default_decoder_parameters(&parameters)
 	level := desired_progression_level(r, width, height)
 	goLog(6, fmt.Sprintf("desired level: %d", level))
 	//(parameters).cp_reduce = C.OPJ_UINT32(level)
 
-	C.set_handlers(l_codec)
-
-	if err == nil && C.opj_setup_decoder(l_codec, &parameters) == C.OPJ_FALSE {
-		err = errors.New("failed to setup decoder")
-	}
-
-	if err == nil && C.opj_set_decoded_resolution_factor(l_codec, C.OPJ_UINT32(level)) == C.OPJ_FALSE {
+	if err == nil && C.opj_set_decoded_resolution_factor(jp2.codec, C.OPJ_UINT32(level)) == C.OPJ_FALSE {
 		err = errors.New("failed to set decode resolution factor")
 	}
 
-	var img *C.opj_image_t
-	if err == nil && C.opj_read_header(l_stream, l_codec, &img) == C.OPJ_FALSE {
-		err = errors.New("failed to read the header")
-	}
+	// Header *must* be read after we determine the decode resolution factor
+	err = jp2.ReadHeader()
 
 	if err == nil {
-		goLog(6, fmt.Sprintf("num comps: %d", img.numcomps))
-		goLog(6, fmt.Sprintf("x0: %d, x1: %d, y0: %d, y1: %d", img.x0, img.x1, img.y0, img.y1))
+		goLog(6, fmt.Sprintf("num comps: %d", jp2.header.numcomps))
+		goLog(6, fmt.Sprintf("x0: %d, x1: %d, y0: %d, y1: %d", jp2.header.x0, jp2.header.x1, jp2.header.y0, jp2.header.y1))
 	}
 
-	if err == nil && C.opj_set_decode_area(l_codec, img, C.OPJ_INT32(r.Min.X), C.OPJ_INT32(r.Min.Y), C.OPJ_INT32(r.Max.X), C.OPJ_INT32(r.Max.Y)) == C.OPJ_FALSE {
+	if err == nil && C.opj_set_decode_area(jp2.codec, jp2.header, C.OPJ_INT32(r.Min.X), C.OPJ_INT32(r.Min.Y), C.OPJ_INT32(r.Max.X), C.OPJ_INT32(r.Max.Y)) == C.OPJ_FALSE {
 		err = errors.New("failed to set the decoded area")
 	}
 
-	if err == nil && C.opj_decode(l_codec, l_stream, img) == C.OPJ_FALSE {
+	if err == nil && C.opj_decode(jp2.codec, jp2.stream, jp2.header) == C.OPJ_FALSE {
 		err = errors.New("failed to decode image")
 	}
-	if err == nil && C.opj_end_decompress(l_codec, l_stream) == C.OPJ_FALSE {
+	if err == nil && C.opj_end_decompress(jp2.codec, jp2.stream) == C.OPJ_FALSE {
 		err = errors.New("failed to decode image")
-	}
-
-	C.opj_stream_destroy_v3(l_stream)
-	if l_codec != nil {
-		C.opj_destroy_codec(l_codec)
 	}
 
 	if err == nil {
 		var comps []C.opj_image_comp_t
 		compsSlice := (*reflect.SliceHeader)((unsafe.Pointer(&comps)))
-		compsSlice.Cap = int(img.numcomps)
-		compsSlice.Len = int(img.numcomps)
-		compsSlice.Data = uintptr(unsafe.Pointer(img.comps))
+		compsSlice.Cap = int(jp2.header.numcomps)
+		compsSlice.Len = int(jp2.header.numcomps)
+		compsSlice.Data = uintptr(unsafe.Pointer(jp2.header.comps))
 
 		bounds := image.Rect(0, 0, int(comps[0].w), int(comps[0].h))
 
@@ -79,12 +58,7 @@ func NewImageTile(filename string, r image.Rectangle, width, height int) (tile *
 		dataSlice.Len = bounds.Dx() * bounds.Dy()
 		dataSlice.Data = uintptr(unsafe.Pointer(comps[0].data))
 
-		tile = &ImageTile{data, bounds, bounds.Dx(), img}
-		runtime.SetFinalizer(tile, func(it *ImageTile) {
-			C.opj_image_destroy(it.img)
-		})
-	} else {
-		C.opj_image_destroy(img)
+		tile = &ImageTile{data, bounds, bounds.Dx(), jp2.header}
 	}
 	return
 }
