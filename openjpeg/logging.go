@@ -6,6 +6,7 @@ import "C"
 
 import (
 	"fmt"
+	"strings"
 )
 
 // Debug by default
@@ -17,12 +18,12 @@ func GoLog(clevel C.int, cmessage *C.char) {
 	level := int(clevel)
 	message := C.GoString(cmessage)
 
-	goLog(level, message)
+	goLog(level, strings.TrimSpace(message))
 }
 
 // Internal go-specific version of logger
 func goLog(level int, message string) {
 	if level <= LogLevel {
-		fmt.Printf("[%s] %s", LogLevels[level], message)
+		fmt.Printf("[%s] %s\n", LogLevels[level], message)
 	}
 }
