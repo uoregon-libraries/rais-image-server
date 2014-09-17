@@ -54,13 +54,19 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "image/jpeg")
 	w.Header().Set("Last-Modified", info.ModTime().Format(time.RFC1123))
 
-	// Serve generated JPG file
-	if i, err := openjpeg.NewImageTile(filepath, r, width, height); err != nil {
-		if err = jpeg.Encode(w, i, &jpeg.Options{Quality: 80}); err != nil {
-			log.Println(err)
-		}
-	} else {
-		log.Println(err)
+	// Create raw image tile
+	img, err := openjpeg.NewImageTile(filepath, r, width, height)
+	if err != nil {
+		http.Error(w, "Unable to create image tile", 500)
+		log.Println("Unable to create image tile:", err)
+		return
+	}
+
+	// Encode as JPEG straight to the client
+	if err = jpeg.Encode(w, img, &jpeg.Options{Quality: 80}); err != nil {
+		http.Error(w, "Unable to encode tile", 500)
+		log.Println("Unable to encode tile into JPEG:", err)
+		return
 	}
 }
 
