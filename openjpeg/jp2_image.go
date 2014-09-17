@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
+	"image"
 )
 
 type JP2Image struct {
@@ -71,4 +72,14 @@ func (i *JP2Image) ReadHeader() error {
 		return errors.New("failed to read the header")
 	}
 	return nil
+}
+
+func (i *JP2Image) Dimensions() (r image.Rectangle, err error) {
+	if i.header == nil {
+		if err = i.ReadHeader(); err != nil {
+			return
+		}
+	}
+	r = image.Rect(int(i.header.x0), int(i.header.y0), int(i.header.x1), int(i.header.y1))
+	return
 }

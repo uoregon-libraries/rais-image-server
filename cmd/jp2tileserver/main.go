@@ -17,8 +17,35 @@ import (
 )
 
 var tilePathRegex = regexp.MustCompile(`/images/tiles/(?P<path>.+)/image_(?P<width>\d+)x(?P<height>\d+)_from_(?P<x1>\d+),(?P<y1>\d+)_to_(?P<x2>\d+),(?P<y2>\d+).jpg`)
+var infoPathRegex = regexp.MustCompile(`^/images/info/(.+)$`)
 
 var tilePath string
+
+func InfoHandler(w http.ResponseWriter, req *http.Request) {
+	// Extract request path's regex parts into local variables
+	parts := infoPathRegex.FindStringSubmatch(req.URL.Path)
+
+	if parts == nil {
+		http.Error(w, "Invalid info request", 400)
+		return
+	}
+
+	path := parts[1]
+	filepath := tilePath + "/" + path
+	jp2, err := openjpeg.NewJP2Image(filepath)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Unable to read JP2 file %#v", path), 500)
+		return
+	}
+	rect, err := jp2.Dimensions()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Unable to read JP2 dimensions for %#v", path), 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(w, `{"size": [%d, %d]}`, rect.Dx(), rect.Dy())
+}
 
 func TileHandler(w http.ResponseWriter, req *http.Request) {
 	// Extract request path's regex parts into local variables
@@ -90,6 +117,7 @@ func main() {
 	openjpeg.LogLevel = logLevel
 
 	http.HandleFunc("/images/tiles/", TileHandler)
+	http.HandleFunc("/images/info/", InfoHandler)
 
 	if err := http.ListenAndServe(address, nil); err != nil {
 		log.Print("ListenAndServe:", err)
