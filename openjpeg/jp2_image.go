@@ -15,7 +15,7 @@ type JP2Image struct {
 	filename string
 	stream *C.opj_stream_t
 	codec *C.opj_codec_t
-	header *C.opj_image_t
+	image *C.opj_image_t
 }
 
 func finalizer(i *JP2Image) {
@@ -27,8 +27,8 @@ func finalizer(i *JP2Image) {
 		C.opj_destroy_codec(i.codec)
 	}
 
-	if i.header != nil {
-		C.opj_image_destroy(i.header)
+	if i.image != nil {
+		C.opj_image_destroy(i.image)
 	}
 }
 
@@ -68,18 +68,18 @@ func (i *JP2Image) initializeCodec() error {
 }
 
 func (i *JP2Image) ReadHeader() error {
-	if C.opj_read_header(i.stream, i.codec, &i.header) == C.OPJ_FALSE {
+	if C.opj_read_header(i.stream, i.codec, &i.image) == C.OPJ_FALSE {
 		return errors.New("failed to read the header")
 	}
 	return nil
 }
 
 func (i *JP2Image) Dimensions() (r image.Rectangle, err error) {
-	if i.header == nil {
+	if i.image == nil {
 		if err = i.ReadHeader(); err != nil {
 			return
 		}
 	}
-	r = image.Rect(int(i.header.x0), int(i.header.y0), int(i.header.x1), int(i.header.y1))
+	r = image.Rect(int(i.image.x0), int(i.image.y0), int(i.image.x1), int(i.image.y1))
 	return
 }
