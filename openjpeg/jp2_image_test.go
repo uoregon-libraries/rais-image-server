@@ -16,5 +16,5 @@ func TestNewJP2Image(t *testing.T) {
 		t.Log("No jp2 object!")
 		t.FailNow()
 	}
-	t.Log(jp2.header)
+	t.Log(jp2.image)
 }
