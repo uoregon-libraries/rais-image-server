@@ -37,14 +37,22 @@ func TestTile(t *testing.T) {
 		r := image.Rect(2547, 447, 4298, 1559)
 		width := 681
 		height := 432
-		if i, err := NewImageTile(path, r, width, height); err == nil {
-			log.Println(i.Bounds())
-			if i.Bounds().Max.X < 10 {
-				t.FailNow()
-			}
 
-		} else {
+		jp2, err := NewJP2Image(path)
+		if err != nil {
+			log.Fatal("error creating jp2:", err)
+			t.FailNow()
+		}
+
+		i, err := NewImageTile(jp2, r, width, height)
+		if err != nil {
 			log.Fatal("error creating image tile:", err)
+			t.FailNow()
+		}
+
+		log.Println(i.Bounds())
+		if i.Bounds().Max.X < 10 {
+			t.FailNow()
 		}
 	}
 }
