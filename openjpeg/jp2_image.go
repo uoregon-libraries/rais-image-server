@@ -19,17 +19,7 @@ type JP2Image struct {
 }
 
 func finalizer(i *JP2Image) {
-	if i.stream != nil {
-		C.opj_stream_destroy_v3(i.stream)
-	}
-
-	if i.codec != nil {
-		C.opj_destroy_codec(i.codec)
-	}
-
-	if i.image != nil {
-		C.opj_image_destroy(i.image)
-	}
+	i.CleanupResources()
 }
 
 func NewJP2Image(filename string) (*JP2Image, error) {
@@ -82,4 +72,21 @@ func (i *JP2Image) Dimensions() (r image.Rectangle, err error) {
 	}
 	r = image.Rect(int(i.image.x0), int(i.image.y0), int(i.image.x1), int(i.image.y1))
 	return
+}
+
+func (i *JP2Image) CleanupResources() () {
+	if i.stream != nil {
+		C.opj_stream_destroy_v3(i.stream)
+		i.stream = nil
+	}
+
+	if i.codec != nil {
+		C.opj_destroy_codec(i.codec)
+		i.codec = nil
+	}
+
+	if i.image != nil {
+		C.opj_image_destroy(i.image)
+		i.image = nil
+	}
 }

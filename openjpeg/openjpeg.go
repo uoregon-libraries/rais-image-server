@@ -13,9 +13,7 @@ import (
 	"fmt"
 )
 
-func NewImageTile(filename string, r image.Rectangle, width, height int) (tile *ImageTile, err error) {
-	jp2, err := NewJP2Image(filename)
-
+func NewImageTile(jp2 *JP2Image, r image.Rectangle, width, height int) (tile *ImageTile, err error) {
 	level := desired_progression_level(r, width, height)
 	goLog(6, fmt.Sprintf("desired level: %d", level))
 	//(parameters).cp_reduce = C.OPJ_UINT32(level)

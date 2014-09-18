@@ -81,13 +81,17 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "image/jpeg")
 	w.Header().Set("Last-Modified", info.ModTime().Format(time.RFC1123))
 
-	// Create raw image tile
-	img, err := openjpeg.NewImageTile(filepath, r, width, height)
+	// Create JP2 structure
+	jp2, err := openjpeg.NewJP2Image(filepath)
+	defer jp2.CleanupResources()
 	if err != nil {
-		http.Error(w, "Unable to create image tile", 500)
-		log.Println("Unable to create image tile:", err)
+		http.Error(w, "Unable to read source image", 500)
+		log.Println("Unable to read source image: ", err)
 		return
 	}
+
+	// Pull raw tile data
+	img, err := openjpeg.NewImageTile(jp2, r, width, height)
 
 	// Encode as JPEG straight to the client
 	if err = jpeg.Encode(w, img, &jpeg.Options{Quality: 80}); err != nil {
