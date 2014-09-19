@@ -43,6 +43,19 @@ func InfoHandler(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, `{"size": [%d, %d]}`, rect.Dx(), rect.Dy())
 }
 
+func sendCacheHeaders(w http.ResponseWriter, filepath string) error {
+	info, err := os.Stat(filepath)
+	if err != nil {
+		http.Error(w, "Unable to access file", 404)
+		return err
+	}
+
+	// Set headers
+	w.Header().Set("Content-Type", "image/jpeg")
+	w.Header().Set("Last-Modified", info.ModTime().Format(time.RFC1123))
+	return nil
+}
+
 func TileHandler(w http.ResponseWriter, req *http.Request) {
 	// Extract request path's regex parts into local variables
 	parts := tilePathRegex.FindStringSubmatch(req.URL.Path)
@@ -65,17 +78,11 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	width, _ := strconv.Atoi(d["width"])
 	height, _ := strconv.Atoi(d["height"])
 
-	// Get file's last modified time, returning a 404 if we can't stat the file
 	filepath := tilePath + "/" + path
-	info, err := os.Stat(filepath)
-	if err != nil {
-		http.Error(w, "Unable to find the file " + path, 404)
+
+	if err := sendCacheHeaders(w, filepath); err != nil {
 		return
 	}
-
-	// Set headers
-	w.Header().Set("Content-Type", "image/jpeg")
-	w.Header().Set("Last-Modified", info.ModTime().Format(time.RFC1123))
 
 	// Create JP2 structure
 	jp2 := openjpeg.NewJP2Image(filepath)
