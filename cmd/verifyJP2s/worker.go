@@ -38,7 +38,7 @@ func doVerify(path string) string {
 		return fmt.Sprintf("ERROR reading JP2 from %#v: %s", path, err)
 	}
 
-	_, err = openjpeg.NewImageTile(jp2, r, width, height)
+	_, err = openjpeg.NewRawImage(jp2, r, width, height)
 
 	if (err != nil) {
 		return fmt.Sprintf("ERROR creating image tile from %#v: %s", path, err)

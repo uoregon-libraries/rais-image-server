@@ -91,7 +91,7 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Pull raw tile data
-	img, err := openjpeg.NewImageTile(jp2, r, width, height)
+	img, err := openjpeg.NewRawImage(jp2, r, width, height)
 
 	// Encode as JPEG straight to the client
 	if err = jpeg.Encode(w, img, &jpeg.Options{Quality: 80}); err != nil {

@@ -13,7 +13,7 @@ import (
 	"fmt"
 )
 
-func NewImageTile(jp2 *JP2Image, r image.Rectangle, width, height int) (*ImageTile, error) {
+func NewRawImage(jp2 *JP2Image, r image.Rectangle, width, height int) (*RawImage, error) {
 	level := desired_progression_level(r, width, height)
 	goLog(6, fmt.Sprintf("desired level: %d", level))
 
@@ -54,25 +54,25 @@ func NewImageTile(jp2 *JP2Image, r image.Rectangle, width, height int) (*ImageTi
 	dataSlice.Len = bounds.Dx() * bounds.Dy()
 	dataSlice.Data = uintptr(unsafe.Pointer(comps[0].data))
 
-	return &ImageTile{data, bounds, bounds.Dx(), jp2.image}, nil
+	return &RawImage{data, bounds, bounds.Dx(), jp2.image}, nil
 }
 
-type ImageTile struct {
+type RawImage struct {
 	data   []int32
 	bounds image.Rectangle
 	stride int
 	img    *C.opj_image_t
 }
 
-func (p *ImageTile) ColorModel() color.Model {
+func (p *RawImage) ColorModel() color.Model {
 	return color.GrayModel
 }
 
-func (p *ImageTile) Bounds() image.Rectangle {
+func (p *RawImage) Bounds() image.Rectangle {
 	return p.bounds
 }
 
-func (p *ImageTile) At(x, y int) color.Color {
+func (p *RawImage) At(x, y int) color.Color {
 	if !(image.Point{x, y}.In(p.bounds)) {
 		return color.Gray{}
 	}
@@ -80,6 +80,6 @@ func (p *ImageTile) At(x, y int) color.Color {
 	return color.Gray{uint8(p.data[index])}
 }
 
-func (p *ImageTile) PixOffset(x, y int) int {
+func (p *RawImage) PixOffset(x, y int) int {
 	return (y-p.bounds.Min.Y)*p.stride + (x-p.bounds.Min.X)*1
 }

@@ -44,7 +44,7 @@ func TestTile(t *testing.T) {
 			t.FailNow()
 		}
 
-		i, err := NewImageTile(jp2, r, width, height)
+		i, err := NewRawImage(jp2, r, width, height)
 		if err != nil {
 			log.Fatal("error creating image tile:", err)
 			t.FailNow()
