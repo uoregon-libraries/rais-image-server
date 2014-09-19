@@ -74,7 +74,7 @@ func (i *JP2Image) Dimensions() (r image.Rectangle, err error) {
 	return
 }
 
-func (i *JP2Image) CleanupResources() () {
+func (i *JP2Image) CleanupResources() {
 	if i.stream != nil {
 		C.opj_stream_destroy_v3(i.stream)
 		i.stream = nil
