@@ -75,7 +75,7 @@ func (i *JP2Image) RawImage() (*RawImage, error) {
 		if err != nil {
 			return nil, err
 		}
-		i.decodeArea = r
+		i.SetCrop(r)
 		i.CleanupResources()
 	}
 
