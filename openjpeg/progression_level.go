@@ -31,8 +31,18 @@ func desired_progression_level(r image.Rectangle, width, height int) uint {
 		return 0
 	}
 
-	scaleX := getScale(r.Dx(), width)
-	scaleY := getScale(r.Dy(), height)
+	// If either dimension is zero, we want to avoid computation and just use the
+	// other's scale value
+	scaleX := MAX_PROGRESSION_LEVEL
+	scaleY := MAX_PROGRESSION_LEVEL
+
+	if width > 0 {
+		scaleX = getScale(r.Dx(), width)
+	}
+
+	if height > 0 {
+		scaleY = getScale(r.Dy(), height)
+	}
 
 	// Pull the smallest value - if we request a resize from 1000x1000 to 250x500
 	// (for some odd reason), then we need to start with the 500x500 level, not
