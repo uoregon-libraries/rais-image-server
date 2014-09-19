@@ -38,13 +38,11 @@ func TestTile(t *testing.T) {
 		width := 681
 		height := 432
 
-		jp2, err := NewJP2Image(path)
-		if err != nil {
-			log.Fatal("error creating jp2:", err)
-			t.FailNow()
-		}
+		jp2 := NewJP2Image(path)
+		jp2.SetCrop(r)
+		jp2.SetResize(width, height)
 
-		i, err := NewRawImage(jp2, r, width, height)
+		i, err := jp2.RawImage()
 		if err != nil {
 			log.Fatal("error creating image tile:", err)
 			t.FailNow()
