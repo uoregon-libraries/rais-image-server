@@ -2,19 +2,41 @@ package openjpeg
 
 import (
 	"image"
+	"math"
 )
 
 const MAX_PROGRESSION_LEVEL = uint(6)
 
-func scaled_dimension(progression_level uint, dimension int) int {
-	scale_factor := uint(2) << (progression_level - uint(1))
-	return int(float32(dimension) / float32(scale_factor))
+func min(a, b uint) uint {
+	if a < b { return a }
+	return b
+}
+
+// Returns the scale in powers of two between two numbers
+func getScale(v1, v2 int) uint {
+	if v1 == v2 {
+		return 0
+	}
+
+	large, small := float64(v1), float64(v2)
+	if large < small {
+		large, small = small, large
+	}
+
+	return uint(math.Floor(math.Log2(large) - math.Log2(small)))
 }
 
 func desired_progression_level(r image.Rectangle, width, height int) uint {
-	level := MAX_PROGRESSION_LEVEL
-	for ; level > 0 && width > scaled_dimension(level, r.Dx()) && height > scaled_dimension(level, r.Dy()); level-- {
+	if width > r.Dx() || height > r.Dy() {
+		return 0
 	}
-	return level
-}
 
+	scaleX := getScale(r.Dx(), width)
+	scaleY := getScale(r.Dy(), height)
+
+	// Pull the smallest value - if we request a resize from 1000x1000 to 250x500
+	// (for some odd reason), then we need to start with the 500x500 level, not
+	// the 250x250 level
+	level := min(scaleX, scaleY)
+	return min(MAX_PROGRESSION_LEVEL, level)
+}
