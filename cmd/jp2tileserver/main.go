@@ -18,7 +18,7 @@ import (
 )
 
 var tilePathRegex = regexp.MustCompile(`/images/tiles/(?P<path>.+)/image_(?P<width>\d+)x(?P<height>\d+)_from_(?P<x1>\d+),(?P<y1>\d+)_to_(?P<x2>\d+),(?P<y2>\d+).jpg`)
-var thumbPathRegex = regexp.MustCompile(`/images/thumb/(.+)/(\d+)x(\d+)`)
+var resizePathRegex = regexp.MustCompile(`/images/resize/(.+)/(\d+)x(\d+)`)
 var infoPathRegex = regexp.MustCompile(`^/images/info/(.+)$`)
 
 var tilePath string
@@ -108,11 +108,11 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func ThumbHandler(w http.ResponseWriter, req *http.Request) {
+func ResizeHandler(w http.ResponseWriter, req *http.Request) {
 	// Extract request path's regex parts into local variables
-	parts := thumbPathRegex.FindStringSubmatch(req.URL.Path)
+	parts := resizePathRegex.FindStringSubmatch(req.URL.Path)
 	if parts == nil {
-		http.Error(w, "Invalid thumbnail request", 400)
+		http.Error(w, "Invalid resize request", 400)
 		return
 	}
 
@@ -171,7 +171,7 @@ func main() {
 
 	http.HandleFunc("/images/tiles/", TileHandler)
 	http.HandleFunc("/images/info/", InfoHandler)
-	http.HandleFunc("/images/thumb/", ThumbHandler)
+	http.HandleFunc("/images/resize/", ResizeHandler)
 
 	if err := http.ListenAndServe(address, nil); err != nil {
 		log.Print("ListenAndServe:", err)
