@@ -98,6 +98,13 @@ enable proxy and proxy_http mods, and add this to your config:
 
 `ProxyPass /images/tiles/ http://localhost:8888/images/tiles/`
 
+Unfortunately, the version of chronam we're using has a lot of other dynamic
+image URLs, so serving JP2s exclusively ended up requiring a lot of other
+chronam hacks.  Our work isn't portable due to the extensive customizations we
+have done to the site, but you can see the branch merge commit where we
+centralized all dynamic image URLs [in this commit to the oregonnews
+project](https://github.com/uoregon-libraries/oregonnews/commit/c8aad3287bf80cc4ca6716b91abd8b714be956a1)
+
 Caching
 -----
 
