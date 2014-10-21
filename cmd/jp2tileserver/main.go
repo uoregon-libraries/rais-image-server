@@ -45,7 +45,7 @@ func InfoHandler(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, `{"size": [%d, %d]}`, rect.Dx(), rect.Dy())
 }
 
-func sendCacheHeaders(w http.ResponseWriter, filepath string) error {
+func sendCacheHeaders(w http.ResponseWriter, req *http.Request, filepath string) error {
 	info, err := os.Stat(filepath)
 	if err != nil {
 		http.Error(w, "Unable to access file", 404)
@@ -55,6 +55,13 @@ func sendCacheHeaders(w http.ResponseWriter, filepath string) error {
 	// Set headers
 	w.Header().Set("Content-Type", "image/jpeg")
 	w.Header().Set("Last-Modified", info.ModTime().Format(time.RFC1123))
+
+	// Check for forced download parameter
+	query := req.URL.Query()
+	if query["download"] != nil {
+		w.Header().Set("Content-Disposition", "attachment")
+	}
+
 	return nil
 }
 
@@ -82,7 +89,7 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 
 	filepath := tilePath + "/" + path
 
-	if err := sendCacheHeaders(w, filepath); err != nil {
+	if err := sendCacheHeaders(w, req, filepath); err != nil {
 		return
 	}
 
@@ -123,7 +130,7 @@ func ResizeHandler(w http.ResponseWriter, req *http.Request) {
 	// Get file's last modified time, returning a 404 if we can't stat the file
 	filepath := tilePath + "/" + path
 
-	if err := sendCacheHeaders(w, filepath); err != nil {
+	if err := sendCacheHeaders(w, req, filepath); err != nil {
 		http.Error(w, "Unable to access file " + path, 404)
 		return
 	}
