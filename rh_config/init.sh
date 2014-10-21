@@ -40,7 +40,7 @@ loop_tileserver() {
 
   while [ -f $restartfile ] && [ $retry -gt 0 ]; do
     laststart=`date +%s`
-    $cmd >$stdout_log 2>$stderr_log
+    $cmd >>$stdout_log 2>>$stderr_log
     let retry=$retry-1
     let timediff=`date +%s`-$laststart
     [ $timediff -gt 5 ] && retry=5
