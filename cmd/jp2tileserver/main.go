@@ -57,7 +57,8 @@ func sendCacheHeaders(w http.ResponseWriter, req *http.Request, filepath string)
 	w.Header().Set("Last-Modified", info.ModTime().Format(time.RFC1123))
 
 	// Check for forced download parameter
-	if req.URL.Query()["download"][0] == "True" {
+	query := req.URL.Query()
+	if query["download"] != nil {
 		w.Header().Set("Content-Disposition", "attachment")
 	}
 
