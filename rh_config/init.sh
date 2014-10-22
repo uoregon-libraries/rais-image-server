@@ -41,8 +41,18 @@ loop_tileserver() {
   while [ -f $restartfile ] && [ $retry -gt 0 ]; do
     laststart=`date +%s`
     $cmd >>$stdout_log 2>>$stderr_log
+
+    let timediff=$newdate-$laststart
+
+    # Log the restart to stderr and stdout logs in an apache-like format
+    local logdate=`date +"[%a %b %d %H:%M:%S %Y]"`
+    local message="Restarting server, ran for $timediff seconds before error"
+    echo "$logdate [WARN] $message" >> $stdout_log
+    echo "$logdate [WARN] $message" >> $stderr_log
+
+    # Reset the retry counter as long as we don't restart too often; otherwise
+    # we break out of the loop and assume we have a major failure
     let retry=$retry-1
-    let timediff=`date +%s`-$laststart
     [ $timediff -gt 5 ] && retry=5
   done
 
