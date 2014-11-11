@@ -28,35 +28,21 @@ Setup
 
 ### Openjpeg installation
 
-Openjpeg has to be installed from source until a new 2.x release is available.
-2.0 will not work.  The following bash checks out the latest version of 2.0
-from trunk (this project is currently hard-coded to use 2.0, and the bleeding
-edge openjpeg code is set to be version 2.1):
+Openjpeg 2.1 must be installed for this to work.  The previous approach which
+used a checkout of the subversion repository is no longer supported.
+Installation depends on operating system, but we were able to rebuild the
+Fedora SRPM for RedHat 6.
 
-```bash
-cd /usr/local/src
-svn checkout http://openjpeg.googlecode.com/svn/trunk/ openjpeg
-cd openjpeg
-svn update -r 2722
-cmake .                     # This might be "cmake28 ."
-sudo make install
-sudo ldconfig
-```
+The general build algorthim is fairly straightforward:
 
-*NOTE*: You may get an error trying to run the server (see below) that looks
-like this:
+- Go to http://koji.fedoraproject.org/koji/packageinfo?packageID=18369
+- Grab the source rpm for the latest version of openjpeg2-2.1.x for the oldest
+  version of fedora that exists
+- Build on RHEL 6
+- Install the openjpeg2 and openjpeg2-devel rpms which get built
 
-    error while loading shared libraries: libopenjp2.so.6: cannot open shared object file: No such file or directory
-
-In this case, you probably have to add the openjp2 library to your ldconfig
-search path.  The easiest way to do this (at least on a Red Hat system)
-is by creating a file called `/etc/ld.so.conf.d/openjp2.conf` and putting in
-the following line:
-
-    /usr/local/lib/
-
-This isn't optimal, but hopefully the process is better once the next release
-of openjpeg hits.
+We've specifically tested `openjpeg2-2.1.0-1`, but it stands to reason the
+above steps will work for others as well.
 
 Running the tile server
 -----
