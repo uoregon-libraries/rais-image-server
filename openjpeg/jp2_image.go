@@ -34,7 +34,7 @@ func NewJP2Image(filename string) *JP2Image {
 }
 
 func (i *JP2Image) initializeStream() error {
-	i.stream = C.opj_stream_create_default_file_stream_v3(C.CString(i.filename), 1)
+	i.stream = C.opj_stream_create_default_file_stream(C.CString(i.filename), 1)
 	if (i.stream == nil) {
 		return errors.New(fmt.Sprintf("Failed to create stream in %#v", i.filename))
 	}
@@ -162,7 +162,7 @@ func (i *JP2Image) Dimensions() (r image.Rectangle, err error) {
 
 func (i *JP2Image) CleanupResources() {
 	if i.stream != nil {
-		C.opj_stream_destroy_v3(i.stream)
+		C.opj_stream_destroy(i.stream)
 		i.stream = nil
 	}
 

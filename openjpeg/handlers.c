@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <openjpeg-2.0/openjpeg.h>
+#include <openjpeg-2.1/openjpeg.h>
 #include "handlers.h"
 #include "_cgo_export.h"
 
