@@ -17,9 +17,7 @@ that's not our goal at this time.
 Setup
 -----
 
-- Install cmake 2.8 or later
-- Install subversion
-- Install openjpeg *from source* (see below)
+- Install openjpeg 2.1 (see below)
 - [Install go](http://golang.org/doc/install)
 - Set up the [`GOPATH` environment variable](http://golang.org/doc/code.html#GOPATH)
   - This tells go where to put the project
