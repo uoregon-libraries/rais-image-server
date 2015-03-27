@@ -9,8 +9,8 @@ import (
 	"strings"
 )
 
-// Debug by default
-var LogLevel = 7
+// WARN by default
+var LogLevel = 4
 var LogLevels = []string{"EMERG", "ALERT", "CRIT", "ERROR", "WARN", "NOTICE", "INFO", "DEBUG"}
 
 //export GoLog
