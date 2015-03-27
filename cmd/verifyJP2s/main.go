@@ -1,10 +1,10 @@
 package main
 
-import(
+import (
 	"fmt"
+	"github.com/uoregon-libraries/newspaper-jp2-viewer/openjpeg"
 	"os"
 	"runtime"
-	"github.com/uoregon-libraries/newspaper-jp2-viewer/openjpeg"
 )
 
 // Buffer for holding all the output information as jp2s are examined
@@ -26,7 +26,7 @@ func main() {
 	jp2Files = make(chan string, maxWorkers)
 
 	// Read JP2 file list and stuff it into the channel
-	if (len(os.Args) != 2) {
+	if len(os.Args) != 2 {
 		fmt.Println("You must provide a path to a file listing JP2s to verify")
 		os.Exit(1)
 	}

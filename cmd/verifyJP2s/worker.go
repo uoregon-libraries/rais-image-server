@@ -1,10 +1,10 @@
 package main
 
-import(
+import (
 	"fmt"
+	"github.com/uoregon-libraries/newspaper-jp2-viewer/openjpeg"
 	"image"
 	"os"
-	"github.com/uoregon-libraries/newspaper-jp2-viewer/openjpeg"
 )
 
 // Image tile-pulling values
@@ -38,7 +38,7 @@ func doVerify(path string) string {
 
 	_, err := jp2.RawImage()
 
-	if (err != nil) {
+	if err != nil {
 		return fmt.Sprintf("ERROR creating image tile from %#v: %s", path, err)
 	}
 

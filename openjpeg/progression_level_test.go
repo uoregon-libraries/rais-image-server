@@ -1,12 +1,12 @@
 package openjpeg
 
 import (
-	"testing"
 	"image"
+	"testing"
 )
 
 func assertEqualUInt(expected, actual uint, message string, t *testing.T) {
-	if (expected != actual) {
+	if expected != actual {
 		t.Errorf("Expected %d, but got %d - %s", expected, actual, message)
 		return
 	}

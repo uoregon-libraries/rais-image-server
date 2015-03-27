@@ -2,15 +2,15 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"image"
 	"image/jpeg"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"runtime"
 	"strconv"
-	"fmt"
-	"os"
 	"time"
 
 	"github.com/nfnt/resize"
@@ -131,7 +131,7 @@ func ResizeHandler(w http.ResponseWriter, req *http.Request) {
 	filepath := tilePath + "/" + path
 
 	if err := sendCacheHeaders(w, req, filepath); err != nil {
-		http.Error(w, "Unable to access file " + path, 404)
+		http.Error(w, "Unable to access file "+path, 404)
 		return
 	}
 

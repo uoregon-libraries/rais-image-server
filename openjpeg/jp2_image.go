@@ -7,20 +7,20 @@ import "C"
 import (
 	"errors"
 	"fmt"
-	"runtime"
-	"reflect"
-	"unsafe"
 	"image"
+	"reflect"
+	"runtime"
+	"unsafe"
 )
 
 type JP2Image struct {
-	filename string
-	stream *C.opj_stream_t
-	codec *C.opj_codec_t
-	image *C.opj_image_t
+	filename                  string
+	stream                    *C.opj_stream_t
+	codec                     *C.opj_codec_t
+	image                     *C.opj_image_t
 	decodeWidth, decodeHeight int
-	decodeArea image.Rectangle
-	crop, resize bool
+	decodeArea                image.Rectangle
+	crop, resize              bool
 }
 
 func finalizer(i *JP2Image) {
@@ -35,7 +35,7 @@ func NewJP2Image(filename string) *JP2Image {
 
 func (i *JP2Image) initializeStream() error {
 	i.stream = C.opj_stream_create_default_file_stream(C.CString(i.filename), 1)
-	if (i.stream == nil) {
+	if i.stream == nil {
 		return errors.New(fmt.Sprintf("Failed to create stream in %#v", i.filename))
 	}
 	return nil

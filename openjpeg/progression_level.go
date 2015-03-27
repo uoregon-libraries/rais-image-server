@@ -8,7 +8,9 @@ import (
 const MAX_PROGRESSION_LEVEL = uint(6)
 
 func min(a, b uint) uint {
-	if a < b { return a }
+	if a < b {
+		return a
+	}
 	return b
 }
 

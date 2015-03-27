@@ -1,8 +1,8 @@
 package openjpeg
 
 import (
-	"testing"
 	"os"
+	"testing"
 )
 
 func TestNewJP2Image(t *testing.T) {

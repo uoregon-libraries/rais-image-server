@@ -1,9 +1,9 @@
 package main
 
-import(
-	"os"
+import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 )
 
