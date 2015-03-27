@@ -85,7 +85,7 @@ func (i *JP2Image) RawImage() (*RawImage, error) {
 			return nil, err
 		}
 
-		level := desired_progression_level(i.decodeArea, i.decodeWidth, i.decodeHeight)
+		level := desiredProgressionLevel(i.decodeArea, i.decodeWidth, i.decodeHeight)
 		goLog(6, fmt.Sprintf("desired level: %d", level))
 
 		if C.opj_set_decoded_resolution_factor(i.codec, C.OPJ_UINT32(level)) == C.OPJ_FALSE {

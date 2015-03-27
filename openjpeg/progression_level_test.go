@@ -16,7 +16,7 @@ func assertEqualUInt(expected, actual uint, message string, t *testing.T) {
 func TestDesiredProgressionLevel(t *testing.T) {
 	source := image.Rect(0, 0, 5000, 5000)
 	dpl := func(w, h int) uint {
-		return desired_progression_level(source, w, h)
+		return desiredProgressionLevel(source, w, h)
 	}
 
 	assertEqualUInt(0, dpl(5000, 5000), "Source and dest are equal, level should be 0", t)

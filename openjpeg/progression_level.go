@@ -28,7 +28,7 @@ func getScale(v1, v2 int) uint {
 	return uint(math.Floor(math.Log2(large) - math.Log2(small)))
 }
 
-func desired_progression_level(r image.Rectangle, width, height int) uint {
+func desiredProgressionLevel(r image.Rectangle, width, height int) uint {
 	if width > r.Dx() || height > r.Dy() {
 		return 0
 	}
