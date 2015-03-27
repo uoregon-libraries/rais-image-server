@@ -5,7 +5,7 @@ import (
 	"math"
 )
 
-const MAX_PROGRESSION_LEVEL = uint(6)
+const MaxProgressionLevel = uint(6)
 
 func min(a, b uint) uint {
 	if a < b {
@@ -35,8 +35,8 @@ func desired_progression_level(r image.Rectangle, width, height int) uint {
 
 	// If either dimension is zero, we want to avoid computation and just use the
 	// other's scale value
-	scaleX := MAX_PROGRESSION_LEVEL
-	scaleY := MAX_PROGRESSION_LEVEL
+	scaleX := MaxProgressionLevel
+	scaleY := MaxProgressionLevel
 
 	if width > 0 {
 		scaleX = getScale(r.Dx(), width)
@@ -50,5 +50,5 @@ func desired_progression_level(r image.Rectangle, width, height int) uint {
 	// (for some odd reason), then we need to start with the 500x500 level, not
 	// the 250x250 level
 	level := min(scaleX, scaleY)
-	return min(MAX_PROGRESSION_LEVEL, level)
+	return min(MaxProgressionLevel, level)
 }
