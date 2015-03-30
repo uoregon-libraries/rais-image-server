@@ -5,6 +5,9 @@ import (
 	"math"
 )
 
+// MaxProgressionLevel represents the maximum resolution factor for newspapers
+// encoded to the NDNP spec.  A value of X means the smallest image that can be
+// decoded (without any resizing) is 1/(2^X).
 const MaxProgressionLevel = uint(6)
 
 func min(a, b uint) uint {
