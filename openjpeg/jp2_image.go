@@ -54,7 +54,7 @@ func (i *JP2Image) RawImage() (*RawImage, error) {
 			goLog(3, "Error getting dimensions - aborting")
 			return nil, err
 		}
-		i.SetCrop(i.Dimensions())
+		i.decodeArea = i.Dimensions()
 		i.CleanupResources()
 	}
 
@@ -83,9 +83,11 @@ func (i *JP2Image) RawImage() (*RawImage, error) {
 	goLog(6, fmt.Sprintf("x0: %d, x1: %d, y0: %d, y1: %d", i.image.x0, i.image.x1, i.image.y0, i.image.y1))
 
 	// Setting decode area has to happen *after* reading the header / image data
-	r := i.decodeArea
-	if C.opj_set_decode_area(i.codec, i.image, C.OPJ_INT32(r.Min.X), C.OPJ_INT32(r.Min.Y), C.OPJ_INT32(r.Max.X), C.OPJ_INT32(r.Max.Y)) == C.OPJ_FALSE {
-		return nil, errors.New("failed to set the decoded area")
+	if i.crop {
+		r := i.decodeArea
+		if C.opj_set_decode_area(i.codec, i.image, C.OPJ_INT32(r.Min.X), C.OPJ_INT32(r.Min.Y), C.OPJ_INT32(r.Max.X), C.OPJ_INT32(r.Max.Y)) == C.OPJ_FALSE {
+			return nil, errors.New("failed to set the decoded area")
+		}
 	}
 
 	// Decode the JP2 into the image stream
