@@ -111,7 +111,7 @@ func (i *JP2Image) RawImage() (*RawImage, error) {
 		return nil, errors.New("failed to decode image")
 	}
 	if C.opj_end_decompress(i.codec, i.stream) == C.OPJ_FALSE {
-		return nil, errors.New("failed to decode image")
+		return nil, errors.New("failed to close decompression")
 	}
 
 	var comps []C.opj_image_comp_t
