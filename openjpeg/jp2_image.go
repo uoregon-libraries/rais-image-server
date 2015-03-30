@@ -50,7 +50,6 @@ func (i *JP2Image) RawImage() (*RawImage, error) {
 	// dimensions), figure out progression level, and throw out all resources so
 	// we can re-initialize with the right progression level
 	if i.resize && !i.crop {
-		i.ReadHeader()
 		r, err := i.Dimensions()
 		if err != nil {
 			goLog(3, "Error getting dimensions - aborting")
