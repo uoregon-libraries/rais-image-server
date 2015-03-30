@@ -46,6 +46,12 @@ func (i *JP2Image) SetCrop(r image.Rectangle) {
 }
 
 func (i *JP2Image) RawImage() (*RawImage, error) {
+	// We need the codec to be ready for all operations below
+	if err := i.initializeCodec(); err != nil {
+		goLog(3, "Error initializing codec - aborting")
+		return nil, err
+	}
+
 	// If we want to resize, but not crop, we have to set the decode area to the
 	// full image - which means reading in the image header and then
 	// cleaning up all previously-initialized data
@@ -61,11 +67,6 @@ func (i *JP2Image) RawImage() (*RawImage, error) {
 	// Get progression level if we're resizing (it's zero if there isn't any
 	// scaling of the output)
 	if i.resize {
-		if err := i.initializeCodec(); err != nil {
-			goLog(3, "Error initializing codec before setting decode resolution factor - aborting")
-			return nil, err
-		}
-
 		level := desiredProgressionLevel(i.decodeArea, i.decodeWidth, i.decodeHeight)
 		goLog(6, fmt.Sprintf("desired level: %d", level))
 
