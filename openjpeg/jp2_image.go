@@ -61,7 +61,7 @@ func (i *JP2Image) RawImage() (*RawImage, error) {
 
 	// Get progression level if we're resizing (it's zero if there isn't any
 	// scaling of the outut)
-	if i.resize && i.crop {
+	if i.resize {
 		if err := i.initializeCodec(); err != nil {
 			goLog(3, "Error initializing codec before setting decode resolution factor - aborting")
 			return nil, err
