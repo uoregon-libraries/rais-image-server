@@ -53,6 +53,7 @@ func (i *JP2Image) RawImage() (*RawImage, error) {
 		i.ReadHeader()
 		r, err := i.Dimensions()
 		if err != nil {
+			goLog(3, "Error getting dimensions - aborting")
 			return nil, err
 		}
 		i.SetCrop(r)
@@ -62,6 +63,7 @@ func (i *JP2Image) RawImage() (*RawImage, error) {
 	// Get progression level if we're resizing and cropping
 	if i.resize && i.crop {
 		if err := i.initializeCodec(); err != nil {
+			goLog(3, "Error initializing codec before setting decode resolution factor - aborting")
 			return nil, err
 		}
 
@@ -74,6 +76,7 @@ func (i *JP2Image) RawImage() (*RawImage, error) {
 	}
 
 	if err := i.ReadHeader(); err != nil {
+		goLog(3, "Error reading header before decode - aborting")
 		return nil, err
 	}
 
