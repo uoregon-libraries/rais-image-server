@@ -34,7 +34,12 @@ func InfoHandler(w http.ResponseWriter, req *http.Request) {
 
 	path := parts[1]
 	filepath := tilePath + "/" + path
-	jp2 := openjpeg.NewJP2Image(filepath)
+	jp2, err := openjpeg.NewJP2Image(filepath)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Unable to read JP2 file from %#v", path), 500)
+		return
+	}
+
 	rect, err := jp2.Dimensions()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Unable to read JP2 dimensions for %#v", path), 500)
@@ -94,7 +99,13 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Create JP2 structure
-	jp2 := openjpeg.NewJP2Image(filepath)
+	jp2, err := openjpeg.NewJP2Image(filepath)
+	if err != nil {
+		http.Error(w, "Unable to read source image", 500)
+		log.Println("Unable to read source image: ", err)
+		return
+	}
+
 	defer jp2.CleanupResources()
 
 	// Pull raw tile data
@@ -102,8 +113,8 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	jp2.SetCrop(r)
 	img, err := jp2.RawImage()
 	if err != nil {
-		http.Error(w, "Unable to read source image", 500)
-		log.Println("Unable to read source image: ", err)
+		http.Error(w, "Unable to decode image", 500)
+		log.Println("Unable to decode image: ", err)
 		return
 	}
 
@@ -136,15 +147,21 @@ func ResizeHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Create JP2 structure
-	jp2 := openjpeg.NewJP2Image(filepath)
+	jp2, err := openjpeg.NewJP2Image(filepath)
+	if err != nil {
+		http.Error(w, "Unable to read source image", 500)
+		log.Println("Unable to read source image: ", err)
+		return
+	}
+
 	defer jp2.CleanupResources()
 
 	// Pull raw tile data
 	jp2.SetResize(width, height)
 	img, err := jp2.RawImage()
 	if err != nil {
-		http.Error(w, "Unable to read source image", 500)
-		log.Println("Unable to read source image: ", err)
+		http.Error(w, "Unable to decode image", 500)
+		log.Println("Unable to decode image: ", err)
 		return
 	}
 

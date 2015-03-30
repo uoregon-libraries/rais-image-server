@@ -32,11 +32,15 @@ func verifyJP2(path string) {
 // Verifies that we can read and serve tiles for the given JP2.  This
 // effectively determines if the installed openjpeg libs will work.
 func doVerify(path string) string {
-	jp2 := openjpeg.NewJP2Image(path)
+	jp2, err := openjpeg.NewJP2Image(path)
+	if err != nil {
+		return fmt.Sprintf("ERROR reading JP2 image %#v: %s", path, err)
+	}
+
 	jp2.SetCrop(r)
 	jp2.SetResize(width, height)
 
-	_, err := jp2.RawImage()
+	_, err = jp2.RawImage()
 
 	if err != nil {
 		return fmt.Sprintf("ERROR creating image tile from %#v: %s", path, err)

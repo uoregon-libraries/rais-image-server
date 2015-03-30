@@ -38,7 +38,11 @@ func TestTile(t *testing.T) {
 		width := 681
 		height := 432
 
-		jp2 := NewJP2Image(path)
+		jp2, err := NewJP2Image(path)
+		if err != nil {
+			t.Error("Error reading JP2:", err)
+		}
+
 		jp2.SetCrop(r)
 		jp2.SetResize(width, height)
 

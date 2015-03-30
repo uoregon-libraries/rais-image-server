@@ -7,10 +7,14 @@ import (
 
 func TestNewJP2Image(t *testing.T) {
 	dir, _ := os.Getwd()
-	jp2 := NewJP2Image(dir + "/../test-world.jp2")
-	if jp2 == nil {
-		t.Log("No jp2 object!")
-		t.FailNow()
+	jp2, err := NewJP2Image(dir + "/../test-world.jp2")
+	if err != nil {
+		t.Error("Error reading JP2:", err)
 	}
+
+	if jp2 == nil {
+		t.Error("No JP2 object!")
+	}
+
 	t.Log(jp2.image)
 }

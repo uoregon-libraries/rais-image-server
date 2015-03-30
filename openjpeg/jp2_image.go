@@ -23,10 +23,15 @@ type JP2Image struct {
 	crop, resize              bool
 }
 
-func NewJP2Image(filename string) *JP2Image {
+func NewJP2Image(filename string) (*JP2Image, error) {
 	i := &JP2Image{filename: filename}
 	runtime.SetFinalizer(i, finalizer)
-	return i
+
+	if err := i.initializeStream(); err != nil {
+		return nil, err
+	}
+
+	return i, nil
 }
 
 func (i *JP2Image) SetResize(width, height int) {
