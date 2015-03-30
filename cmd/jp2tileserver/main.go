@@ -40,13 +40,13 @@ func InfoHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	rect, err := jp2.Dimensions()
-	if err != nil {
+	if err := jp2.ReadHeader(); err != nil {
 		http.Error(w, fmt.Sprintf("Unable to read JP2 dimensions for %#v", path), 500)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	rect := jp2.Dimensions()
 	fmt.Fprintf(w, `{"size": [%d, %d]}`, rect.Dx(), rect.Dy())
 }
 

@@ -50,12 +50,11 @@ func (i *JP2Image) RawImage() (*RawImage, error) {
 	// full image - which means reading in the image header and then
 	// cleaning up all previously-initialized data
 	if i.resize && !i.crop {
-		r, err := i.Dimensions()
-		if err != nil {
+		if err := i.ReadHeader(); err != nil {
 			goLog(3, "Error getting dimensions - aborting")
 			return nil, err
 		}
-		i.SetCrop(r)
+		i.SetCrop(i.Dimensions())
 		i.CleanupResources()
 	}
 
@@ -130,12 +129,6 @@ func (i *JP2Image) ReadHeader() error {
 	return nil
 }
 
-func (i *JP2Image) Dimensions() (r image.Rectangle, err error) {
-	if i.image == nil {
-		if err = i.ReadHeader(); err != nil {
-			return
-		}
-	}
-	r = image.Rect(int(i.image.x0), int(i.image.y0), int(i.image.x1), int(i.image.y1))
-	return
+func (i *JP2Image) Dimensions() image.Rectangle {
+	return image.Rect(int(i.image.x0), int(i.image.y0), int(i.image.x1), int(i.image.y1))
 }
