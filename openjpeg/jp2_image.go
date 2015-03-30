@@ -116,6 +116,10 @@ func (i *JP2Image) RawImage() (*RawImage, error) {
 }
 
 func (i *JP2Image) ReadHeader() error {
+	if i.image != nil {
+		return nil
+	}
+
 	if err := i.initializeCodec(); err != nil {
 		return err
 	}
