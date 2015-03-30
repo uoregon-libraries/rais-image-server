@@ -114,21 +114,18 @@ func (i *JP2Image) RawImage() (*RawImage, error) {
 }
 
 func (i *JP2Image) ReadHeader() error {
-	if i.stream == nil {
-		if err := i.initializeStream(); err != nil {
-			return err
-		}
+	if err := i.initializeCodec(); err != nil {
+		return err
 	}
 
-	if i.codec == nil {
-		if err := i.initializeCodec(); err != nil {
-			return err
-		}
+	if err := i.initializeStream(); err != nil {
+		return err
 	}
 
 	if C.opj_read_header(i.stream, i.codec, &i.image) == C.OPJ_FALSE {
 		return errors.New("failed to read the header")
 	}
+
 	return nil
 }
 

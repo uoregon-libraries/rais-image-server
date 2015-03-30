@@ -14,6 +14,10 @@ func finalizer(i *JP2Image) {
 }
 
 func (i *JP2Image) initializeStream() error {
+	if i.stream != nil {
+		return nil
+	}
+
 	i.stream = C.opj_stream_create_default_file_stream(C.CString(i.filename), 1)
 	if i.stream == nil {
 		return errors.New(fmt.Sprintf("Failed to create stream in %#v", i.filename))
@@ -22,6 +26,10 @@ func (i *JP2Image) initializeStream() error {
 }
 
 func (i *JP2Image) initializeCodec() error {
+	if i.codec != nil {
+		return nil
+	}
+
 	i.codec = C.opj_create_decompress(C.OPJ_CODEC_JP2)
 
 	var parameters C.opj_dparameters_t
