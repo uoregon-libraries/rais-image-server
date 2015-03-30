@@ -34,19 +34,29 @@ func (i *JP2Image) initializeCodec() error {
 	return nil
 }
 
-func (i *JP2Image) CleanupResources() {
+func (i *JP2Image) cleanupStream() {
 	if i.stream != nil {
 		C.opj_stream_destroy(i.stream)
 		i.stream = nil
 	}
+}
 
+func (i *JP2Image) cleanupCodec() {
 	if i.codec != nil {
 		C.opj_destroy_codec(i.codec)
 		i.codec = nil
 	}
+}
 
+func (i *JP2Image) cleanupImage() {
 	if i.image != nil {
 		C.opj_image_destroy(i.image)
 		i.image = nil
 	}
+}
+
+func (i *JP2Image) CleanupResources() {
+	i.cleanupStream()
+	i.cleanupCodec()
+	i.cleanupImage()
 }
