@@ -8,9 +8,9 @@ import (
 // MaxProgressionLevel represents the maximum resolution factor for newspapers
 // encoded to the NDNP spec.  A value of X means the smallest image that can be
 // decoded (without any resizing) is 1/(2^X).
-const MaxProgressionLevel = uint(6)
+const MaxProgressionLevel = 6
 
-func min(a, b uint) uint {
+func min(a, b int) int {
 	if a < b {
 		return a
 	}
@@ -18,7 +18,7 @@ func min(a, b uint) uint {
 }
 
 // Returns the scale in powers of two between two numbers
-func getScale(v1, v2 int) uint {
+func getScale(v1, v2 int) int {
 	if v1 == v2 {
 		return 0
 	}
@@ -28,10 +28,10 @@ func getScale(v1, v2 int) uint {
 		large, small = small, large
 	}
 
-	return uint(math.Floor(math.Log2(large) - math.Log2(small)))
+	return int(math.Floor(math.Log2(large) - math.Log2(small)))
 }
 
-func desiredProgressionLevel(r image.Rectangle, width, height int) uint {
+func desiredProgressionLevel(r image.Rectangle, width, height int) int {
 	if width > r.Dx() || height > r.Dy() {
 		return 0
 	}
