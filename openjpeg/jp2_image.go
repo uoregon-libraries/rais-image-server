@@ -1,7 +1,7 @@
 package openjpeg
 
 // #cgo LDFLAGS: -lopenjp2
-// #include "handlers.h"
+// #include <openjpeg-2.1/openjpeg.h>
 import "C"
 
 import (
@@ -23,35 +23,10 @@ type JP2Image struct {
 	crop, resize              bool
 }
 
-func finalizer(i *JP2Image) {
-	i.CleanupResources()
-}
-
 func NewJP2Image(filename string) *JP2Image {
 	i := &JP2Image{filename: filename}
 	runtime.SetFinalizer(i, finalizer)
 	return i
-}
-
-func (i *JP2Image) initializeStream() error {
-	i.stream = C.opj_stream_create_default_file_stream(C.CString(i.filename), 1)
-	if i.stream == nil {
-		return errors.New(fmt.Sprintf("Failed to create stream in %#v", i.filename))
-	}
-	return nil
-}
-
-func (i *JP2Image) initializeCodec() error {
-	i.codec = C.opj_create_decompress(C.OPJ_CODEC_JP2)
-
-	var parameters C.opj_dparameters_t
-	C.opj_set_default_decoder_parameters(&parameters)
-
-	C.set_handlers(i.codec)
-	if C.opj_setup_decoder(i.codec, &parameters) == C.OPJ_FALSE {
-		return errors.New("failed to setup decoder")
-	}
-	return nil
 }
 
 func (i *JP2Image) SetResize(width, height int) {
@@ -158,21 +133,4 @@ func (i *JP2Image) Dimensions() (r image.Rectangle, err error) {
 	}
 	r = image.Rect(int(i.image.x0), int(i.image.y0), int(i.image.x1), int(i.image.y1))
 	return
-}
-
-func (i *JP2Image) CleanupResources() {
-	if i.stream != nil {
-		C.opj_stream_destroy(i.stream)
-		i.stream = nil
-	}
-
-	if i.codec != nil {
-		C.opj_destroy_codec(i.codec)
-		i.codec = nil
-	}
-
-	if i.image != nil {
-		C.opj_image_destroy(i.image)
-		i.image = nil
-	}
 }
