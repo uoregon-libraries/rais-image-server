@@ -68,10 +68,9 @@ func (i *JP2Image) RawImage() (*RawImage, error) {
 	// scaling of the output)
 	if i.resize {
 		level := desiredProgressionLevel(i.decodeArea, i.decodeWidth, i.decodeHeight)
-		goLog(6, fmt.Sprintf("desired level: %d", level))
-
-		if C.opj_set_decoded_resolution_factor(i.codec, C.OPJ_UINT32(level)) == C.OPJ_FALSE {
-			return nil, errors.New("failed to set decode resolution factor")
+		if err := i.SetDynamicProgressionLevel(level); err != nil {
+			goLog(3, "Unable to set dynamic progression level - aborting")
+			return nil, err
 		}
 	}
 
@@ -138,4 +137,36 @@ func (i *JP2Image) ReadHeader() error {
 
 func (i *JP2Image) Dimensions() image.Rectangle {
 	return image.Rect(int(i.image.x0), int(i.image.y0), int(i.image.x1), int(i.image.y1))
+}
+
+// Attempts to set the progression level to the given value, then re-read the
+// header.  If reading the header fails, attempts to set the level to one level
+// below the initial level.  If reading the header fails at level 0, an error
+// is returned.
+func (i *JP2Image) SetDynamicProgressionLevel(level int) error {
+	onErr := func(err error) error {
+		if level > 0 {
+			goLog(6, fmt.Sprintf("Unable to set progression level to %d; trying again (%s)", level, err))
+			i.CleanupResources()
+			return i.SetDynamicProgressionLevel(level - 1)
+		}
+
+		return err
+	}
+
+	goLog(6, fmt.Sprintf("Setting progression level to %d", level))
+
+	if err := i.initializeCodec(); err != nil {
+		return onErr(err)
+	}
+
+	if C.opj_set_decoded_resolution_factor(i.codec, C.OPJ_UINT32(level)) == C.OPJ_FALSE {
+		return onErr(errors.New("Error trying to set decoded resolution factor"))
+	}
+
+	if err := i.ReadHeader(); err != nil {
+		return onErr(err)
+	}
+
+	return nil
 }
