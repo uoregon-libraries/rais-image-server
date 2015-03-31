@@ -49,7 +49,7 @@ func (i *JP2Image) SetCrop(r image.Rectangle) {
 // Returns a RawImage that holds the decoded image data.  Note that the
 // RawImage just holds the best resolution for the given JP2, and *not* a
 // resized image.
-func (i *JP2Image) DecodeImage() (*RawImage, error) {
+func (i *JP2Image) DecodeImage() (image.Image, error) {
 	// We need the codec to be ready for all operations below
 	if err := i.initializeCodec(); err != nil {
 		goLog(3, "Error initializing codec - aborting")

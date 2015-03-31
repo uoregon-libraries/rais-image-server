@@ -32,10 +32,10 @@ func TestDirectConversion(t *testing.T) {
 		t.Errorf("jp2.DecodeImage() got an error: %#v", err)
 		return
 	}
-	assertEqualInt(0, i.bounds.Min.X, "Min.X should be 0", t)
-	assertEqualInt(0, i.bounds.Min.Y, "Min.Y should be 0", t)
-	assertEqualInt(800, i.bounds.Max.X, "Max.X should be 800", t)
-	assertEqualInt(400, i.bounds.Max.Y, "Max.Y should be 400", t)
+	assertEqualInt(0, i.Bounds().Min.X, "Min.X should be 0", t)
+	assertEqualInt(0, i.Bounds().Min.Y, "Min.Y should be 0", t)
+	assertEqualInt(800, i.Bounds().Max.X, "Max.X should be 800", t)
+	assertEqualInt(400, i.Bounds().Max.Y, "Max.Y should be 400", t)
 }
 
 func TestCrop(t *testing.T) {
@@ -46,10 +46,10 @@ func TestCrop(t *testing.T) {
 		t.Errorf("jp2.DecodeImage() got an error: %#v", err)
 		return
 	}
-	assertEqualInt(0, i.bounds.Min.X, "Min.X should be 0", t)
-	assertEqualInt(0, i.bounds.Min.Y, "Min.Y should be 0", t)
-	assertEqualInt(300, i.bounds.Max.X, "Max.X should be 300 (cropped X from 200 - 500)", t)
-	assertEqualInt(300, i.bounds.Max.Y, "Max.Y should be 300 (cropped Y from 100 - 400)", t)
+	assertEqualInt(0, i.Bounds().Min.X, "Min.X should be 0", t)
+	assertEqualInt(0, i.Bounds().Min.Y, "Min.Y should be 0", t)
+	assertEqualInt(300, i.Bounds().Max.X, "Max.X should be 300 (cropped X from 200 - 500)", t)
+	assertEqualInt(300, i.Bounds().Max.Y, "Max.Y should be 300 (cropped Y from 100 - 400)", t)
 }
 
 // This serves as a resize test as well as a test that we properly check
@@ -65,10 +65,10 @@ func TestResize(t *testing.T) {
 
 	// Since DecodeImage doesn't actually resize, we can actually only test for
 	// conversion to the smallest resolution factor
-	assertEqualInt(0, i.bounds.Min.X, "Min.X should be 0", t)
-	assertEqualInt(0, i.bounds.Min.Y, "Min.Y should be 0", t)
-	assertEqualInt(400, i.bounds.Max.X, "Max.X should be 400", t)
-	assertEqualInt(200, i.bounds.Max.Y, "Max.Y should be 200", t)
+	assertEqualInt(0, i.Bounds().Min.X, "Min.X should be 0", t)
+	assertEqualInt(0, i.Bounds().Min.Y, "Min.Y should be 0", t)
+	assertEqualInt(400, i.Bounds().Max.X, "Max.X should be 400", t)
+	assertEqualInt(200, i.Bounds().Max.Y, "Max.Y should be 200", t)
 }
 
 func TestResizeAndCrop(t *testing.T) {
@@ -83,8 +83,8 @@ func TestResizeAndCrop(t *testing.T) {
 
 	// Since DecodeImage doesn't actually resize, we can actually only test for
 	// conversion to the smallest resolution factor
-	assertEqualInt(0, i.bounds.Min.X, "Min.X should be 0", t)
-	assertEqualInt(0, i.bounds.Min.Y, "Min.Y should be 0", t)
-	assertEqualInt(150, i.bounds.Max.X, "Max.X should be 150", t)
-	assertEqualInt(150, i.bounds.Max.Y, "Max.Y should be 150", t)
+	assertEqualInt(0, i.Bounds().Min.X, "Min.X should be 0", t)
+	assertEqualInt(0, i.Bounds().Min.Y, "Min.Y should be 0", t)
+	assertEqualInt(150, i.Bounds().Max.X, "Max.X should be 150", t)
+	assertEqualInt(150, i.Bounds().Max.Y, "Max.Y should be 150", t)
 }
