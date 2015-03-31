@@ -2,7 +2,7 @@
 #
 # Compiles and deploys the tile server as a service
 #
-# This is mostly an example for going from development to production.  MANY
+# This is meant as an example for going from development to production.  MANY
 # assumptions are made:
 #
 # - You've already installed the service once and done `chkconfig` magic
@@ -11,11 +11,11 @@
 # - You have sudo access
 # - You are using this with chronam
 
-rm -f $GOPATH/bin/jp2tileserver
-go install ./cmd/...
+make clean
+make bin/jp2tileserver
 sudo service tileserver stop
 sudo rm /opt/chronam-support/jp2tileserver
 sudo mkdir -p /opt/chronam-support/
 sudo cp rh_config/init.sh /etc/init.d/tileserver
-sudo cp $GOPATH/bin/jp2tileserver /opt/chronam-support/jp2tileserver
+sudo cp bin/jp2tileserver /opt/chronam-support/jp2tileserver
 sudo service tileserver start
