@@ -11,6 +11,8 @@ import (
 	"reflect"
 	"runtime"
 	"unsafe"
+
+	"github.com/nfnt/resize"
 )
 
 // Container for our simple JP2 operations
@@ -46,9 +48,7 @@ func (i *JP2Image) SetCrop(r image.Rectangle) {
 	i.crop = true
 }
 
-// Returns an image.Image that holds the decoded image data.  Note that the
-// image just holds the best resolution for the given JP2, *not* a resized
-// image.
+// Returns an image.Image that holds the decoded image data, resized if requested
 func (i *JP2Image) DecodeImage() (image.Image, error) {
 	// We need the codec to be ready for all operations below
 	if err := i.initializeCodec(); err != nil {
@@ -131,6 +131,9 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 		img = &image.RGBA{Pix: realData, Stride: bounds.Dx() << 2, Rect: bounds}
 	}
 
+	if i.resize {
+		img = resize.Resize(uint(i.decodeWidth), uint(i.decodeHeight), img, resize.Bilinear)
+	}
 
 	return img, nil
 }

@@ -63,12 +63,10 @@ func TestResize(t *testing.T) {
 		return
 	}
 
-	// Since DecodeImage doesn't actually resize, we can actually only test for
-	// conversion to the smallest resolution factor
 	assertEqualInt(0, i.Bounds().Min.X, "Min.X should be 0", t)
 	assertEqualInt(0, i.Bounds().Min.Y, "Min.Y should be 0", t)
-	assertEqualInt(400, i.Bounds().Max.X, "Max.X should be 400", t)
-	assertEqualInt(200, i.Bounds().Max.Y, "Max.Y should be 200", t)
+	assertEqualInt(50, i.Bounds().Max.X, "Max.X should be 400", t)
+	assertEqualInt(50, i.Bounds().Max.Y, "Max.Y should be 200", t)
 }
 
 func TestResizeAndCrop(t *testing.T) {
