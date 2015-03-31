@@ -116,7 +116,12 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 	dataSlice.Len = bounds.Dx() * bounds.Dy()
 	dataSlice.Data = uintptr(unsafe.Pointer(comps[0].data))
 
-	return &RawImage{data, bounds, bounds.Dx()}, nil
+	realData := make([]uint8, len(data))
+	for index, point := range data {
+		realData[index] = uint8(point)
+	}
+
+	return &image.Gray{Pix: realData, Stride: bounds.Dx(), Rect: bounds}, nil
 }
 
 func (i *JP2Image) ReadHeader() error {
