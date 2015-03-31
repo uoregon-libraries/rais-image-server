@@ -109,8 +109,30 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 	compsSlice.Data = uintptr(unsafe.Pointer(i.image.comps))
 
 	bounds := image.Rect(0, 0, int(comps[0].w), int(comps[0].h))
+	var img image.Image
 
-	return &image.Gray{Pix: JP2ComponentData(comps[0]), Stride: bounds.Dx(), Rect: bounds}, nil
+	// We assume grayscale if we don't have at least 3 components, because it's
+	// probably the safest default
+	if len(comps) < 3 {
+		img = &image.Gray{Pix: JP2ComponentData(comps[0]), Stride: bounds.Dx(), Rect: bounds}
+	} else {
+		// If we have 3+ components, we only care about the first three - I have no
+		// idea what else we might have other than alpha, and as a tile server, we
+		// don't care about alpha.  It's worth noting that this will almost certainly
+		// blow up on any JP2 that isn't using RGB.
+		realData := make([]uint8, (bounds.Dx() * bounds.Dy()) << 2)
+		for x, comp := range comps[0:3] {
+			compData := JP2ComponentData(comp)
+			for y, point := range compData {
+				realData[y * 4 + x] = point
+			}
+		}
+
+		img = &image.RGBA{Pix: realData, Stride: bounds.Dx() << 2, Rect: bounds}
+	}
+
+
+	return img, nil
 }
 
 func (i *JP2Image) ReadHeader() error {
