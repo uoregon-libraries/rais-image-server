@@ -111,7 +111,7 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	// Pull raw tile data
 	jp2.SetResize(width, height)
 	jp2.SetCrop(r)
-	img, err := jp2.RawImage()
+	img, err := jp2.DecodeImage()
 	if err != nil {
 		http.Error(w, "Unable to decode image", 500)
 		log.Println("Unable to decode image: ", err)
@@ -158,7 +158,7 @@ func ResizeHandler(w http.ResponseWriter, req *http.Request) {
 
 	// Pull raw tile data
 	jp2.SetResize(width, height)
-	img, err := jp2.RawImage()
+	img, err := jp2.DecodeImage()
 	if err != nil {
 		http.Error(w, "Unable to decode image", 500)
 		log.Println("Unable to decode image: ", err)

@@ -46,7 +46,7 @@ func TestTile(t *testing.T) {
 		jp2.SetCrop(r)
 		jp2.SetResize(width, height)
 
-		i, err := jp2.RawImage()
+		i, err := jp2.DecodeImage()
 		if err != nil {
 			log.Fatal("error creating image tile:", err)
 			t.FailNow()

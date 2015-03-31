@@ -27,9 +27,9 @@ func TestNewJP2Image(t *testing.T) {
 
 func TestDirectConversion(t *testing.T) {
 	jp2 := jp2i()
-	i, err := jp2.RawImage()
+	i, err := jp2.DecodeImage()
 	if err != nil {
-		t.Errorf("jp2.RawImage() got an error: %#v", err)
+		t.Errorf("jp2.DecodeImage() got an error: %#v", err)
 		return
 	}
 	assertEqualInt(0, i.bounds.Min.X, "Min.X should be 0", t)
@@ -41,9 +41,9 @@ func TestDirectConversion(t *testing.T) {
 func TestCrop(t *testing.T) {
 	jp2 := jp2i()
 	jp2.SetCrop(image.Rect(200, 100, 500, 400))
-	i, err := jp2.RawImage()
+	i, err := jp2.DecodeImage()
 	if err != nil {
-		t.Errorf("jp2.RawImage() got an error: %#v", err)
+		t.Errorf("jp2.DecodeImage() got an error: %#v", err)
 		return
 	}
 	assertEqualInt(0, i.bounds.Min.X, "Min.X should be 0", t)
@@ -57,13 +57,13 @@ func TestCrop(t *testing.T) {
 func TestResize(t *testing.T) {
 	jp2 := jp2i()
 	jp2.SetResize(50, 50)
-	i, err := jp2.RawImage()
+	i, err := jp2.DecodeImage()
 	if err != nil {
-		t.Errorf("jp2.RawImage() got an error: %#v", err)
+		t.Errorf("jp2.DecodeImage() got an error: %#v", err)
 		return
 	}
 
-	// Since RawImage doesn't actually resize, we can actually only test for
+	// Since DecodeImage doesn't actually resize, we can actually only test for
 	// conversion to the smallest resolution factor
 	assertEqualInt(0, i.bounds.Min.X, "Min.X should be 0", t)
 	assertEqualInt(0, i.bounds.Min.Y, "Min.Y should be 0", t)
@@ -75,13 +75,13 @@ func TestResizeAndCrop(t *testing.T) {
 	jp2 := jp2i()
 	jp2.SetCrop(image.Rect(200, 100, 500, 400))
 	jp2.SetResize(150, 150)
-	i, err := jp2.RawImage()
+	i, err := jp2.DecodeImage()
 	if err != nil {
-		t.Errorf("jp2.RawImage() got an error: %#v", err)
+		t.Errorf("jp2.DecodeImage() got an error: %#v", err)
 		return
 	}
 
-	// Since RawImage doesn't actually resize, we can actually only test for
+	// Since DecodeImage doesn't actually resize, we can actually only test for
 	// conversion to the smallest resolution factor
 	assertEqualInt(0, i.bounds.Min.X, "Min.X should be 0", t)
 	assertEqualInt(0, i.bounds.Min.Y, "Min.Y should be 0", t)
