@@ -14,6 +14,39 @@ with a few [chronam](https://github.com/LibraryOfCongress/chronam) rules
 hard-coded.  It may be worthwhile to consider making it more configurable, but
 that's not our goal at this time.
 
+Known Limitations
+-----
+
+There are probably a lot of *unknown* limitations, so this should be considered
+a very small list of what are likely a lot of problems.
+
+- Resolution factors beyond 6 aren't supported
+
+Very large images (as in, hundreds of megapixels) will have performance issues
+as the server will have to manually resize anything smaller than 1/64th of the
+original image.
+
+- Resolution factors below 6 are barely supported
+
+We couldn't figure out how to properly determine the number of resolution
+factors a given image has.  When an image maxes out at res. factor 2, and a
+request is made for something at factor 6, we try 6 and fail, then 5, fail, 4,
+fail, 3, fail, 2, success.  This has a bit of overhead for each try, so it's
+best to encode at a factor of 6 or else ensure you aren't requesting images
+smaller than 1 / (2 ^ x) times the width/height of the image.
+
+- Only supports RGB and Grayscale
+
+And I'm not even sure how well we support different variations of those two
+options... or even what variations might exist.  So... good luck?
+
+- RAM usage could be ridiculous
+
+We haven't even made a cursory attempt at curtailing RAM use.  Go's garbage
+collection works well enough for our use case, but really large images and/or
+lots of traffic could cause the system to easily chew up unreasonable amounts
+of RAM.  Load testing is highly recommended.
+
 Setup
 -----
 
