@@ -11,6 +11,8 @@ import (
 	"reflect"
 	"runtime"
 	"unsafe"
+
+	"github.com/nfnt/resize"
 )
 
 // Container for our simple JP2 operations
@@ -46,10 +48,8 @@ func (i *JP2Image) SetCrop(r image.Rectangle) {
 	i.crop = true
 }
 
-// Returns a RawImage that holds the decoded image data.  Note that the
-// RawImage just holds the best resolution for the given JP2, and *not* a
-// resized image.
-func (i *JP2Image) RawImage() (*RawImage, error) {
+// Returns an image.Image that holds the decoded image data, resized if requested
+func (i *JP2Image) DecodeImage() (image.Image, error) {
 	// We need the codec to be ready for all operations below
 	if err := i.initializeCodec(); err != nil {
 		goLog(3, "Error initializing codec - aborting")
@@ -109,14 +109,33 @@ func (i *JP2Image) RawImage() (*RawImage, error) {
 	compsSlice.Data = uintptr(unsafe.Pointer(i.image.comps))
 
 	bounds := image.Rect(0, 0, int(comps[0].w), int(comps[0].h))
+	var img image.Image
 
-	var data []int32
-	dataSlice := (*reflect.SliceHeader)((unsafe.Pointer(&data)))
-	dataSlice.Cap = bounds.Dx() * bounds.Dy()
-	dataSlice.Len = bounds.Dx() * bounds.Dy()
-	dataSlice.Data = uintptr(unsafe.Pointer(comps[0].data))
+	// We assume grayscale if we don't have at least 3 components, because it's
+	// probably the safest default
+	if len(comps) < 3 {
+		img = &image.Gray{Pix: JP2ComponentData(comps[0]), Stride: bounds.Dx(), Rect: bounds}
+	} else {
+		// If we have 3+ components, we only care about the first three - I have no
+		// idea what else we might have other than alpha, and as a tile server, we
+		// don't care about alpha.  It's worth noting that this will almost certainly
+		// blow up on any JP2 that isn't using RGB.
+		realData := make([]uint8, (bounds.Dx() * bounds.Dy()) << 2)
+		for x, comp := range comps[0:3] {
+			compData := JP2ComponentData(comp)
+			for y, point := range compData {
+				realData[y * 4 + x] = point
+			}
+		}
 
-	return &RawImage{data, bounds, bounds.Dx()}, nil
+		img = &image.RGBA{Pix: realData, Stride: bounds.Dx() << 2, Rect: bounds}
+	}
+
+	if i.resize {
+		img = resize.Resize(uint(i.decodeWidth), uint(i.decodeHeight), img, resize.Bilinear)
+	}
+
+	return img, nil
 }
 
 func (i *JP2Image) ReadHeader() error {
@@ -173,4 +192,22 @@ func (i *JP2Image) SetDynamicProgressionLevel(level int) error {
 	}
 
 	return nil
+}
+
+// JP2ComponentData returns a slice of Image-usable uint8s from the JP2 raw
+// data in the given component struct
+func JP2ComponentData(comp C.struct_opj_image_comp) []uint8 {
+	var data []int32
+	dataSlice := (*reflect.SliceHeader)((unsafe.Pointer(&data)))
+	size := int(comp.w) * int(comp.h)
+	dataSlice.Cap = size
+	dataSlice.Len = size
+	dataSlice.Data = uintptr(unsafe.Pointer(comp.data))
+
+	realData := make([]uint8, len(data))
+	for index, point := range data {
+		realData[index] = uint8(point)
+	}
+
+	return realData
 }

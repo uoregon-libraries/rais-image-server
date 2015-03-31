@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/nfnt/resize"
 	"github.com/uoregon-libraries/newspaper-jp2-viewer/openjpeg"
 )
 
@@ -111,7 +110,7 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	// Pull raw tile data
 	jp2.SetResize(width, height)
 	jp2.SetCrop(r)
-	img, err := jp2.RawImage()
+	img, err := jp2.DecodeImage()
 	if err != nil {
 		http.Error(w, "Unable to decode image", 500)
 		log.Println("Unable to decode image: ", err)
@@ -158,7 +157,7 @@ func ResizeHandler(w http.ResponseWriter, req *http.Request) {
 
 	// Pull raw tile data
 	jp2.SetResize(width, height)
-	img, err := jp2.RawImage()
+	img, err := jp2.DecodeImage()
 	if err != nil {
 		http.Error(w, "Unable to decode image", 500)
 		log.Println("Unable to decode image: ", err)
@@ -166,8 +165,7 @@ func ResizeHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Encode as JPEG straight to the client
-	resized := resize.Resize(uint(width), uint(height), img, resize.Bilinear)
-	if err = jpeg.Encode(w, resized, &jpeg.Options{Quality: 80}); err != nil {
+	if err = jpeg.Encode(w, img, &jpeg.Options{Quality: 80}); err != nil {
 		http.Error(w, "Unable to encode tile", 500)
 		log.Println("Unable to encode tile into JPEG:", err)
 		return

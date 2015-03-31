@@ -40,7 +40,7 @@ func doVerify(path string) string {
 	jp2.SetCrop(r)
 	jp2.SetResize(width, height)
 
-	_, err = jp2.RawImage()
+	_, err = jp2.DecodeImage()
 
 	if err != nil {
 		return fmt.Sprintf("ERROR creating image tile from %#v: %s", path, err)

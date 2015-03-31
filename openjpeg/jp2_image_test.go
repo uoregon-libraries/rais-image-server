@@ -27,29 +27,29 @@ func TestNewJP2Image(t *testing.T) {
 
 func TestDirectConversion(t *testing.T) {
 	jp2 := jp2i()
-	i, err := jp2.RawImage()
+	i, err := jp2.DecodeImage()
 	if err != nil {
-		t.Errorf("jp2.RawImage() got an error: %#v", err)
+		t.Errorf("jp2.DecodeImage() got an error: %#v", err)
 		return
 	}
-	assertEqualInt(0, i.bounds.Min.X, "Min.X should be 0", t)
-	assertEqualInt(0, i.bounds.Min.Y, "Min.Y should be 0", t)
-	assertEqualInt(800, i.bounds.Max.X, "Max.X should be 800", t)
-	assertEqualInt(400, i.bounds.Max.Y, "Max.Y should be 400", t)
+	assertEqualInt(0, i.Bounds().Min.X, "Min.X should be 0", t)
+	assertEqualInt(0, i.Bounds().Min.Y, "Min.Y should be 0", t)
+	assertEqualInt(800, i.Bounds().Max.X, "Max.X should be 800", t)
+	assertEqualInt(400, i.Bounds().Max.Y, "Max.Y should be 400", t)
 }
 
 func TestCrop(t *testing.T) {
 	jp2 := jp2i()
 	jp2.SetCrop(image.Rect(200, 100, 500, 400))
-	i, err := jp2.RawImage()
+	i, err := jp2.DecodeImage()
 	if err != nil {
-		t.Errorf("jp2.RawImage() got an error: %#v", err)
+		t.Errorf("jp2.DecodeImage() got an error: %#v", err)
 		return
 	}
-	assertEqualInt(0, i.bounds.Min.X, "Min.X should be 0", t)
-	assertEqualInt(0, i.bounds.Min.Y, "Min.Y should be 0", t)
-	assertEqualInt(300, i.bounds.Max.X, "Max.X should be 300 (cropped X from 200 - 500)", t)
-	assertEqualInt(300, i.bounds.Max.Y, "Max.Y should be 300 (cropped Y from 100 - 400)", t)
+	assertEqualInt(0, i.Bounds().Min.X, "Min.X should be 0", t)
+	assertEqualInt(0, i.Bounds().Min.Y, "Min.Y should be 0", t)
+	assertEqualInt(300, i.Bounds().Max.X, "Max.X should be 300 (cropped X from 200 - 500)", t)
+	assertEqualInt(300, i.Bounds().Max.Y, "Max.Y should be 300 (cropped Y from 100 - 400)", t)
 }
 
 // This serves as a resize test as well as a test that we properly check
@@ -57,34 +57,32 @@ func TestCrop(t *testing.T) {
 func TestResize(t *testing.T) {
 	jp2 := jp2i()
 	jp2.SetResize(50, 50)
-	i, err := jp2.RawImage()
+	i, err := jp2.DecodeImage()
 	if err != nil {
-		t.Errorf("jp2.RawImage() got an error: %#v", err)
+		t.Errorf("jp2.DecodeImage() got an error: %#v", err)
 		return
 	}
 
-	// Since RawImage doesn't actually resize, we can actually only test for
-	// conversion to the smallest resolution factor
-	assertEqualInt(0, i.bounds.Min.X, "Min.X should be 0", t)
-	assertEqualInt(0, i.bounds.Min.Y, "Min.Y should be 0", t)
-	assertEqualInt(400, i.bounds.Max.X, "Max.X should be 400", t)
-	assertEqualInt(200, i.bounds.Max.Y, "Max.Y should be 200", t)
+	assertEqualInt(0, i.Bounds().Min.X, "Min.X should be 0", t)
+	assertEqualInt(0, i.Bounds().Min.Y, "Min.Y should be 0", t)
+	assertEqualInt(50, i.Bounds().Max.X, "Max.X should be 400", t)
+	assertEqualInt(50, i.Bounds().Max.Y, "Max.Y should be 200", t)
 }
 
 func TestResizeAndCrop(t *testing.T) {
 	jp2 := jp2i()
 	jp2.SetCrop(image.Rect(200, 100, 500, 400))
 	jp2.SetResize(150, 150)
-	i, err := jp2.RawImage()
+	i, err := jp2.DecodeImage()
 	if err != nil {
-		t.Errorf("jp2.RawImage() got an error: %#v", err)
+		t.Errorf("jp2.DecodeImage() got an error: %#v", err)
 		return
 	}
 
-	// Since RawImage doesn't actually resize, we can actually only test for
+	// Since DecodeImage doesn't actually resize, we can actually only test for
 	// conversion to the smallest resolution factor
-	assertEqualInt(0, i.bounds.Min.X, "Min.X should be 0", t)
-	assertEqualInt(0, i.bounds.Min.Y, "Min.Y should be 0", t)
-	assertEqualInt(150, i.bounds.Max.X, "Max.X should be 150", t)
-	assertEqualInt(150, i.bounds.Max.Y, "Max.Y should be 150", t)
+	assertEqualInt(0, i.Bounds().Min.X, "Min.X should be 0", t)
+	assertEqualInt(0, i.Bounds().Min.Y, "Min.Y should be 0", t)
+	assertEqualInt(150, i.Bounds().Max.X, "Max.X should be 150", t)
+	assertEqualInt(150, i.Bounds().Max.Y, "Max.Y should be 150", t)
 }
