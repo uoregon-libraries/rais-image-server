@@ -110,18 +110,7 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 
 	bounds := image.Rect(0, 0, int(comps[0].w), int(comps[0].h))
 
-	var data []int32
-	dataSlice := (*reflect.SliceHeader)((unsafe.Pointer(&data)))
-	dataSlice.Cap = bounds.Dx() * bounds.Dy()
-	dataSlice.Len = bounds.Dx() * bounds.Dy()
-	dataSlice.Data = uintptr(unsafe.Pointer(comps[0].data))
-
-	realData := make([]uint8, len(data))
-	for index, point := range data {
-		realData[index] = uint8(point)
-	}
-
-	return &image.Gray{Pix: realData, Stride: bounds.Dx(), Rect: bounds}, nil
+	return &image.Gray{Pix: JP2ComponentData(comps[0]), Stride: bounds.Dx(), Rect: bounds}, nil
 }
 
 func (i *JP2Image) ReadHeader() error {
@@ -178,4 +167,22 @@ func (i *JP2Image) SetDynamicProgressionLevel(level int) error {
 	}
 
 	return nil
+}
+
+// JP2ComponentData returns a slice of Image-usable uint8s from the JP2 raw
+// data in the given component struct
+func JP2ComponentData(comp C.struct_opj_image_comp) []uint8 {
+	var data []int32
+	dataSlice := (*reflect.SliceHeader)((unsafe.Pointer(&data)))
+	size := int(comp.w) * int(comp.h)
+	dataSlice.Cap = size
+	dataSlice.Len = size
+	dataSlice.Data = uintptr(unsafe.Pointer(comp.data))
+
+	realData := make([]uint8, len(data))
+	for index, point := range data {
+		realData[index] = uint8(point)
+	}
+
+	return realData
 }
