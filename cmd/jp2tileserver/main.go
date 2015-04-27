@@ -16,8 +16,8 @@ import (
 	"github.com/uoregon-libraries/newspaper-jp2-viewer/openjpeg"
 )
 
-var tilePathRegex = regexp.MustCompile(`/images/tiles/(?P<path>.+)/image_(?P<width>\d+)x(?P<height>\d+)_from_(?P<x1>\d+),(?P<y1>\d+)_to_(?P<x2>\d+),(?P<y2>\d+).jpg`)
-var resizePathRegex = regexp.MustCompile(`/images/resize/(.+)/(\d+)x(\d+)`)
+var tilePathRegex = regexp.MustCompile(`^/images/tiles/(?P<path>.+)/image_(?P<width>\d+)x(?P<height>\d+)_from_(?P<x1>\d+),(?P<y1>\d+)_to_(?P<x2>\d+),(?P<y2>\d+).jpg`)
+var resizePathRegex = regexp.MustCompile(`^/images/resize/(.+)/(\d+)x(\d+)`)
 var infoPathRegex = regexp.MustCompile(`^/images/info/(.+)$`)
 
 var tilePath string
