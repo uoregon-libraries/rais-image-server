@@ -63,8 +63,15 @@ func NewIIIFCommand(path string) *IIIFCommand {
 	return iiif
 }
 
+// Valid returns the validity of the request - if syntax is bad in any way
+// (doesn't match the regex, region string violates syntax, etc), this returns
+// false and the server should report a 400 status.
 func (ic *IIIFCommand) Valid() bool {
-	if ic.ID == "" {
+	if ic.ID == "" || ic.Quality == Quality("") || ic.Format == Format("") {
+		return false
+	}
+
+	if !ic.Region.Valid() {
 		return false
 	}
 
