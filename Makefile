@@ -12,7 +12,7 @@ IMGRESIZE=$(GOPATH)/src/$(IMGRESIZEDEP)
 # we skip those?)
 SRCS := openjpeg/*.go
 
-.PHONY: all binaries test clean distclean
+.PHONY: all binaries test format clean distclean
 
 # Default target builds binaries
 all: binaries
@@ -42,6 +42,9 @@ bin/verifyJP2s: $(SYMLINK_EXISTS) $(IMGRESIZE) $(SRCS) cmd/verifyJP2s/*.go
 test: $(SYMLINK_EXISTS) $(IMGRESIZE)
 	$(GOBIN) test ./openjpeg
 	$(GOBIN) test ./cmd/...
+
+format:
+	find . -name "*.go" | xargs gofmt -l -w -s
 
 # Cleanup
 clean:
