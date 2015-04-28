@@ -71,7 +71,7 @@ func (ic *IIIFCommand) Valid() bool {
 		return false
 	}
 
-	if !ic.Region.Valid() || !ic.Size.Valid() {
+	if !ic.Region.Valid() || !ic.Size.Valid() || !ic.Rotation.Valid() {
 		return false
 	}
 

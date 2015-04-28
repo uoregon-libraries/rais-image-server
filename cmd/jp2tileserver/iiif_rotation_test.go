@@ -16,3 +16,16 @@ func TestRotationMirrored(t *testing.T) {
 	assert.Equal(90.0, r.Degrees, "r.Degrees", t)
 	assert.True(r.Mirror, "r.Mirror", t)
 }
+
+func TestInvalidRotation(t *testing.T) {
+	r := Rotation{Degrees: -1}
+	assert.True(!r.Valid(), "!r.Valid", t)
+	r = StringToRotation("!-1")
+	assert.True(!r.Valid(), "!r.Valid", t)
+	r = StringToRotation("360.0")
+	assert.True(r.Valid(), "r.Valid", t)
+	r = StringToRotation("360.1")
+	assert.True(!r.Valid(), "!r.Valid", t)
+	r = StringToRotation("!360.1")
+	assert.True(!r.Valid(), "!r.Valid", t)
+}

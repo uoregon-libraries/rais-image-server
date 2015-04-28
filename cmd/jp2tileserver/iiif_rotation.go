@@ -8,6 +8,7 @@ type Rotation struct {
 	Mirror  bool
 	Degrees float64
 }
+
 func StringToRotation(p string) Rotation {
 	r := Rotation{}
 	if p[0:1] == "!" {
@@ -20,3 +21,6 @@ func StringToRotation(p string) Rotation {
 	return r
 }
 
+func (r Rotation) Valid() bool {
+	return r.Degrees >= 0 && r.Degrees <= 360
+}
