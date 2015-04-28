@@ -41,6 +41,7 @@ bin/verifyJP2s: $(SYMLINK_EXISTS) $(IMGRESIZE) $(SRCS) cmd/verifyJP2s/*.go
 # Testing
 test: $(SYMLINK_EXISTS) $(IMGRESIZE)
 	$(GOBIN) test ./openjpeg
+	$(GOBIN) test ./cmd/...
 
 # Cleanup
 clean:
