@@ -120,11 +120,11 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 		// idea what else we might have other than alpha, and as a tile server, we
 		// don't care about alpha.  It's worth noting that this will almost certainly
 		// blow up on any JP2 that isn't using RGB.
-		realData := make([]uint8, (bounds.Dx() * bounds.Dy()) << 2)
+		realData := make([]uint8, (bounds.Dx()*bounds.Dy())<<2)
 		for x, comp := range comps[0:3] {
 			compData := JP2ComponentData(comp)
 			for y, point := range compData {
-				realData[y * 4 + x] = point
+				realData[y*4+x] = point
 			}
 		}
 

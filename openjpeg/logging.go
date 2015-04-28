@@ -18,7 +18,7 @@ func GoLog(clevel C.int, cmessage *C.char) {
 	level := int(clevel)
 	message := C.GoString(cmessage)
 
-	goLog(level, "FROM OPJ: " + strings.TrimSpace(message))
+	goLog(level, "FROM OPJ: "+strings.TrimSpace(message))
 }
 
 // Internal go-specific version of logger

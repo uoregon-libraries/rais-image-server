@@ -6,6 +6,7 @@ import (
 )
 
 type RegionType int
+
 const (
 	RTNone RegionType = iota
 	RTFull
@@ -40,8 +41,10 @@ func StringToRegion(p string) Region {
 
 func (r Region) Valid() bool {
 	switch r.Type {
-	case RTNone: return false
-	case RTFull: return true
+	case RTNone:
+		return false
+	case RTFull:
+		return true
 	}
 
 	if r.W <= 0 || r.H <= 0 || r.X < 0 || r.Y < 0 {
