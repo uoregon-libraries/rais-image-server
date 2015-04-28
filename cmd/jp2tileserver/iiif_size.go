@@ -28,7 +28,7 @@ func StringToSize(p string) Size {
 
 	s := Size{Type: STNone}
 
-	if p[0:4] == "pct:" {
+	if len(p) > 4 && p[0:4] == "pct:" {
 		s.Type = STScalePercent
 		s.Percent, _ = strconv.ParseFloat(p[4:], 64)
 		return s

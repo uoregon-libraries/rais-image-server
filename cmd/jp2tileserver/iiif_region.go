@@ -24,7 +24,7 @@ func StringToRegion(p string) Region {
 	}
 
 	r := Region{Type: RTPixel}
-	if p[0:4] == "pct:" {
+	if len(p) > 4 && p[0:4] == "pct:" {
 		r.Type = RTPercent
 		p = p[4:]
 	}
