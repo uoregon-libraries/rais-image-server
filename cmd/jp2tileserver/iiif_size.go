@@ -55,3 +55,15 @@ func StringToSize(p string) Size {
 
 	return s
 }
+
+func (s Size) Valid() bool {
+	switch s.Type {
+	case STFull: return true
+	case STScaleToWidth: return s.W > 0
+	case STScaleToHeight: return s.H > 0
+	case STScalePercent: return s.Percent > 0
+	case STExact, STBestFit: return s.W > 0 && s.H > 0
+	}
+
+	return false
+}
