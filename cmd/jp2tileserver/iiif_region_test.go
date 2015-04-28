@@ -16,11 +16,21 @@ func TestRegionTypePercent(t *testing.T) {
 
 func TestRegionTypePixels(t *testing.T) {
 	r := StringToRegion("10,10,40,70")
+	assert.True(r.Valid(), "r.Valid()", t)
 	assert.True(r.Type == RTPixel, "r.Type == RTPixel", t)
 	assert.Equal(10.0, r.X, "r.X", t)
 	assert.Equal(10.0, r.Y, "r.Y", t)
 	assert.Equal(40.0, r.W, "r.W", t)
 	assert.Equal(70.0, r.H, "r.H", t)
+}
+
+func TestInvalidRegion(t *testing.T) {
+	r := StringToRegion("10,10,0,70")
+	assert.True(!r.Valid(), "!r.Valid()", t)
+	r = StringToRegion("10,10,40,0")
+	assert.True(!r.Valid(), "!r.Valid()", t)
+	r = Region{}
+	assert.True(!r.Valid(), "!r.Valid()", t)
 }
 
 func TestRegionTypeFull(t *testing.T) {

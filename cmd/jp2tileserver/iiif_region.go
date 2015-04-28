@@ -7,7 +7,8 @@ import (
 
 type RegionType int
 const (
-	RTFull RegionType = iota
+	RTNone RegionType = iota
+	RTFull
 	RTPercent
 	RTPixel
 )
@@ -35,4 +36,17 @@ func StringToRegion(p string) Region {
 	r.H, _ = strconv.ParseFloat(vals[3], 64)
 
 	return r
+}
+
+func (r Region) Valid() bool {
+	switch r.Type {
+	case RTNone: return false
+	case RTFull: return true
+	}
+
+	if r.W <= 0 || r.H <= 0 || r.X < 0 || r.Y < 0 {
+		return false
+	}
+
+	return true
 }
