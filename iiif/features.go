@@ -83,3 +83,31 @@ var FeaturesLevel2 = FeatureSet{
 	Cors:            true,
 	JsonldMediaType: true,
 }
+
+// Supported tells us whether or not the given feature set will actually
+// perform the operation represented by the URL instance.
+//
+// Unsupported functionality is expected to report an http status of 501.
+//
+// This doesn't actually work in all cases, such as a level 0 server that has
+// sizes explicitly listed for a given image resize operation.  In those cases,
+// Supported() is probably not worth calling, instead handling just the few
+// supported cases directly.
+//
+// This also doesn't actually check all possibly supported features - the URL
+// type is useful for parsing a URI path, but doesn't know about e.g.  http
+// features.
+func (fs FeatureSet) Supported(u *URL) bool {
+	return fs.SupportsRegion(u.Region)
+}
+
+func (fs FeatureSet) SupportsRegion(r Region) bool {
+	switch(r.Type) {
+	case RTPixel:
+		return fs.RegionByPx
+	case RTPercent:
+		return fs.RegionByPct
+	default:
+		return true
+	}
+}

@@ -53,15 +53,3 @@ func (r Region) Valid() bool {
 
 	return true
 }
-
-func (r Region) Supported(fs FeatureSet) bool {
-	if !fs.RegionByPx && r.Type == RTPixel {
-		return false
-	}
-
-	if !fs.RegionByPct && r.Type == RTPercent {
-		return false
-	}
-
-	return true
-}
