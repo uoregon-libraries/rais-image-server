@@ -12,11 +12,11 @@ var simplePath = "/images/iiif/" + weirdID + "/full/full/30/default.jpg"
 
 func TestInvalid(t *testing.T) {
 	badRegion := strings.Replace(simplePath, "/full/full", "/bad/full", 1)
-	assert.True(!NewIIIFCommand(badRegion).Valid(), "Expected bad region string to be invalid", t)
+	assert.True(!NewURL(badRegion).Valid(), "Expected bad region string to be invalid", t)
 }
 
 func TestValid(t *testing.T) {
-	i := NewIIIFCommand(simplePath)
+	i := NewURL(simplePath)
 
 	assert.True(i.Valid(), fmt.Sprintf("Expected %s to be valid", simplePath), t)
 	assert.Equal(weirdID, i.ID, "identifier should be extracted", t)

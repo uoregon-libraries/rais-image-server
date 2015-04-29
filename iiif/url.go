@@ -51,7 +51,7 @@ func (f Format) Valid() bool {
 	return false
 }
 
-type IIIFCommand struct {
+type URL struct {
 	ID       string
 	Region   Region
 	Size     Size
@@ -70,14 +70,14 @@ var iiifPathRegex = regexp.MustCompile(fmt.Sprintf(
 	`(jpg|tif|png|gif|jp2|pdf|webp)`,                             // format
 ))
 
-func NewIIIFCommand(path string) *IIIFCommand {
+func NewURL(path string) *URL {
 	parts := iiifPathRegex.FindStringSubmatch(path)
 
 	if parts == nil {
-		return &IIIFCommand{}
+		return &URL{}
 	}
 
-	iiif := &IIIFCommand{
+	return &URL{
 		ID:       parts[1],
 		Region:   StringToRegion(parts[2]),
 		Size:     StringToSize(parts[3]),
@@ -85,18 +85,16 @@ func NewIIIFCommand(path string) *IIIFCommand {
 		Quality:  Quality(parts[5]),
 		Format:   Format(parts[6]),
 	}
-
-	return iiif
 }
 
 // Valid returns the validity of the request - if syntax is bad in any way
 // (doesn't match the regex, region string violates syntax, etc), this returns
 // false and the server should report a 400 status.
-func (ic *IIIFCommand) Valid() bool {
-	return ic.ID != "" &&
-		ic.Region.Valid() &&
-		ic.Size.Valid() &&
-		ic.Rotation.Valid() &&
-		ic.Quality.Valid() &&
-		ic.Format.Valid()
+func (u *URL) Valid() bool {
+	return u.ID != "" &&
+		u.Region.Valid() &&
+		u.Size.Valid() &&
+		u.Rotation.Valid() &&
+		u.Quality.Valid() &&
+		u.Format.Valid()
 }
