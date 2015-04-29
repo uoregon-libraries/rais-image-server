@@ -42,6 +42,7 @@ bin/verifyJP2s: $(SYMLINK_EXISTS) $(IMGRESIZE) $(SRCS) cmd/verifyJP2s/*.go
 test: $(SYMLINK_EXISTS) $(IMGRESIZE)
 	$(GOBIN) test ./openjpeg
 	$(GOBIN) test ./cmd/...
+	$(GOBIN) test ./iiif
 
 format:
 	find . -name "*.go" | xargs gofmt -l -w -s
