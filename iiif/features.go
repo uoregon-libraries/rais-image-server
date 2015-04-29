@@ -92,7 +92,7 @@ var FeaturesLevel2 = &FeatureSet{
 // This doesn't actually work in all cases, such as a level 0 server that has
 // sizes explicitly listed for a given image resize operation.  In those cases,
 // Supported() is probably not worth calling, instead handling just the few
-// supported cases directly.
+// supported cases directly and/or checking a custom featureset directly.
 //
 // This also doesn't actually check all possibly supported features - the URL
 // type is useful for parsing a URI path, but doesn't know about e.g.  http
