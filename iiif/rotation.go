@@ -18,9 +18,15 @@ func StringToRotation(p string) Rotation {
 
 	r.Degrees, _ = strconv.ParseFloat(p, 64)
 
+	// This isn't actually to spec, but it makes way more sense than only
+	// allowing 360 for compliance level 2 (and in fact *requiring* it there)
+	if r.Degrees == 360 {
+		r.Degrees = 0
+	}
+
 	return r
 }
 
 func (r Rotation) Valid() bool {
-	return r.Degrees >= 0 && r.Degrees <= 360
+	return r.Degrees >= 0 && r.Degrees < 360
 }
