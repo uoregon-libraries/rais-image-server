@@ -37,3 +37,20 @@ func TestRegionTypeFull(t *testing.T) {
 	r := StringToRegion("full")
 	assert.True(r.Type == RTFull, "r.Type == RTFull", t)
 }
+
+func TestRegionSupport(t *testing.T) {
+	r := Region{Type: RTFull}
+	assert.True(r.Supported(FeaturesLevel0), "RTFull supports FL0", t)
+	assert.True(r.Supported(FeaturesLevel1), "RTFull supports FL1", t)
+	assert.True(r.Supported(FeaturesLevel2), "RTFull supports FL2", t)
+
+	r.Type = RTPixel
+	assert.False(r.Supported(FeaturesLevel0), "RTFull supports FL0", t)
+	assert.True(r.Supported(FeaturesLevel1), "RTFull supports FL1", t)
+	assert.True(r.Supported(FeaturesLevel2), "RTFull supports FL2", t)
+
+	r.Type = RTPercent
+	assert.False(r.Supported(FeaturesLevel0), "RTFull supports FL0", t)
+	assert.False(r.Supported(FeaturesLevel1), "RTFull supports FL1", t)
+	assert.True(r.Supported(FeaturesLevel2), "RTFull supports FL2", t)
+}

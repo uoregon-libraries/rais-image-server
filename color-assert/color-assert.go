@@ -47,6 +47,10 @@ func True(expression bool, message string, t *testing.T) {
 	success(caller, message, t)
 }
 
+func False(exp bool, m string, t *testing.T) {
+	True(!exp, m, t)
+}
+
 func Equal(expected, actual interface{}, message string, t *testing.T) {
 	caller := getCallerName(1)
 	if expected != actual {
