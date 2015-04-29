@@ -98,3 +98,33 @@ func TestQualitySupport(t *testing.T) {
 	assert.False(FeaturesLevel1.SupportsQuality(QBitonal), "QBitonal NOT supported by FL1", t)
 	assert.True(FeaturesLevel2.SupportsQuality(QBitonal), "QBitonal supported by FL2", t)
 }
+
+func TestFormatSupport(t *testing.T) {
+	assert.True(FeaturesLevel0.SupportsFormat(FmtJPG), "FmtJPG supported by FL0", t)
+	assert.True(FeaturesLevel1.SupportsFormat(FmtJPG), "FmtJPG supported by FL1", t)
+	assert.True(FeaturesLevel2.SupportsFormat(FmtJPG), "FmtJPG supported by FL2", t)
+
+	assert.False(FeaturesLevel0.SupportsFormat(FmtPNG), "FmtPNG NOT supported by FL0", t)
+	assert.False(FeaturesLevel1.SupportsFormat(FmtPNG), "FmtPNG NOT supported by FL1", t)
+	assert.True(FeaturesLevel2.SupportsFormat(FmtPNG), "FmtPNG supported by FL2", t)
+
+	assert.False(FeaturesLevel0.SupportsFormat(FmtTIF), "FmtTIF NOT supported by FL0", t)
+	assert.False(FeaturesLevel1.SupportsFormat(FmtTIF), "FmtTIF NOT supported by FL1", t)
+	assert.False(FeaturesLevel2.SupportsFormat(FmtTIF), "FmtTIF NOT supported by FL2", t)
+
+	assert.False(FeaturesLevel0.SupportsFormat(FmtGIF), "FmtGIF NOT supported by FL0", t)
+	assert.False(FeaturesLevel1.SupportsFormat(FmtGIF), "FmtGIF NOT supported by FL1", t)
+	assert.False(FeaturesLevel2.SupportsFormat(FmtGIF), "FmtGIF NOT supported by FL2", t)
+
+	assert.False(FeaturesLevel0.SupportsFormat(FmtJP2), "FmtJP2 NOT supported by FL0", t)
+	assert.False(FeaturesLevel1.SupportsFormat(FmtJP2), "FmtJP2 NOT supported by FL1", t)
+	assert.False(FeaturesLevel2.SupportsFormat(FmtJP2), "FmtJP2 NOT supported by FL2", t)
+
+	assert.False(FeaturesLevel0.SupportsFormat(FmtPDF), "FmtPDF NOT supported by FL0", t)
+	assert.False(FeaturesLevel1.SupportsFormat(FmtPDF), "FmtPDF NOT supported by FL1", t)
+	assert.False(FeaturesLevel2.SupportsFormat(FmtPDF), "FmtPDF NOT supported by FL2", t)
+
+	assert.False(FeaturesLevel0.SupportsFormat(FmtWEBP), "FmtWEBP NOT supported by FL0", t)
+	assert.False(FeaturesLevel1.SupportsFormat(FmtWEBP), "FmtWEBP NOT supported by FL1", t)
+	assert.False(FeaturesLevel2.SupportsFormat(FmtWEBP), "FmtWEBP NOT supported by FL2", t)
+}

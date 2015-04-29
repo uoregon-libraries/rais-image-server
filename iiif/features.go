@@ -161,3 +161,24 @@ func (fs *FeatureSet) SupportsQuality(q Quality) bool {
 		return false
 	}
 }
+
+func (fs *FeatureSet) SupportsFormat(f Format) bool {
+	switch f {
+	case FmtJPG:
+		return fs.Jpg
+	case FmtTIF:
+		return fs.Tif
+	case FmtPNG:
+		return fs.Png
+	case FmtGIF:
+		return fs.Gif
+	case FmtJP2:
+		return fs.Jp2
+	case FmtPDF:
+		return fs.Pdf
+	case FmtWEBP:
+		return fs.Webp
+	default:
+		return false
+	}
+}
