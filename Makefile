@@ -10,7 +10,7 @@ IMGRESIZE=$(GOPATH)/src/$(IMGRESIZEDEP)
 
 # All library files contribute to the need to recompile (except tests!  How do
 # we skip those?)
-SRCS := openjpeg/*.go
+SRCS := openjpeg/*.go iiif/*.go
 
 .PHONY: all binaries test format clean distclean
 
