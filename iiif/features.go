@@ -98,7 +98,8 @@ var FeaturesLevel2 = &FeatureSet{
 // type is useful for parsing a URI path, but doesn't know about e.g.  http
 // features.
 func (fs *FeatureSet) Supported(u *URL) bool {
-	return fs.SupportsRegion(u.Region)
+	return fs.SupportsRegion(u.Region) &&
+		fs.SupportsSize(u.Size)
 }
 
 func (fs *FeatureSet) SupportsRegion(r Region) bool {
@@ -107,6 +108,23 @@ func (fs *FeatureSet) SupportsRegion(r Region) bool {
 		return fs.RegionByPx
 	case RTPercent:
 		return fs.RegionByPct
+	default:
+		return true
+	}
+}
+
+func (fs *FeatureSet) SupportsSize(s Size) bool {
+	switch(s.Type) {
+	case STScaleToWidth:
+		return fs.SizeByW
+	case STScaleToHeight:
+		return fs.SizeByH
+	case STScalePercent:
+		return fs.SizeByPct
+	case STExact:
+		return fs.SizeByForcedWh
+	case STBestFit:
+		return fs.SizeByWh
 	default:
 		return true
 	}
