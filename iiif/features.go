@@ -99,7 +99,8 @@ var FeaturesLevel2 = &FeatureSet{
 // features.
 func (fs *FeatureSet) Supported(u *URL) bool {
 	return fs.SupportsRegion(u.Region) &&
-		fs.SupportsSize(u.Size)
+		fs.SupportsSize(u.Size) &&
+		fs.SupportsRotation(u.Rotation)
 }
 
 func (fs *FeatureSet) SupportsRegion(r Region) bool {
@@ -127,5 +128,21 @@ func (fs *FeatureSet) SupportsSize(s Size) bool {
 		return fs.SizeByWh
 	default:
 		return true
+	}
+}
+
+func (fs *FeatureSet) SupportsRotation(r Rotation) bool {
+	// We check mirroring specially in order to make the degree checks simple
+	if r.Mirror && !fs.Mirroring {
+		return false
+	}
+
+	switch(r.Degrees) {
+	case 0:
+		return true
+	case 90,180,270:
+		return fs.RotationBy90s || fs.RotationArbitrary
+	default:
+		return fs.RotationArbitrary
 	}
 }

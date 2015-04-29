@@ -53,3 +53,26 @@ func TestSizeSupport(t *testing.T) {
 	assert.False(FeaturesLevel1.SupportsSize(s), "STBestFit NOT supported by FL1", t)
 	assert.True(FeaturesLevel2.SupportsSize(s), "STBestFit supported by FL2", t)
 }
+
+func TestRotationSupport(t *testing.T) {
+	r := Rotation{Degrees: 0}
+	assert.True(FeaturesLevel0.SupportsRotation(r), "0 degrees supported by FL0", t)
+	assert.True(FeaturesLevel1.SupportsRotation(r), "0 degrees supported by FL1", t)
+	assert.True(FeaturesLevel2.SupportsRotation(r), "0 degrees supported by FL2", t)
+
+	r.Degrees = 90
+	assert.False(FeaturesLevel0.SupportsRotation(r), "90 degrees NOT supported by FL0", t)
+	assert.False(FeaturesLevel1.SupportsRotation(r), "90 degrees NOT supported by FL1", t)
+	assert.True(FeaturesLevel2.SupportsRotation(r), "90 degrees supported by FL2", t)
+
+	r.Degrees = 90.01
+	assert.False(FeaturesLevel0.SupportsRotation(r), "90.01 degrees NOT supported by FL0", t)
+	assert.False(FeaturesLevel1.SupportsRotation(r), "90.01 degrees NOT supported by FL1", t)
+	assert.False(FeaturesLevel2.SupportsRotation(r), "90.01 degrees NOT supported by FL2", t)
+
+	r.Degrees = 0
+	r.Mirror = true
+	assert.False(FeaturesLevel0.SupportsRotation(r), "Mirroring NOT supported by FL0", t)
+	assert.False(FeaturesLevel1.SupportsRotation(r), "Mirroring NOT supported by FL1", t)
+	assert.False(FeaturesLevel2.SupportsRotation(r), "Mirroring NOT supported by FL2", t)
+}
