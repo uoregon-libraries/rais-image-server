@@ -44,13 +44,13 @@ type FeatureSet struct {
 	CanonicalLinkHeader bool
 }
 
-var FeaturesLevel0 = FeatureSet{
+var FeaturesLevel0 = &FeatureSet{
 	SizeByWhListed: true,
 	Default:        true,
 	Jpg:            true,
 }
 
-var FeaturesLevel1 = FeatureSet{
+var FeaturesLevel1 = &FeatureSet{
 	RegionByPx:      true,
 	SizeByWhListed:  true,
 	SizeByW:         true,
@@ -63,7 +63,7 @@ var FeaturesLevel1 = FeatureSet{
 	JsonldMediaType: true,
 }
 
-var FeaturesLevel2 = FeatureSet{
+var FeaturesLevel2 = &FeatureSet{
 	RegionByPx:      true,
 	RegionByPct:     true,
 	SizeByWhListed:  true,
@@ -97,11 +97,11 @@ var FeaturesLevel2 = FeatureSet{
 // This also doesn't actually check all possibly supported features - the URL
 // type is useful for parsing a URI path, but doesn't know about e.g.  http
 // features.
-func (fs FeatureSet) Supported(u *URL) bool {
+func (fs *FeatureSet) Supported(u *URL) bool {
 	return fs.SupportsRegion(u.Region)
 }
 
-func (fs FeatureSet) SupportsRegion(r Region) bool {
+func (fs *FeatureSet) SupportsRegion(r Region) bool {
 	switch(r.Type) {
 	case RTPixel:
 		return fs.RegionByPx
