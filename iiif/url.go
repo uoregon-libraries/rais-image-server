@@ -87,9 +87,10 @@ func NewURL(path string) *URL {
 	}
 }
 
-// Valid returns the validity of the request - if syntax is bad in any way
-// (doesn't match the regex, region string violates syntax, etc), this returns
-// false and the server should report a 400 status.
+// Valid returns the validity of the request - is the syntax is bad in any way?
+// Are any numbers outside a set range?  Was the identifier blank?  Etc.
+//
+// Invalid requests are expected to report an http status of 400.
 func (u *URL) Valid() bool {
 	return u.ID != "" &&
 		u.Region.Valid() &&
