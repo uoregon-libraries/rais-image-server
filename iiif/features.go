@@ -146,3 +146,18 @@ func (fs *FeatureSet) SupportsRotation(r Rotation) bool {
 		return fs.RotationArbitrary
 	}
 }
+
+func (fs *FeatureSet) SupportsQuality(q Quality) bool {
+	switch q {
+	case QColor:
+		return fs.Color
+	case QGray:
+		return fs.Gray
+	case QBitonal:
+		return fs.Bitonal
+	case QDefault, QNative:
+		return fs.Default
+	default:
+		return false
+	}
+}

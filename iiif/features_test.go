@@ -76,3 +76,25 @@ func TestRotationSupport(t *testing.T) {
 	assert.False(FeaturesLevel1.SupportsRotation(r), "Mirroring NOT supported by FL1", t)
 	assert.False(FeaturesLevel2.SupportsRotation(r), "Mirroring NOT supported by FL2", t)
 }
+
+func TestQualitySupport(t *testing.T) {
+	assert.True(FeaturesLevel0.SupportsQuality(QDefault), "QDefault supported by FL0", t)
+	assert.True(FeaturesLevel1.SupportsQuality(QDefault), "QDefault supported by FL1", t)
+	assert.True(FeaturesLevel2.SupportsQuality(QDefault), "QDefault supported by FL2", t)
+
+	assert.True(FeaturesLevel0.SupportsQuality(QNative), "QNative supported by FL0", t)
+	assert.True(FeaturesLevel1.SupportsQuality(QNative), "QNative supported by FL1", t)
+	assert.True(FeaturesLevel2.SupportsQuality(QNative), "QNative supported by FL2", t)
+
+	assert.False(FeaturesLevel0.SupportsQuality(QColor), "QColor NOT supported by FL0", t)
+	assert.False(FeaturesLevel1.SupportsQuality(QColor), "QColor NOT supported by FL1", t)
+	assert.True(FeaturesLevel2.SupportsQuality(QColor), "QColor supported by FL2", t)
+
+	assert.False(FeaturesLevel0.SupportsQuality(QGray), "QGray NOT supported by FL0", t)
+	assert.False(FeaturesLevel1.SupportsQuality(QGray), "QGray NOT supported by FL1", t)
+	assert.True(FeaturesLevel2.SupportsQuality(QGray), "QGray supported by FL2", t)
+
+	assert.False(FeaturesLevel0.SupportsQuality(QBitonal), "QBitonal NOT supported by FL0", t)
+	assert.False(FeaturesLevel1.SupportsQuality(QBitonal), "QBitonal NOT supported by FL1", t)
+	assert.True(FeaturesLevel2.SupportsQuality(QBitonal), "QBitonal supported by FL2", t)
+}
