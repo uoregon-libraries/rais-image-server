@@ -35,8 +35,6 @@ func IIIFHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func iiifInfoHandler(w http.ResponseWriter, req *http.Request, id string) {
-	fmt.Println(req.URL)
-
 	filepath := tilePath + "/" + id
 	if _, err := os.Stat(filepath); err != nil {
 		http.Error(w, "Image resource does not exist", 404)
