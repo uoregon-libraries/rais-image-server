@@ -104,7 +104,7 @@ func (fs *FeatureSet) Supported(u *URL) bool {
 }
 
 func (fs *FeatureSet) SupportsRegion(r Region) bool {
-	switch(r.Type) {
+	switch r.Type {
 	case RTPixel:
 		return fs.RegionByPx
 	case RTPercent:
@@ -115,7 +115,7 @@ func (fs *FeatureSet) SupportsRegion(r Region) bool {
 }
 
 func (fs *FeatureSet) SupportsSize(s Size) bool {
-	switch(s.Type) {
+	switch s.Type {
 	case STScaleToWidth:
 		return fs.SizeByW
 	case STScaleToHeight:
@@ -137,10 +137,10 @@ func (fs *FeatureSet) SupportsRotation(r Rotation) bool {
 		return false
 	}
 
-	switch(r.Degrees) {
+	switch r.Degrees {
 	case 0:
 		return true
-	case 90,180,270:
+	case 90, 180, 270:
 		return fs.RotationBy90s || fs.RotationArbitrary
 	default:
 		return fs.RotationArbitrary

@@ -143,4 +143,3 @@ func ResizeHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 }
-

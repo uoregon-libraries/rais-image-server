@@ -106,8 +106,8 @@ func iiifCommandHandler(w http.ResponseWriter, req *http.Request, u *iiif.URL) {
 		r := image.Rect(
 			int(u.Region.X),
 			int(u.Region.Y),
-			int(u.Region.X + u.Region.W),
-			int(u.Region.Y + u.Region.H),
+			int(u.Region.X+u.Region.W),
+			int(u.Region.Y+u.Region.H),
 		)
 		jp2.SetCrop(r)
 	}
