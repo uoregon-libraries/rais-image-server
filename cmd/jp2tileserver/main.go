@@ -196,6 +196,7 @@ func main() {
 	http.HandleFunc("/images/resize/", ResizeHandler)
 
 	if err := http.ListenAndServe(address, nil); err != nil {
-		log.Print("ListenAndServe:", err)
+		fmt.Printf("Error starting listener: %s", err)
+		os.Exit(1)
 	}
 }
