@@ -16,6 +16,7 @@ func sendHeaders(w http.ResponseWriter, req *http.Request, filepath string) erro
 	// Set headers
 	w.Header().Set("Content-Type", "image/jpeg")
 	w.Header().Set("Last-Modified", info.ModTime().Format(time.RFC1123))
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	// Check for forced download parameter
 	query := req.URL.Query()

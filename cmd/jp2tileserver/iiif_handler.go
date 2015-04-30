@@ -71,6 +71,7 @@ func iiifInfoHandler(w http.ResponseWriter, req *http.Request, id string) {
 
 	// Set headers - TODO: check for Accept header with jsonld content type!
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Write(json)
 }
 
