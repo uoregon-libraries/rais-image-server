@@ -9,11 +9,6 @@ application for verifying JP2 images can be served.  The University of Oregon's
 primary use case is the [Historic Oregon
 Newspapers](http://oregonnews.uoregon.edu/) project.
 
-Technically the jp2 viewer could be used for a variety of systems, but is built
-with a few [chronam](https://github.com/LibraryOfCongress/chronam) rules
-hard-coded.  It may be worthwhile to consider making it more configurable, but
-that's not our goal at this time.
-
 Known Limitations
 -----
 
