@@ -100,7 +100,9 @@ var FeaturesLevel2 = &FeatureSet{
 func (fs *FeatureSet) Supported(u *URL) bool {
 	return fs.SupportsRegion(u.Region) &&
 		fs.SupportsSize(u.Size) &&
-		fs.SupportsRotation(u.Rotation)
+		fs.SupportsRotation(u.Rotation) &&
+		fs.SupportsQuality(u.Quality) &&
+		fs.SupportsFormat(u.Format)
 }
 
 func (fs *FeatureSet) SupportsRegion(r Region) bool {
