@@ -42,6 +42,16 @@ collection works well enough for our use case, but really large images and/or
 lots of traffic could cause the system to easily chew up unreasonable amounts
 of RAM.  Load testing is highly recommended.
 
+- IIIF Support isn't perfect
+
+The IIIF support adheres to level 1 of the spec, but it isn't as customizable
+as we would prefer.  You can't specify per-image info.json files; there is no
+way to change the tile scale factors: 1, 2, 4, 8, 16, 32, and 64; and there's
+no way to specify optimal resize targets.
+
+IIIF viewers seem to pick moderately smart choices, but this server probably
+won't work out of the box for, say, a 200+ megapixel image.
+
 Setup
 -----
 
@@ -57,7 +67,7 @@ Setup
 Openjpeg 2.1 must be installed for this to work.  The previous approach which
 used a checkout of the subversion repository is no longer supported.
 Installation depends on operating system, but we were able to rebuild the
-Fedora SRPM for RedHat 6.
+Fedora SRPM for RedHat 6 and CentOS 7.
 
 The general build algorthim is fairly straightforward:
 
@@ -77,8 +87,27 @@ Running the tile server
 
 `$GOPATH/bin/jp2tileserver --address=":8888" --tile-path="/path/to/data/batches"`
 
+Note that if you wish to enable [IIIF](http://iiif.io/api/image/2.0/) support,
+you must specify extra information on the command-line:
+
+```bash
+$GOPATH/bin/jp2tileserver --address=":8888" --tile-path="/path/to/images" \
+    --iiif-scheme="http" --iiif-server="iiif.example.com:8888" \
+    --iiif-prefix="images/iiif" --iiif-tile-sizes="512,1024"`
+```
+
+This would enable IIIF services with a base URL of `http://iiif.example.com:8888/images/iiif`.
+Image info requests would then be at, e.g., `http://iiif.example.com:8888/images/iiif/myimage.jp2/info.json`.
+It would report tile sizes of 512 and 1024, each with hard-coded scale factors
+from 1 to 64 in powers of 2.  Currently the scale factors are not configurable.
+
+Also note that the scheme and server (`http://my.iiifserver.example.com:8888`)
+are informative for the IIIF information response, but aren't actually used by
+the application otherwise.  IIIF information requests must include a full URI
+to an image, and the scheme and server aren't known to HTTP servers at runtime.
+
 It is probably a good idea to set this up to run on server startup, and to
-respawn if it dies unexpectedly.
+respawn if it dies unexpectedly:
 
 ### Red Hat 6
 
