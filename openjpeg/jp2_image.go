@@ -37,7 +37,7 @@ func NewJP2Image(filename string) (*JP2Image, error) {
 	return i, nil
 }
 
-func (i *JP2Image) SetResize(width, height int) {
+func (i *JP2Image) SetResizeWH(width, height int) {
 	i.decodeWidth = width
 	i.decodeHeight = height
 	i.resize = true

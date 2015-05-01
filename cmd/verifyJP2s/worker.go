@@ -38,7 +38,7 @@ func doVerify(path string) string {
 	}
 
 	jp2.SetCrop(r)
-	jp2.SetResize(width, height)
+	jp2.SetResizeWH(width, height)
 
 	_, err = jp2.DecodeImage()
 

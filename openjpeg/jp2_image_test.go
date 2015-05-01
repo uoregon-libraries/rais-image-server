@@ -64,7 +64,7 @@ func TestCrop(t *testing.T) {
 // maximum resolution factor
 func TestResize(t *testing.T) {
 	jp2 := jp2i()
-	jp2.SetResize(50, 50)
+	jp2.SetResizeWH(50, 50)
 	i, err := jp2.DecodeImage()
 	if err != nil {
 		t.Errorf("jp2.DecodeImage() got an error: %#v", err)
@@ -80,7 +80,7 @@ func TestResize(t *testing.T) {
 func TestResizeAndCrop(t *testing.T) {
 	jp2 := jp2i()
 	jp2.SetCrop(image.Rect(200, 100, 500, 400))
-	jp2.SetResize(125, 125)
+	jp2.SetResizeWH(125, 125)
 	i, err := jp2.DecodeImage()
 	if err != nil {
 		t.Errorf("jp2.DecodeImage() got an error: %#v", err)

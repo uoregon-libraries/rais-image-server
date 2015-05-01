@@ -114,11 +114,11 @@ func iiifCommandHandler(w http.ResponseWriter, req *http.Request, u *iiif.URL) {
 	// TODO: support percentage sizing
 	switch u.Size.Type {
 	case iiif.STScaleToWidth:
-		jp2.SetResize(u.Size.W, 0)
+		jp2.SetResizeWH(u.Size.W, 0)
 	case iiif.STScaleToHeight:
-		jp2.SetResize(0, u.Size.H)
+		jp2.SetResizeWH(0, u.Size.H)
 	case iiif.STExact:
-		jp2.SetResize(u.Size.W, u.Size.H)
+		jp2.SetResizeWH(u.Size.W, u.Size.H)
 	case iiif.STScalePercent:
 		panic("OHAI I CAN HAZ PERCENT RESIZE?")
 	}
