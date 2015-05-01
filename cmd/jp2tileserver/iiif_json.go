@@ -15,20 +15,23 @@ type IIIFInfo struct {
 	Width    int        `json:"width"`
 	Height   int        `json:"height"`
 	Profile  []string   `json:"profile"`
-	Tiles    []tiledata `json:"tiles"`
+	Tiles    []tiledata `json:"tiles,omitempty"`
 }
 
 // Creates the default structure for converting to the IIIF Information JSON.
 // The handler is responsible for filling in ID and dimensions.
 func NewIIIFInfo() *IIIFInfo {
-	return &IIIFInfo{
+	i := &IIIFInfo{
 		Context:  "http://iiif.io/api/image/2/context.json",
 		Protocol: "http://iiif.io/api/image",
 		Profile:  []string{"http://iiif.io/api/image/2/level1.json"},
-		Tiles:    []tiledata{
-			tiledata{Width: 256, ScaleFactors: []int{1, 2, 4, 8, 16, 32, 64}},
-			tiledata{Width: 512, ScaleFactors: []int{1, 2, 4, 8, 16, 32, 64}},
-			tiledata{Width: 1024, ScaleFactors: []int{1, 2, 4, 8, 16, 32, 64}},
-		},
+		Tiles:    make([]tiledata, 0),
 	}
+
+	sf := []int{1, 2, 4, 8, 16, 32, 64}
+	for _, val := range tileSizes {
+		i.Tiles = append(i.Tiles, tiledata{Width: val, ScaleFactors: sf})
+	}
+
+	return i
 }
