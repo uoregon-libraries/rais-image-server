@@ -25,6 +25,14 @@ func TestNewJP2Image(t *testing.T) {
 	t.Log(jp2.image)
 }
 
+func TestDimensions(t *testing.T) {
+	jp2 := jp2i()
+	jp2.ReadHeader()
+	if jp2.Dimensions() != image.Rect(0, 0, 800, 400) {
+		t.Error("Dimensions were incorrect for the test jp2")
+	}
+}
+
 func TestDirectConversion(t *testing.T) {
 	jp2 := jp2i()
 	i, err := jp2.DecodeImage()
