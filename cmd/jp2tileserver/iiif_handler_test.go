@@ -49,6 +49,14 @@ func TestInfoHandler(t *testing.T) {
 	assert.Equal("application/json", w.Headers["Content-Type"][0], "Proper content type", t)
 }
 
+func TestInfoRedirect(t *testing.T) {
+	w := request("/images/iiif/test-world.jp2", t)
+	assert.Equal(303, w.StatusCode, "Base URL redirects to info request", t)
+	locHeader := w.Headers["Location"]
+	assert.Equal(1, len(locHeader), "There's only 1 location header", t)
+	assert.Equal("/images/iiif/test-world.jp2/info.json", locHeader[0], "Location header", t)
+}
+
 func TestCommandHandler404(t *testing.T) {
 	w := request("/images/iiif/identifier/full/full/0/default.jpg", t)
 	assert.Equal(404, w.StatusCode, "Valid command on nonexistent file returns 404", t)

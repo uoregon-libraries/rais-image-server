@@ -13,14 +13,39 @@ import (
 	"regexp"
 )
 
+var iiifBaseRegex = regexp.MustCompile(`^/images/iiif/([^/]+)`)
+var iiifBaseOnlyRegex = regexp.MustCompile(`^/images/iiif/[^/]+$`)
 var iiifInfoPathRegex = regexp.MustCompile(`^/images/iiif/([^/]+)/info.json$`)
 
 func IIIFHandler(w http.ResponseWriter, req *http.Request) {
+	// Pull identifier from base so we know if we're even dealing with a valid
+	// file in the first place
 	p := req.URL.Path
+	parts := iiifBaseRegex.FindStringSubmatch(p)
 
-	// Check for info path first, and dispatch if it matches
-	if parts := iiifInfoPathRegex.FindStringSubmatch(p); parts != nil {
-		iiifInfoHandler(w, req, parts[1])
+	// If it didn't even match the base, something weird happened, so we just
+	// spit out a generic 404
+	if parts == nil {
+		http.NotFound(w, req)
+		return
+	}
+
+	identifier := parts[1]
+	filepath := tilePath + "/" + identifier
+	if _, err := os.Stat(filepath); err != nil {
+		http.Error(w, "Image resource does not exist", 404)
+		return
+	}
+
+	// Check for base path and redirect if that's all we have
+	if iiifBaseOnlyRegex.MatchString(p) {
+		http.Redirect(w, req, p + "/info.json", 303)
+		return
+	}
+
+	// Check for info path, and dispatch if it matches
+	if iiifInfoPathRegex.MatchString(p) {
+		iiifInfoHandler(w, req, identifier)
 		return
 	}
 
@@ -30,17 +55,12 @@ func IIIFHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// No info or command?  400 error according to IIIF spec.
+	// This means the URI was probably a command, but had an invalid syntax
 	http.Error(w, "Invalid IIIF request", 400)
 }
 
 func iiifInfoHandler(w http.ResponseWriter, req *http.Request, id string) {
 	filepath := tilePath + "/" + id
-	if _, err := os.Stat(filepath); err != nil {
-		http.Error(w, "Image resource does not exist", 404)
-		return
-	}
-
 	jp2, err := openjpeg.NewJP2Image(filepath)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Unable to read image %#v", id), 500)
