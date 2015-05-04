@@ -111,7 +111,6 @@ func iiifCommandHandler(w http.ResponseWriter, req *http.Request, u *iiif.URL) {
 		jp2.SetCrop(r)
 	}
 
-	// TODO: support percentage sizing
 	switch u.Size.Type {
 	case iiif.STScaleToWidth:
 		jp2.SetResizeWH(u.Size.W, 0)
@@ -120,7 +119,7 @@ func iiifCommandHandler(w http.ResponseWriter, req *http.Request, u *iiif.URL) {
 	case iiif.STExact:
 		jp2.SetResizeWH(u.Size.W, u.Size.H)
 	case iiif.STScalePercent:
-		panic("OHAI I CAN HAZ PERCENT RESIZE?")
+		jp2.SetScale(u.Size.Percent / 100.0)
 	}
 
 	img, err := jp2.DecodeImage()

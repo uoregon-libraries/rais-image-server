@@ -17,13 +17,17 @@ import (
 
 // Container for our simple JP2 operations
 type JP2Image struct {
-	filename                  string
-	stream                    *C.opj_stream_t
-	codec                     *C.opj_codec_t
-	image                     *C.opj_image_t
-	decodeWidth, decodeHeight int
-	decodeArea                image.Rectangle
-	crop, resize              bool
+	filename        string
+	stream          *C.opj_stream_t
+	codec           *C.opj_codec_t
+	image           *C.opj_image_t
+	decodeWidth     int
+	decodeHeight    int
+	scaleFactor     float64
+	decodeArea      image.Rectangle
+	crop            bool
+	resizeByPercent bool
+	resizeByPixels  bool
 }
 
 func NewJP2Image(filename string) (*JP2Image, error) {
@@ -37,10 +41,17 @@ func NewJP2Image(filename string) (*JP2Image, error) {
 	return i, nil
 }
 
+func (i *JP2Image) SetScale(m float64) {
+	i.scaleFactor = m
+	i.resizeByPercent = true
+	i.resizeByPixels = false
+}
+
 func (i *JP2Image) SetResizeWH(width, height int) {
 	i.decodeWidth = width
 	i.decodeHeight = height
-	i.resize = true
+	i.resizeByPixels = true
+	i.resizeByPercent = false
 }
 
 func (i *JP2Image) SetCrop(r image.Rectangle) {
@@ -59,7 +70,7 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 	// If we want to resize, but not crop, we have to set the decode area to the
 	// full image - which means reading in the image header and then
 	// cleaning up all previously-initialized data
-	if i.resize && !i.crop {
+	if (i.resizeByPixels || i.resizeByPercent) && !i.crop {
 		if err := i.ReadHeader(); err != nil {
 			goLog(3, "Error getting dimensions - aborting")
 			return nil, err
@@ -68,9 +79,17 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 		i.CleanupResources()
 	}
 
-	// Get progression level if we're resizing (it's zero if there isn't any
-	// scaling of the output)
-	if i.resize {
+	// If resize is by percent, we now have the decode area, and can use that to
+	// get pixel dimensions
+	if i.resizeByPercent {
+		i.decodeWidth = int(float64(i.decodeArea.Dx()) * i.scaleFactor)
+		i.decodeHeight = int(float64(i.decodeArea.Dy()) * i.scaleFactor)
+		i.resizeByPixels = true
+	}
+
+	// Get progression level if we're resizing to specific dimensions (it's zero
+	// if there isn't any scaling of the output)
+	if i.resizeByPixels {
 		level := desiredProgressionLevel(i.decodeArea, i.decodeWidth, i.decodeHeight)
 		if err := i.SetDynamicProgressionLevel(level); err != nil {
 			goLog(3, "Unable to set dynamic progression level - aborting")
@@ -131,7 +150,7 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 		img = &image.RGBA{Pix: realData, Stride: bounds.Dx() << 2, Rect: bounds}
 	}
 
-	if i.resize {
+	if i.resizeByPixels {
 		img = resize.Resize(uint(i.decodeWidth), uint(i.decodeHeight), img, resize.Bilinear)
 	}
 
