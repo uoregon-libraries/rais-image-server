@@ -13,7 +13,7 @@ import (
 	"regexp"
 )
 
-var iiifInfoPathRegex = regexp.MustCompile(`^/images/iiif/(.+)/info.json$`)
+var iiifInfoPathRegex = regexp.MustCompile(`^/images/iiif/([^/]+)/info.json$`)
 
 func IIIFHandler(w http.ResponseWriter, req *http.Request) {
 	p := req.URL.Path
