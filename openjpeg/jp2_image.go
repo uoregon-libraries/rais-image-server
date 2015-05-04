@@ -41,12 +41,18 @@ func NewJP2Image(filename string) (*JP2Image, error) {
 	return i, nil
 }
 
+// SetScale sets the image to scale by the given multiplier, typically a
+// percentage from 0 to 1.  This is mutually exclusive with resizing by a set
+// width/height value.
 func (i *JP2Image) SetScale(m float64) {
 	i.scaleFactor = m
 	i.resizeByPercent = true
 	i.resizeByPixels = false
 }
 
+// SetResizeWH sets the image to scale to the given width and height.  If one
+// dimension is 0, the decoded image will preserve the aspect ratio while
+// scaling to the non-zero dimension.
 func (i *JP2Image) SetResizeWH(width, height int) {
 	i.decodeWidth = width
 	i.decodeHeight = height
@@ -59,7 +65,10 @@ func (i *JP2Image) SetCrop(r image.Rectangle) {
 	i.crop = true
 }
 
-// Returns an image.Image that holds the decoded image data, resized if requested
+// DecodeImage returns an image.Image that holds the decoded image data,
+// resized and cropped if resizing or cropping was requested.  Both cropping
+// and resizing happen here due to the nature of openjpeg, so SetScale,
+// SetResizeWH, and SetCrop must be called before this function.
 func (i *JP2Image) DecodeImage() (image.Image, error) {
 	// We need the codec to be ready for all operations below
 	if err := i.initializeCodec(); err != nil {
@@ -68,8 +77,8 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 	}
 
 	// If we want to resize, but not crop, we have to set the decode area to the
-	// full image - which means reading in the image header and then
-	// cleaning up all previously-initialized data
+	// full image - which means reading in the image header and then cleaning up
+	// all previously-initialized data
 	if (i.resizeByPixels || i.resizeByPercent) && !i.crop {
 		if err := i.ReadHeader(); err != nil {
 			goLog(3, "Error getting dimensions - aborting")
