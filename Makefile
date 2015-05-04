@@ -43,6 +43,7 @@ test: $(SYMLINK_EXISTS) $(IMGRESIZE)
 	$(GOBIN) test ./openjpeg
 	$(GOBIN) test ./cmd/...
 	$(GOBIN) test ./iiif
+	$(GOBIN) test ./fakehttp
 
 format:
 	find . -name "*.go" | xargs gofmt -l -w -s
