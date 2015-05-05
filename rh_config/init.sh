@@ -46,10 +46,12 @@ loop_tileserver() {
     let timediff=$newdate-$laststart
 
     # Log the restart to stderr and stdout logs in an apache-like format
-    local logdate=`date +"[%a %b %d %H:%M:%S %Y]"`
-    local message="Restarting server, ran for $timediff seconds before error"
-    echo "$logdate [WARN] $message" >> $stdout_log
-    echo "$logdate [WARN] $message" >> $stderr_log
+    if [-f $restartfile ]; then
+      local logdate=`date +"[%a %b %d %H:%M:%S %Y]"`
+      local message="Restarting server, ran for $timediff seconds before error"
+      echo "$logdate [WARN] $message" >> $stdout_log
+      echo "$logdate [WARN] $message" >> $stderr_log
+    fi
 
     # Reset the retry counter as long as we don't restart too often; otherwise
     # we break out of the loop and assume we have a major failure
