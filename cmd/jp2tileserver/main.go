@@ -48,7 +48,6 @@ func main() {
 
 	if iiifBase.Scheme != "" && iiifBase.Host != "" && iiifBase.Path != "" {
 		fmt.Printf("IIIF enabled at %s\n", iiifBase.String())
-		fmt.Printf("IIIF enabled at %s\n", iiifBase.Path)
 
 		tileSizes := parseInts(tileSizeString)
 		if len(tileSizes) == 0 {
