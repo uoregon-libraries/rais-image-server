@@ -44,7 +44,7 @@ func TestTile(t *testing.T) {
 		}
 
 		jp2.SetCrop(r)
-		jp2.SetResize(width, height)
+		jp2.SetResizeWH(width, height)
 
 		i, err := jp2.DecodeImage()
 		if err != nil {

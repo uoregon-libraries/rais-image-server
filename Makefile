@@ -10,9 +10,9 @@ IMGRESIZE=$(GOPATH)/src/$(IMGRESIZEDEP)
 
 # All library files contribute to the need to recompile (except tests!  How do
 # we skip those?)
-SRCS := openjpeg/*.go
+SRCS := openjpeg/*.go iiif/*.go
 
-.PHONY: all binaries test clean distclean
+.PHONY: all binaries test format clean distclean
 
 # Default target builds binaries
 all: binaries
@@ -40,7 +40,10 @@ bin/verifyJP2s: $(SYMLINK_EXISTS) $(IMGRESIZE) $(SRCS) cmd/verifyJP2s/*.go
 
 # Testing
 test: $(SYMLINK_EXISTS) $(IMGRESIZE)
-	$(GOBIN) test ./openjpeg
+	$(GOBIN) test ./openjpeg ./cmd/jp2tileserver ./iiif ./fakehttp
+
+format:
+	find . -name "*.go" | xargs gofmt -l -w -s
 
 # Cleanup
 clean:

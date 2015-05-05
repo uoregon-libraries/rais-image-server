@@ -8,7 +8,7 @@ import (
 
 func jp2i() *JP2Image {
 	dir, _ := os.Getwd()
-	jp2, err := NewJP2Image(dir + "/../test-world.jp2")
+	jp2, err := NewJP2Image(dir + "/../testfile/test-world.jp2")
 	if err != nil {
 		panic("Error reading JP2 for testing!")
 	}
@@ -62,9 +62,9 @@ func TestCrop(t *testing.T) {
 
 // This serves as a resize test as well as a test that we properly check
 // maximum resolution factor
-func TestResize(t *testing.T) {
+func TestResizeWH(t *testing.T) {
 	jp2 := jp2i()
-	jp2.SetResize(50, 50)
+	jp2.SetResizeWH(50, 50)
 	i, err := jp2.DecodeImage()
 	if err != nil {
 		t.Errorf("jp2.DecodeImage() got an error: %#v", err)
@@ -77,10 +77,10 @@ func TestResize(t *testing.T) {
 	assertEqualInt(50, i.Bounds().Max.Y, "Max.Y should be 50", t)
 }
 
-func TestResizeAndCrop(t *testing.T) {
+func TestResizeWHAndCrop(t *testing.T) {
 	jp2 := jp2i()
 	jp2.SetCrop(image.Rect(200, 100, 500, 400))
-	jp2.SetResize(125, 125)
+	jp2.SetResizeWH(125, 125)
 	i, err := jp2.DecodeImage()
 	if err != nil {
 		t.Errorf("jp2.DecodeImage() got an error: %#v", err)
@@ -91,4 +91,35 @@ func TestResizeAndCrop(t *testing.T) {
 	assertEqualInt(0, i.Bounds().Min.Y, "Min.Y should be 0", t)
 	assertEqualInt(125, i.Bounds().Max.X, "Max.X should be 125", t)
 	assertEqualInt(125, i.Bounds().Max.Y, "Max.Y should be 125", t)
+}
+
+func TestResizePercent(t *testing.T) {
+	jp2 := jp2i()
+	jp2.SetScale(0.10)
+	i, err := jp2.DecodeImage()
+	if err != nil {
+		t.Errorf("jp2.DecodeImage() got an error: %#v", err)
+		return
+	}
+
+	assertEqualInt(0, i.Bounds().Min.X, "Min.X should be 0", t)
+	assertEqualInt(0, i.Bounds().Min.Y, "Min.Y should be 0", t)
+	assertEqualInt(80, i.Bounds().Max.X, "Max.X should be 80", t)
+	assertEqualInt(40, i.Bounds().Max.Y, "Max.Y should be 40", t)
+}
+
+func TestResizePercentAndCrop(t *testing.T) {
+	jp2 := jp2i()
+	jp2.SetCrop(image.Rect(200, 100, 500, 400))
+	jp2.SetScale(0.10)
+	i, err := jp2.DecodeImage()
+	if err != nil {
+		t.Errorf("jp2.DecodeImage() got an error: %#v", err)
+		return
+	}
+
+	assertEqualInt(0, i.Bounds().Min.X, "Min.X should be 0", t)
+	assertEqualInt(0, i.Bounds().Min.Y, "Min.Y should be 0", t)
+	assertEqualInt(30, i.Bounds().Max.X, "Max.X should be 30", t)
+	assertEqualInt(30, i.Bounds().Max.Y, "Max.Y should be 30", t)
 }
