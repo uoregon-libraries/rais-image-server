@@ -21,14 +21,13 @@ func rootDir() string {
 
 // Sets up everything necessary to test an IIIF request
 func request(path string, t *testing.T) *fakehttp.ResponseWriter {
-	tilePath = rootDir()
-	iiifBase, _ = url.Parse("http://example.com/foo/bar")
+	u, _ := url.Parse("http://example.com/foo/bar")
 	w := fakehttp.NewResponseWriter()
 	req, err := http.NewRequest("get", fmt.Sprintf("/foo/bar/%s", path), strings.NewReader(""))
 	if err != nil {
 		t.Errorf("Unable to create fake request: %s", err)
 	}
-	IIIFHandler(w, req)
+	NewIIIFHandler(u, []int{}, rootDir()).Router(w, req)
 
 	return w
 }

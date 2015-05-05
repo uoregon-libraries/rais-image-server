@@ -9,29 +9,41 @@ import (
 	"image/jpeg"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 )
 
-var iiifRegexPrefix string
-var iiifBaseRegex, iiifBaseOnlyRegex, iiifInfoPathRegex *regexp.Regexp
-
-func iiifRegexInit() {
-	iiifRegexPrefix = fmt.Sprintf(`^%s`, iiifBase.Path)
-	iiifBaseRegex = regexp.MustCompile(iiifRegexPrefix + `/([^/]+)`)
-	iiifBaseOnlyRegex = regexp.MustCompile(iiifRegexPrefix + `/[^/]+$`)
-	iiifInfoPathRegex = regexp.MustCompile(iiifRegexPrefix + `/([^/]+)/info.json$`)
+type IIIFHandler struct {
+	Base          *url.URL
+	RegexPrefix   string
+	BaseRegex     *regexp.Regexp
+	BaseOnlyRegex *regexp.Regexp
+	InfoPathRegex *regexp.Regexp
+	TileSizes     []int
+	TilePath      string
 }
 
-func IIIFHandler(w http.ResponseWriter, req *http.Request) {
-	if iiifBaseRegex == nil {
-		iiifRegexInit()
+func NewIIIFHandler(u *url.URL, ts []int, tp string) *IIIFHandler {
+	ih := &IIIFHandler{
+		Base:          u,
+		RegexPrefix:   fmt.Sprintf(`^%s`, u.Path),
+		TileSizes:     ts,
+		TilePath:      tp,
 	}
 
+	ih.BaseRegex = regexp.MustCompile(ih.RegexPrefix + `/([^/]+)`)
+	ih.BaseOnlyRegex = regexp.MustCompile(ih.RegexPrefix + `/[^/]+$`)
+	ih.InfoPathRegex = regexp.MustCompile(ih.RegexPrefix + `/([^/]+)/info.json$`)
+
+	return ih
+}
+
+func (ih *IIIFHandler) Router(w http.ResponseWriter, req *http.Request) {
 	// Pull identifier from base so we know if we're even dealing with a valid
 	// file in the first place
 	p := req.URL.Path
-	parts := iiifBaseRegex.FindStringSubmatch(p)
+	parts := ih.BaseRegex.FindStringSubmatch(p)
 
 	// If it didn't even match the base, something weird happened, so we just
 	// spit out a generic 404
@@ -41,27 +53,27 @@ func IIIFHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	identifier := parts[1]
-	filepath := tilePath + "/" + identifier
+	filepath := ih.TilePath + "/" + identifier
 	if _, err := os.Stat(filepath); err != nil {
 		http.Error(w, "Image resource does not exist", 404)
 		return
 	}
 
 	// Check for base path and redirect if that's all we have
-	if iiifBaseOnlyRegex.MatchString(p) {
+	if ih.BaseOnlyRegex.MatchString(p) {
 		http.Redirect(w, req, p + "/info.json", 303)
 		return
 	}
 
 	// Check for info path, and dispatch if it matches
-	if iiifInfoPathRegex.MatchString(p) {
-		iiifInfoHandler(w, req, identifier)
+	if ih.InfoPathRegex.MatchString(p) {
+		ih.Info(w, req, identifier)
 		return
 	}
 
 	// No info path should mean a full command path
 	if u := iiif.NewURL(p); u.Valid() {
-		iiifCommandHandler(w, req, u)
+		ih.Command(w, req, u)
 		return
 	}
 
@@ -69,8 +81,8 @@ func IIIFHandler(w http.ResponseWriter, req *http.Request) {
 	http.Error(w, "Invalid IIIF request", 400)
 }
 
-func iiifInfoHandler(w http.ResponseWriter, req *http.Request, id string) {
-	filepath := tilePath + "/" + id
+func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, id string) {
+	filepath := ih.TilePath + "/" + id
 	jp2, err := openjpeg.NewJP2Image(filepath)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Unable to read image %#v", id), 500)
@@ -83,12 +95,13 @@ func iiifInfoHandler(w http.ResponseWriter, req *http.Request, id string) {
 	}
 
 	info := NewIIIFInfo()
+	info.SetTileSizes(ih.TileSizes)
 	rect := jp2.Dimensions()
 	info.Width = rect.Dx()
 	info.Height = rect.Dy()
 
 	// The info id is actually the full path to the resource, not just its ID
-	info.ID = iiifBase.String() + "/" + id
+	info.ID = ih.Base.String() + "/" + id
 
 	json, err := json.Marshal(info)
 	if err != nil {
@@ -108,9 +121,9 @@ func iiifInfoHandler(w http.ResponseWriter, req *http.Request, id string) {
 // so the resize information actually has to be known before a given region can
 // be cropped.  Otherwise we'd have to decode the whole image instead of just
 // the minimum necessary "layer".
-func iiifCommandHandler(w http.ResponseWriter, req *http.Request, u *iiif.URL) {
+func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL) {
 	// Get file's last modified time, returning a 404 if we can't stat the file
-	filepath := tilePath + "/" + u.ID
+	filepath := ih.TilePath + "/" + u.ID
 	if err := sendHeaders(w, req, filepath); err != nil {
 		return
 	}
