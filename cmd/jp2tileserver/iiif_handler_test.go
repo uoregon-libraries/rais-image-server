@@ -29,7 +29,7 @@ func request(path string, t *testing.T) *fakehttp.ResponseWriter {
 	if err != nil {
 		t.Errorf("Unable to create fake request: %s", err)
 	}
-	NewIIIFHandler(u, []int{}, rootDir()).Router(w, req)
+	NewIIIFHandler(u, []int{}, rootDir()).Route(w, req)
 
 	return w
 }

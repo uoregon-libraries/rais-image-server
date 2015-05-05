@@ -39,7 +39,7 @@ func NewIIIFHandler(u *url.URL, ts []int, tp string) *IIIFHandler {
 	return ih
 }
 
-func (ih *IIIFHandler) Router(w http.ResponseWriter, req *http.Request) {
+func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 	// Pull identifier from base so we know if we're even dealing with a valid
 	// file in the first place
 	p := req.RequestURI

@@ -56,7 +56,7 @@ func main() {
 		}
 
 		ih := NewIIIFHandler(iiifBase, tileSizes, tilePath)
-		http.HandleFunc(ih.Base.Path+"/", ih.Router)
+		http.HandleFunc(ih.Base.Path+"/", ih.Route)
 	}
 
 	if err := http.ListenAndServe(address, nil); err != nil {
