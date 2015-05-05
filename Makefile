@@ -40,10 +40,7 @@ bin/verifyJP2s: $(SYMLINK_EXISTS) $(IMGRESIZE) $(SRCS) cmd/verifyJP2s/*.go
 
 # Testing
 test: $(SYMLINK_EXISTS) $(IMGRESIZE)
-	$(GOBIN) test ./openjpeg
-	$(GOBIN) test ./cmd/...
-	$(GOBIN) test ./iiif
-	$(GOBIN) test ./fakehttp
+	$(GOBIN) test ./openjpeg ./cmd/jp2tileserver ./iiif ./fakehttp
 
 format:
 	find . -name "*.go" | xargs gofmt -l -w -s
