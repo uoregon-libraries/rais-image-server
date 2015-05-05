@@ -20,18 +20,31 @@ func rootDir() string {
 }
 
 // Sets up everything necessary to test an IIIF request
-func request(path string, t *testing.T) *fakehttp.ResponseWriter {
+func dorequest(path string, acceptLD bool, t *testing.T) *fakehttp.ResponseWriter {
 	u, _ := url.Parse("http://example.com/foo/bar")
 	w := fakehttp.NewResponseWriter()
 	reqPath := fmt.Sprintf("/foo/bar/%s", path)
 	req, err := http.NewRequest("get", reqPath, strings.NewReader(""))
 	req.RequestURI = reqPath
+
+	if acceptLD {
+		req.Header.Add("Accept", "application/ld+json")
+	}
+
 	if err != nil {
 		t.Errorf("Unable to create fake request: %s", err)
 	}
 	NewIIIFHandler(u, []int{}, rootDir()).Route(w, req)
 
 	return w
+}
+
+func request(path string, t *testing.T) *fakehttp.ResponseWriter {
+	return dorequest(path, false, t)
+}
+
+func requestLD(path string, t *testing.T) *fakehttp.ResponseWriter {
+	return dorequest(path, true, t)
 }
 
 func TestInfoHandler404(t *testing.T) {
@@ -49,6 +62,13 @@ func TestInfoHandler(t *testing.T) {
 	assert.Equal("http://example.com/foo/bar/testfile%2Ftest-world.jp2", data.ID, "JSON-decoded ID", t)
 	assert.Equal(1, len(w.Headers["Content-Type"]), "Proper content type length", t)
 	assert.Equal("application/json", w.Headers["Content-Type"][0], "Proper content type", t)
+}
+
+func TestInfoHandlerLD(t *testing.T) {
+	w := requestLD("testfile%2Ftest-world.jp2/info.json", t)
+	assert.Equal(-1, w.StatusCode, "Valid info request doesn't explicitly set status code", t)
+	assert.Equal(1, len(w.Headers["Content-Type"]), "Proper content type length", t)
+	assert.Equal("application/ld+json", w.Headers["Content-Type"][0], "Proper content type", t)
 }
 
 func TestInfoRedirect(t *testing.T) {

@@ -12,7 +12,20 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"strings"
 )
+
+func acceptsLD(req *http.Request) bool {
+	for _, h := range req.Header["Accept"] {
+		for _, accept := range strings.Split(h, ",") {
+			if accept == "application/ld+json" {
+				return true
+			}
+		}
+	}
+
+	return false
+}
 
 type IIIFHandler struct {
 	Base          *url.URL
@@ -111,8 +124,12 @@ func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, id iiif.ID
 		return
 	}
 
-	// Set headers - TODO: check for Accept header with jsonld content type!
-	w.Header().Set("Content-Type", "application/json")
+	// Set headers - content type is dependent on client
+	ct :=  "application/json"
+	if acceptsLD(req) {
+		ct = "application/ld+json"
+	}
+	w.Header().Set("Content-Type", ct)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Write(json)
 }
