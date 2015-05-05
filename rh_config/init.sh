@@ -42,6 +42,7 @@ loop_tileserver() {
     laststart=`date +%s`
     $cmd >>$stdout_log 2>>$stderr_log
 
+    newdate=`date +%s`
     let timediff=$newdate-$laststart
 
     # Log the restart to stderr and stdout logs in an apache-like format
