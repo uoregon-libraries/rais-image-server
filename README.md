@@ -45,9 +45,9 @@ of RAM.  Load testing is highly recommended.
 - IIIF Support isn't perfect
 
 The IIIF support adheres to level 1 of the spec, but it isn't as customizable
-as we would prefer.  You can't specify per-image info.json files; there is no
-way to change the tile scale factors: 1, 2, 4, 8, 16, 32, and 64; and there's
-no way to specify optimal resize targets.
+as we would prefer.  You can't specify per-image info.json responses; there is
+no way to change the tile scale factors: 1, 2, 4, 8, 16, 32, and 64; and
+there's no way to specify optimal resize targets.
 
 IIIF viewers seem to pick moderately smart choices, but this server probably
 won't work out of the box for, say, a 200+ megapixel image.
@@ -92,8 +92,7 @@ you must specify extra information on the command-line:
 
 ```bash
 $GOPATH/bin/jp2tileserver --address=":8888" --tile-path="/path/to/images" \
-    --iiif-scheme="http" --iiif-server="iiif.example.com:8888" \
-    --iiif-prefix="images/iiif" --iiif-tile-sizes="512,1024"`
+  --iiif-url="http://iiif.example.com/images/iiif" --iiif-tile-sizes="512,1024"
 ```
 
 This would enable IIIF services with a base URL of `http://iiif.example.com:8888/images/iiif`.
@@ -103,8 +102,9 @@ from 1 to 64 in powers of 2.  Currently the scale factors are not configurable.
 
 Also note that the scheme and server (`http://my.iiifserver.example.com:8888`)
 are informative for the IIIF information response, but aren't actually used by
-the application otherwise.  IIIF information requests must include a full URI
-to an image, and the scheme and server aren't known to HTTP servers at runtime.
+the application otherwise.  IIIF information responses must include the full
+URI to any given image.  The information must be correct, however, because IIIF
+clients **will** use it to determine how to find the image tiles.
 
 It is probably a good idea to set this up to run on server startup, and to
 respawn if it dies unexpectedly:
