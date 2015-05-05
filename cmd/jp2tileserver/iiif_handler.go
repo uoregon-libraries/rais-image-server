@@ -13,11 +13,21 @@ import (
 	"regexp"
 )
 
-var iiifBaseRegex = regexp.MustCompile(`^/images/iiif/([^/]+)`)
-var iiifBaseOnlyRegex = regexp.MustCompile(`^/images/iiif/[^/]+$`)
-var iiifInfoPathRegex = regexp.MustCompile(`^/images/iiif/([^/]+)/info.json$`)
+var iiifRegexPrefix string
+var iiifBaseRegex, iiifBaseOnlyRegex, iiifInfoPathRegex *regexp.Regexp
+
+func iiifRegexInit() {
+	iiifRegexPrefix = fmt.Sprintf(`^%s`, iiifBase.Path)
+	iiifBaseRegex = regexp.MustCompile(iiifRegexPrefix + `/([^/]+)`)
+	iiifBaseOnlyRegex = regexp.MustCompile(iiifRegexPrefix + `/[^/]+$`)
+	iiifInfoPathRegex = regexp.MustCompile(iiifRegexPrefix + `/([^/]+)/info.json$`)
+}
 
 func IIIFHandler(w http.ResponseWriter, req *http.Request) {
+	if iiifBaseRegex == nil {
+		iiifRegexInit()
+	}
+
 	// Pull identifier from base so we know if we're even dealing with a valid
 	// file in the first place
 	p := req.URL.Path
