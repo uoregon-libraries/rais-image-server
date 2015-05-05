@@ -35,7 +35,7 @@ func success(caller *Caller, message string, t *testing.T) {
 func failure(caller *Caller, message string, t *testing.T) {
 	fmt.Printf("\033[31;1mnot ok\033[0m    %s(): %s\n", caller.Name, message)
 	fmt.Printf("          - %s:%d\n", caller.Filename, caller.Line)
-	t.Fail()
+	t.FailNow()
 }
 
 func True(expression bool, message string, t *testing.T) {
