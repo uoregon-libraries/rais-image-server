@@ -42,7 +42,7 @@ func NewIIIFHandler(u *url.URL, ts []int, tp string) *IIIFHandler {
 func (ih *IIIFHandler) Router(w http.ResponseWriter, req *http.Request) {
 	// Pull identifier from base so we know if we're even dealing with a valid
 	// file in the first place
-	p := req.URL.Path
+	p := req.RequestURI
 	parts := ih.BaseRegex.FindStringSubmatch(p)
 
 	// If it didn't even match the base, something weird happened, so we just
@@ -52,8 +52,9 @@ func (ih *IIIFHandler) Router(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	identifier := parts[1]
-	filepath := ih.TilePath + "/" + identifier
+	identifier := iiif.ID(parts[1])
+	filepath := ih.TilePath + "/" + identifier.Path()
+
 	if _, err := os.Stat(filepath); err != nil {
 		http.Error(w, "Image resource does not exist", 404)
 		return
@@ -81,8 +82,8 @@ func (ih *IIIFHandler) Router(w http.ResponseWriter, req *http.Request) {
 	http.Error(w, "Invalid IIIF request", 400)
 }
 
-func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, id string) {
-	filepath := ih.TilePath + "/" + id
+func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, id iiif.ID) {
+	filepath := ih.TilePath + "/" + id.Path()
 	jp2, err := openjpeg.NewJP2Image(filepath)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Unable to read image %#v", id), 500)
@@ -100,8 +101,8 @@ func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, id string)
 	info.Width = rect.Dx()
 	info.Height = rect.Dy()
 
-	// The info id is actually the full path to the resource, not just its ID
-	info.ID = ih.Base.String() + "/" + id
+	// The info id is actually the full URL to the resource, not just its ID
+	info.ID = ih.Base.String() + "/" + id.String()
 
 	json, err := json.Marshal(info)
 	if err != nil {
@@ -123,7 +124,7 @@ func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, id string)
 // the minimum necessary "layer".
 func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL) {
 	// Get file's last modified time, returning a 404 if we can't stat the file
-	filepath := ih.TilePath + "/" + u.ID
+	filepath := ih.TilePath + "/" + u.ID.Path()
 	if err := sendHeaders(w, req, filepath); err != nil {
 		return
 	}

@@ -3,6 +3,7 @@ package iiif
 import (
 	"fmt"
 	"regexp"
+	"net/url"
 )
 
 type Quality string
@@ -52,13 +53,25 @@ func (f Format) Valid() bool {
 }
 
 type URL struct {
-	ID       string
+	ID       ID
 	Region   Region
 	Size     Size
 	Rotation Rotation
 	Quality  Quality
 	Format   Format
 }
+
+type ID string
+
+func (id ID) Path() string {
+	p, _ := url.QueryUnescape(string(id))
+	return p
+}
+
+func (id ID) String() string {
+	return string(id)
+}
+
 
 var iiifPathRegex = regexp.MustCompile(fmt.Sprintf(
 	"/%s/%s/%s/%s/%s.%s$",
@@ -78,7 +91,7 @@ func NewURL(path string) *URL {
 	}
 
 	return &URL{
-		ID:       parts[1],
+		ID:       ID(parts[1]),
 		Region:   StringToRegion(parts[2]),
 		Size:     StringToSize(parts[3]),
 		Rotation: StringToRotation(parts[4]),
