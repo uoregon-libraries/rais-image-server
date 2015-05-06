@@ -109,10 +109,15 @@ clients **will** use it to determine how to find the image tiles.
 It is probably a good idea to set this up to run on server startup, and to
 respawn if it dies unexpectedly:
 
-### Red Hat 6
+### Red Hat 6 / 7
 
 Read the provided [documentation for systems based on Red
 Hat](rh_config/README.md).
+
+Note that RHEL 7 uses a different system for init scripts (systemd), but what
+we provide has worked on CentOS 7, so we're fairly confident it'll work on RHEL
+7.  Ideally we'd have a proper systemd-based configuration - PRs would be most
+appreciated here!
 
 ### Ubuntu
 
