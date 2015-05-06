@@ -22,7 +22,7 @@ func main() {
 	var logLevel int
 
 	flag.StringVar(&iiifURL, "iiif-url", "", `Base URL for serving IIIF requests, e.g., "http://example.com:8888/images/iiif"`)
-	flag.StringVar(&tileSizeString, "iiif-tile-sizes", "", `Tile sizes for IIIF, e.g., "256,512,1024"`)
+	flag.StringVar(&tileSizeString, "iiif-tile-sizes", "512", `Tile sizes for IIIF, e.g., "256,512,1024"`)
 	flag.StringVar(&address, "address", ":8888", "http service address")
 	flag.StringVar(&tilePath, "tile-path", "", "Base path for JP2 images")
 	flag.IntVar(&logLevel, "log-level", 4, "Log level: 0-7 (lower is less verbose)")
@@ -48,13 +48,7 @@ func main() {
 
 	if iiifBase.Scheme != "" && iiifBase.Host != "" && iiifBase.Path != "" {
 		fmt.Printf("IIIF enabled at %s\n", iiifBase.String())
-
 		tileSizes := parseInts(tileSizeString)
-		if len(tileSizes) == 0 {
-			tileSizes = []int{512}
-			fmt.Println("-- No tile sizes specified; defaulting to 512")
-		}
-
 		ih := NewIIIFHandler(iiifBase, tileSizes, tilePath)
 		http.HandleFunc(ih.Base.Path+"/", ih.Route)
 	}
@@ -67,8 +61,17 @@ func main() {
 
 func parseInts(intStrings string) []int {
 	iList := make([]int, 0)
+
+	if intStrings == "" {
+		return iList
+	}
+
 	for _, s := range strings.Split(intStrings, ",") {
-		i, _ := strconv.Atoi(s)
+		i, err := strconv.Atoi(s)
+		if err != nil {
+			fmt.Println("-- Error parsing tile sizes; using default of 512")
+			return []int{512}
+		}
 
 		if i > 0 {
 			iList = append(iList, i)
