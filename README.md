@@ -121,12 +121,12 @@ appreciated here!
 
 ### Ubuntu
 
-Here's an example for running the original brikker on an Amazon EC2 instance:
-[brikker-userdata.txt](https://gist.github.com/eikeon/5124717) (tested with
-Ubuntu Server 12.10 from quick start).
+The original Brikker was able to run on an Amazon EC2 instance, but we haven't
+updated the config files with all the latest changes.  We are no longer
+suggesting the old config files as there are too many changes in the old
+brikker and our current JP2 tile server.
 
-*Note* that this was for an older version of the tile server and openjpeg.  The
-scripts may need updates based on the latest information in this README.
+PRs for working configs would be greatly appreciated.
 
 Using with chronam
 -----
