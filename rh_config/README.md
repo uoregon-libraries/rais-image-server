@@ -11,6 +11,8 @@ probably isn't set by default for root):
 
     mkdir /opt/chronam-support/
     cp init.sh /etc/init.d/tileserver
+    cp tileserver.conf /etc
+    # edit tileserver.conf if you want to configure address, IIIF support, etc
     cp $GOPATH/bin/jp2tileserver /opt/chronam-support/jp2tileserver
     chkconfig --add tileserver
     chkconfig tileserver on
