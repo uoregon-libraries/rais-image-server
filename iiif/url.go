@@ -2,8 +2,8 @@ package iiif
 
 import (
 	"fmt"
-	"regexp"
 	"net/url"
+	"regexp"
 )
 
 type Quality string

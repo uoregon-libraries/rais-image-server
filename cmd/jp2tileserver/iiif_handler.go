@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/uoregon-libraries/newspaper-jp2-viewer/iiif"
-	"github.com/uoregon-libraries/newspaper-jp2-viewer/transform"
 	"github.com/uoregon-libraries/newspaper-jp2-viewer/openjpeg"
+	"github.com/uoregon-libraries/newspaper-jp2-viewer/transform"
 	"image"
 	"image/jpeg"
 	"log"
@@ -41,11 +41,11 @@ type IIIFHandler struct {
 
 func NewIIIFHandler(u *url.URL, ts []int, tp string) *IIIFHandler {
 	ih := &IIIFHandler{
-		Base:          u,
-		RegexPrefix:   fmt.Sprintf(`^%s`, u.Path),
-		TileSizes:     ts,
-		TilePath:      tp,
-		FeatureSet:    iiif.FeaturesLevel1,
+		Base:        u,
+		RegexPrefix: fmt.Sprintf(`^%s`, u.Path),
+		TileSizes:   ts,
+		TilePath:    tp,
+		FeatureSet:  iiif.FeaturesLevel1,
 	}
 
 	ih.BaseRegex = regexp.MustCompile(ih.RegexPrefix + `/([^/]+)`)
@@ -81,7 +81,7 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 
 	// Check for base path and redirect if that's all we have
 	if ih.BaseOnlyRegex.MatchString(p) {
-		http.Redirect(w, req, p + "/info.json", 303)
+		http.Redirect(w, req, p+"/info.json", 303)
 		return
 	}
 
@@ -131,7 +131,7 @@ func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, id iiif.ID
 	}
 
 	// Set headers - content type is dependent on client
-	ct :=  "application/json"
+	ct := "application/json"
 	if acceptsLD(req) {
 		ct = "application/ld+json"
 	}
