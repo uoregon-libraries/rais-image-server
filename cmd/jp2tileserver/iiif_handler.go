@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/uoregon-libraries/newspaper-jp2-viewer/iiif"
+	"github.com/uoregon-libraries/newspaper-jp2-viewer/transform"
 	"github.com/uoregon-libraries/newspaper-jp2-viewer/openjpeg"
 	"image"
 	"image/jpeg"
@@ -32,6 +33,7 @@ type IIIFHandler struct {
 	RegexPrefix   string
 	BaseRegex     *regexp.Regexp
 	BaseOnlyRegex *regexp.Regexp
+	FeatureSet    *iiif.FeatureSet
 	InfoPathRegex *regexp.Regexp
 	TileSizes     []int
 	TilePath      string
@@ -43,11 +45,15 @@ func NewIIIFHandler(u *url.URL, ts []int, tp string) *IIIFHandler {
 		RegexPrefix:   fmt.Sprintf(`^%s`, u.Path),
 		TileSizes:     ts,
 		TilePath:      tp,
+		FeatureSet:    iiif.FeaturesLevel1,
 	}
 
 	ih.BaseRegex = regexp.MustCompile(ih.RegexPrefix + `/([^/]+)`)
 	ih.BaseOnlyRegex = regexp.MustCompile(ih.RegexPrefix + `/[^/]+$`)
 	ih.InfoPathRegex = regexp.MustCompile(ih.RegexPrefix + `/([^/]+)/info.json$`)
+
+	// Add features we support beyond level 1
+	ih.FeatureSet.RotationBy90s = true
 
 	return ih
 }
@@ -147,7 +153,7 @@ func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif
 	}
 
 	// Do we support this request?  If not, return a 501
-	if !iiif.FeaturesLevel1.Supported(u) {
+	if !ih.FeatureSet.Supported(u) {
 		http.Error(w, "Feature not supported", 501)
 		return
 	}
@@ -188,6 +194,25 @@ func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif
 		http.Error(w, "Unable to decode image", 500)
 		log.Println("Unable to decode image: ", err)
 		return
+	}
+
+	if u.Rotation.Degrees != 0 {
+		var r transform.Rotator
+		switch img0 := img.(type) {
+		case *image.Gray:
+			r = transform.GrayRotator{img0}
+		case *image.RGBA:
+			r = transform.RGBARotator{img0}
+		}
+
+		switch u.Rotation.Degrees {
+		case 90:
+			img = r.Rotate90()
+		case 180:
+			img = r.Rotate180()
+		case 270:
+			img = r.Rotate270()
+		}
 	}
 
 	// Encode as JPEG straight to the client
