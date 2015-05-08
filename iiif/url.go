@@ -72,15 +72,14 @@ func (id ID) String() string {
 	return string(id)
 }
 
-
 var iiifPathRegex = regexp.MustCompile(fmt.Sprintf(
 	"/%s/%s/%s/%s/%s.%s$",
-	`([^/]+)`,                                                    // identifier
-	`(full|\d+,\d+,\d+,\d+|pct:[0-9.]+,[0-9.]+,[0-9.]+,[0-9.]+)`, // region
-	`(full|\d+,|,\d+|pct:[0-9.]+|\d+,\d+|!\d+,\d+)`,              // size
-	`(\d+|!\d+)`,                                                 // rotation
-	`(color|gray|bitonal|default|native)`,                        // quality
-	`(jpg|tif|png|gif|jp2|pdf|webp)`,                             // format
+	`([^/]+)`,
+	`(full|\d+,\d+,\d+,\d+|pct:[0-9.]+,[0-9.]+,[0-9.]+,[0-9.]+)`,
+	`(full|\d+,|,\d+|pct:[0-9.]+|\d+,\d+|!\d+,\d+)`,
+	`(\d+|!\d+)`,
+	`(color|gray|bitonal|default|native)`,
+	`(jpg|tif|png|gif|jp2|pdf|webp)`,
 ))
 
 func NewURL(path string) *URL {
