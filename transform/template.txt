@@ -1,0 +1,42 @@
+// GENERATED CODE; DO NOT EDIT!
+
+package transform{{$Rotations := .Rotations}}
+
+import (
+	"image"
+)
+
+type Rotator interface {
+	Rotate90() image.Image
+	Rotate180() image.Image
+	Rotate270() image.Image
+}
+
+{{range .Types}}{{$Type := .}}
+// {{.Shortstring}}Rotator decorates {{.String}} with rotation functions
+type {{.Shortstring}}Rotator struct {
+	{{.String}}
+}
+{{range $Rotations}}
+// Rotate{{.Degrees}} does a simple {{.Degrees}}-degree clockwise rotation, returning a new {{$Type.String}}
+func (src {{$Type.Shortstring}}Rotator) Rotate{{.Degrees}}() image.Image {
+	srcB := src.Bounds()
+	srcWidth := srcB.Dx()
+	srcHeight := srcB.Dy()
+
+	dst := {{$Type.ConstructorMethod}}(image.Rect(0, 0, {{.DimensionOrder}}))
+
+	var x, y, srcPix, dstPix int64
+	maxX, maxY := int64(srcWidth), int64(srcHeight)
+	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	for y = 0; y < maxY; y++ {
+		for x = 0; x < maxX; x++ {
+			srcPix = y * srcStride + {{.GetSrcX $Type.ByteSize}}
+			dstPix = {{.GetDstY}} * dstStride + {{.GetDstX $Type.ByteSize}}
+			{{$Type.CopyStatement}}
+		}
+	}
+
+	return dst
+}
+{{end}}{{end}}
