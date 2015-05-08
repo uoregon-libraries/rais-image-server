@@ -40,3 +40,4 @@ func (src {{$Type.Shortstring}}Rotator) Rotate{{.Degrees}}() image.Image {
 	return dst
 }
 {{end}}{{end}}
+// GENERATED CODE; DO NOT EDIT!
