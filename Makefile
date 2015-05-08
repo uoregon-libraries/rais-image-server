@@ -12,13 +12,19 @@ IMGRESIZE=$(GOPATH)/src/$(IMGRESIZEDEP)
 # we skip those?)
 SRCS := openjpeg/*.go iiif/*.go
 
-.PHONY: all binaries test format clean distclean
+.PHONY: all generate binaries test format clean distclean
 
 # Default target builds binaries
 all: binaries
 
+# Generated code
+generate: transform/rotation.go
+
+transform/rotation.go: transform/generator.go transform/template.txt
+	$(GOBIN) run transform/generator.go
+
 # Dependency-getters
-deps: $(GOPATH)/src/github.com/nfnt/resize
+deps: $(IMGRESIZE)
 $(IMGRESIZE):
 	$(GOBIN) get $(IMGRESIZEDEP)
 
@@ -33,7 +39,7 @@ $(SYMLINK_EXISTS):
 
 # Binary building rules
 binaries: bin/jp2tileserver bin/verifyJP2s
-bin/jp2tileserver: $(SYMLINK_EXISTS) $(IMGRESIZE) $(SRCS) cmd/jp2tileserver/*.go
+bin/jp2tileserver: $(SYMLINK_EXISTS) $(IMGRESIZE) $(SRCS) cmd/jp2tileserver/*.go transform/rotation.go
 	$(GOBIN) build -o bin/jp2tileserver ./cmd/jp2tileserver
 bin/verifyJP2s: $(SYMLINK_EXISTS) $(IMGRESIZE) $(SRCS) cmd/verifyJP2s/*.go
 	$(GOBIN) build -o bin/verifyJP2s ./cmd/verifyJP2s
