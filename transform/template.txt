@@ -12,11 +12,14 @@ type Rotator interface {
 	Rotate270() image.Image
 }
 
-{{range .Types}}{{$Type := .}}
+{{range .Types}}
+{{$Type := .}}
+
 // {{.Shortstring}}Rotator decorates {{.String}} with rotation functions
 type {{.Shortstring}}Rotator struct {
 	{{.String}}
 }
+
 {{range $Rotations}}
 // Rotate{{.Degrees}} does a simple {{.Degrees}}-degree clockwise rotation, returning a new {{$Type.String}}
 func (src {{$Type.Shortstring}}Rotator) Rotate{{.Degrees}}() image.Image {
@@ -31,13 +34,14 @@ func (src {{$Type.Shortstring}}Rotator) Rotate{{.Degrees}}() image.Image {
 	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
 	for y = 0; y < maxY; y++ {
 		for x = 0; x < maxX; x++ {
-			srcPix = y * srcStride + {{.GetSrcX $Type.ByteSize}}
-			dstPix = {{.GetDstY}} * dstStride + {{.GetDstX $Type.ByteSize}}
+			srcPix = y*srcStride + {{.GetSrcX $Type.ByteSize}}
+			dstPix = {{.GetDstY}}*dstStride + {{.GetDstX $Type.ByteSize}}
 			{{$Type.CopyStatement}}
 		}
 	}
 
 	return dst
 }
-{{end}}{{end}}
+{{end}}
+{{end}}
 // GENERATED CODE; DO NOT EDIT!

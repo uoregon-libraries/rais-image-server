@@ -57,7 +57,7 @@ var rotate180 rotation = rotation{
 var rotate270 rotation = rotation{
 	Degrees:        270,
 	getDstXBase:    "y",
-	GetDstY:        "(maxX -1 - x)",
+	GetDstY:        "(maxX - 1 - x)",
 	DimensionOrder: "srcHeight, srcWidth",
 }
 

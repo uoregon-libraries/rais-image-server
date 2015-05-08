@@ -22,6 +22,7 @@ generate: transform/rotation.go
 
 transform/rotation.go: transform/generator.go transform/template.txt
 	$(GOBIN) run transform/generator.go
+	gofmt -l -w -s transform/rotation.go
 
 # Dependency-getters
 deps: $(IMGRESIZE)

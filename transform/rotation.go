@@ -12,7 +12,6 @@ type Rotator interface {
 	Rotate270() image.Image
 }
 
-
 // GrayRotator decorates *image.Gray with rotation functions
 type GrayRotator struct {
 	*image.Gray
@@ -31,8 +30,8 @@ func (src GrayRotator) Rotate90() image.Image {
 	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
 	for y = 0; y < maxY; y++ {
 		for x = 0; x < maxX; x++ {
-			srcPix = y * srcStride + x
-			dstPix = x * dstStride + (maxY - 1 - y)
+			srcPix = y*srcStride + x
+			dstPix = x*dstStride + (maxY - 1 - y)
 			dst.Pix[dstPix] = src.Pix[srcPix]
 		}
 	}
@@ -53,8 +52,8 @@ func (src GrayRotator) Rotate180() image.Image {
 	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
 	for y = 0; y < maxY; y++ {
 		for x = 0; x < maxX; x++ {
-			srcPix = y * srcStride + x
-			dstPix = (maxY - 1 - y) * dstStride + (maxX - 1 - x)
+			srcPix = y*srcStride + x
+			dstPix = (maxY-1-y)*dstStride + (maxX - 1 - x)
 			dst.Pix[dstPix] = src.Pix[srcPix]
 		}
 	}
@@ -75,8 +74,8 @@ func (src GrayRotator) Rotate270() image.Image {
 	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
 	for y = 0; y < maxY; y++ {
 		for x = 0; x < maxX; x++ {
-			srcPix = y * srcStride + x
-			dstPix = (maxX -1 - x) * dstStride + y
+			srcPix = y*srcStride + x
+			dstPix = (maxX-1-x)*dstStride + y
 			dst.Pix[dstPix] = src.Pix[srcPix]
 		}
 	}
@@ -102,8 +101,8 @@ func (src RGBARotator) Rotate90() image.Image {
 	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
 	for y = 0; y < maxY; y++ {
 		for x = 0; x < maxX; x++ {
-			srcPix = y * srcStride + (x << 2)
-			dstPix = x * dstStride + ((maxY - 1 - y) << 2)
+			srcPix = y*srcStride + (x << 2)
+			dstPix = x*dstStride + ((maxY - 1 - y) << 2)
 			copy(dst.Pix[dstPix:dstPix+4], src.Pix[srcPix:srcPix+4])
 		}
 	}
@@ -124,8 +123,8 @@ func (src RGBARotator) Rotate180() image.Image {
 	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
 	for y = 0; y < maxY; y++ {
 		for x = 0; x < maxX; x++ {
-			srcPix = y * srcStride + (x << 2)
-			dstPix = (maxY - 1 - y) * dstStride + ((maxX - 1 - x) << 2)
+			srcPix = y*srcStride + (x << 2)
+			dstPix = (maxY-1-y)*dstStride + ((maxX - 1 - x) << 2)
 			copy(dst.Pix[dstPix:dstPix+4], src.Pix[srcPix:srcPix+4])
 		}
 	}
@@ -146,8 +145,8 @@ func (src RGBARotator) Rotate270() image.Image {
 	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
 	for y = 0; y < maxY; y++ {
 		for x = 0; x < maxX; x++ {
-			srcPix = y * srcStride + (x << 2)
-			dstPix = (maxX -1 - x) * dstStride + (y << 2)
+			srcPix = y*srcStride + (x << 2)
+			dstPix = (maxX-1-x)*dstStride + (y << 2)
 			copy(dst.Pix[dstPix:dstPix+4], src.Pix[srcPix:srcPix+4])
 		}
 	}
