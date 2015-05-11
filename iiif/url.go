@@ -17,7 +17,7 @@ func (id ID) String() string {
 	return string(id)
 }
 
-var iiifPathRegex = regexp.MustCompile(fmt.Sprintf(
+var pathRegex = regexp.MustCompile(fmt.Sprintf(
 	"/%s/%s/%s/%s/%s.%s$",
 	`([^/]+)`,
 	`(full|\d+,\d+,\d+,\d+|pct:[0-9.]+,[0-9.]+,[0-9.]+,[0-9.]+)`,
@@ -37,7 +37,7 @@ type URL struct {
 }
 
 func NewURL(path string) *URL {
-	parts := iiifPathRegex.FindStringSubmatch(path)
+	parts := pathRegex.FindStringSubmatch(path)
 
 	if parts == nil {
 		return &URL{}
