@@ -33,25 +33,27 @@ func (fs *FeatureSet) Info() *Info {
 	return i
 }
 
+// baseFeatureSetData returns a FeatureSet instance for the base level as well
+// as the profile URI for a given feature level
+func (fs *FeatureSet) baseFeatureSet() (*FeatureSet, string) {
+	if fs.includes(FeaturesLevel2) {
+		return FeaturesLevel2, "http://iiif.io/api/image/2/level2.json"
+	}
+	if fs.includes(FeaturesLevel1) {
+		return FeaturesLevel1, "http://iiif.io/api/image/2/level1.json"
+	}
+
+	return FeaturesLevel0, "http://iiif.io/api/image/2/level0.json"
+}
+
 // Profile examines the features in the FeatureSet to determine first which
 // level the FeatureSet supports, then adds any variances.
 func (fs *FeatureSet) Profile() []profile {
+	var baseFS *FeatureSet
 	p := make([]profile, 1)
+	baseFS, p[0] = fs.baseFeatureSet()
 
-	var baseFeatureSet *FeatureSet
-	if fs.includes(FeaturesLevel2) {
-		baseFeatureSet = FeaturesLevel2
-		p[0] = profile("http://iiif.io/api/image/2/level2.json")
-	} else if fs.includes(FeaturesLevel1) {
-		baseFeatureSet = FeaturesLevel1
-		p[0] = profile("http://iiif.io/api/image/2/level1.json")
-	} else {
-		baseFeatureSet = FeaturesLevel0
-		p[0] = profile("http://iiif.io/api/image/2/level0.json")
-	}
-
-	_, extraFeatures, _ := FeatureCompare(fs, baseFeatureSet)
-
+	_, extraFeatures, _ := FeatureCompare(fs, baseFS)
 	if len(extraFeatures) > 0 {
 	}
 
