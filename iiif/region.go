@@ -5,20 +5,30 @@ import (
 	"strings"
 )
 
+// A RegionType tells us what a Region is representing so we know how to apply
+// the x/y/w/h values
 type RegionType int
 
 const (
+	// RTNone means we didn't find a valid region string
 	RTNone RegionType = iota
+	// RTFull means we ignore x/y/w/h and use the whole image
 	RTFull
+	// RTPercent means we interpret x/y/w/h as percentages of the image size
 	RTPercent
+	// RTPixel means we interpret x/y/w/h as precise coordinates within the image
 	RTPixel
 )
 
+// Region represents the part of the image we'll manipulate.  It can be thought
+// of as the cropping rectangle.
 type Region struct {
 	Type       RegionType
 	X, Y, W, H float64
 }
 
+// StringToRegion takes a string representing a region, as seen in an IIIF URL,
+// and fills in the values based on the string's format.
 func StringToRegion(p string) Region {
 	if p == "full" {
 		return Region{Type: RTFull}
@@ -39,6 +49,9 @@ func StringToRegion(p string) Region {
 	return r
 }
 
+// Valid checks for (a) a known region type, and then (b) verifies that the
+// values are valid for the given type.  There is no attempt to check for
+// per-image correctness, just general validity.
 func (r Region) Valid() bool {
 	switch r.Type {
 	case RTNone:

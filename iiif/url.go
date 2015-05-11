@@ -6,13 +6,18 @@ import (
 	"regexp"
 )
 
+// ID is a string identifying a particular file to process.  It can contain
+// URI-encoded data in order to allow, e.g., full paths.
 type ID string
 
+// Path unescapes "percentage encoding" to return a more friendly value for
+// path-on-disk usage.
 func (id ID) Path() string {
 	p, _ := url.QueryUnescape(string(id))
 	return p
 }
 
+// String just gives the ID as it was created, but obviously as a string type
 func (id ID) String() string {
 	return string(id)
 }
@@ -27,6 +32,7 @@ var pathRegex = regexp.MustCompile(fmt.Sprintf(
 	`(jpg|tif|png|gif|jp2|pdf|webp)`,
 ))
 
+// URL represents the different options composed into an IIIF URL request
 type URL struct {
 	ID       ID
 	Region   Region
@@ -36,6 +42,16 @@ type URL struct {
 	Format   Format
 }
 
+// NewURL takes a path string (no scheme, server, or prefix, just the IIIF
+// pieces), such as "somefile.jp2/full/512,/270/default.jpg", and breaks it
+// down into the different components.  In this example:
+//
+//     - ID:       "somefile.jp2"  (the server determines how to find this)
+//     - Region:   "full"          (the whole image is processed)
+//     - Size:     "512,"          (the image is resized to a width of 512; aspect ratio is maintained)
+//     - Rotation: "270"           (the image is rotated 270 degrees clockwise)
+//     - Quality:  "default"       (the image color space is unchanged)
+//     - Format:   "jpg"           (the resulting image will be a JPEG)
 func NewURL(path string) *URL {
 	parts := pathRegex.FindStringSubmatch(path)
 

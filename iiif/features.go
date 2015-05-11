@@ -1,7 +1,13 @@
 package iiif
 
-// Possible IIIF 2.0 features.  The fields are the same as the string to report
-// features, except that the first character should be lowercased.
+// FeatureSet represents all possible IIIF 2.0 features that can be encoded
+// into a URL.  The fields are the same as the string to report features,
+// except that the first character should be lowercased.
+//
+// Note that using this in a custom server only gets you so far.  As noted in
+// the Supported() documentation below, verifying complete support is trickier
+// than just checking a URL, and a server that doesn't support arbitrary
+// resizing can still advertise specific sizes that will work.
 type FeatureSet struct {
 	// Region options: note that full isn't specified but must be supported
 	RegionByPx  bool
@@ -44,12 +50,14 @@ type FeatureSet struct {
 	CanonicalLinkHeader bool
 }
 
+// FeaturesLevel0: the required features for a level-0-compliant IIIF server
 var FeaturesLevel0 = &FeatureSet{
 	SizeByWhListed: true,
 	Default:        true,
 	Jpg:            true,
 }
 
+// FeaturesLevel1: the required features for a level-1-compliant IIIF server
 var FeaturesLevel1 = &FeatureSet{
 	RegionByPx:      true,
 	SizeByWhListed:  true,
@@ -63,6 +71,7 @@ var FeaturesLevel1 = &FeatureSet{
 	JsonldMediaType: true,
 }
 
+// FeaturesLevel2: the required features for a level-2-compliant IIIF server
 var FeaturesLevel2 = &FeatureSet{
 	RegionByPx:      true,
 	RegionByPct:     true,
@@ -105,6 +114,7 @@ func (fs *FeatureSet) Supported(u *URL) bool {
 		fs.SupportsFormat(u.Format)
 }
 
+// SupportsRegion just verifies a given region type is supported
 func (fs *FeatureSet) SupportsRegion(r Region) bool {
 	switch r.Type {
 	case RTPixel:
@@ -116,6 +126,7 @@ func (fs *FeatureSet) SupportsRegion(r Region) bool {
 	}
 }
 
+// SupportsSize just verifies a given size type is supported
 func (fs *FeatureSet) SupportsSize(s Size) bool {
 	switch s.Type {
 	case STScaleToWidth:
@@ -133,6 +144,7 @@ func (fs *FeatureSet) SupportsSize(s Size) bool {
 	}
 }
 
+// SupportsRotation just verifies a given rotation type is supported
 func (fs *FeatureSet) SupportsRotation(r Rotation) bool {
 	// We check mirroring specially in order to make the degree checks simple
 	if r.Mirror && !fs.Mirroring {
@@ -149,6 +161,7 @@ func (fs *FeatureSet) SupportsRotation(r Rotation) bool {
 	}
 }
 
+// SupportsQuality just verifies a given quality type is supported
 func (fs *FeatureSet) SupportsQuality(q Quality) bool {
 	switch q {
 	case QColor:
@@ -164,6 +177,7 @@ func (fs *FeatureSet) SupportsQuality(q Quality) bool {
 	}
 }
 
+// SupportsFormat just verifies a given format type is supported
 func (fs *FeatureSet) SupportsFormat(f Format) bool {
 	switch f {
 	case FmtJPG:
