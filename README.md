@@ -4,9 +4,10 @@ Newspaper JP2 viewer
 The JP2 viewer was originally built by [eikeon](https://github.com/eikeon) as a
 proof of concept of a tile server for JP2 images within
 [chronam](https://github.com/LibraryOfCongress/chronam).  It has been updated
-to allow more command-line options as well as a special command-line
-application for verifying JP2 images can be served.  The University of Oregon's
-primary use case is the [Historic Oregon
+to allow more command-line options and conform to the [IIIF](http://iiif.io/)
+spec.
+
+The University of Oregon's primary use case is the [Historic Oregon
 Newspapers](http://oregonnews.uoregon.edu/) project.
 
 Known Limitations

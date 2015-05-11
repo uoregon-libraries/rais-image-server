@@ -39,11 +39,9 @@ $(SYMLINK_EXISTS):
 	ln -s $(CURDIR) $(GO_PROJECT_SYMLINK)
 
 # Binary building rules
-binaries: bin/jp2tileserver bin/verifyJP2s
+binaries: bin/jp2tileserver
 bin/jp2tileserver: $(SYMLINK_EXISTS) $(IMGRESIZE) $(SRCS) cmd/jp2tileserver/*.go transform/rotation.go
 	$(GOBIN) build -o bin/jp2tileserver ./cmd/jp2tileserver
-bin/verifyJP2s: $(SYMLINK_EXISTS) $(IMGRESIZE) $(SRCS) cmd/verifyJP2s/*.go
-	$(GOBIN) build -o bin/verifyJP2s ./cmd/verifyJP2s
 
 # Testing
 test: $(SYMLINK_EXISTS) $(IMGRESIZE)
