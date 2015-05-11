@@ -30,7 +30,6 @@ func acceptsLD(req *http.Request) bool {
 
 type IIIFHandler struct {
 	Base          *url.URL
-	RegexPrefix   string
 	BaseRegex     *regexp.Regexp
 	BaseOnlyRegex *regexp.Regexp
 	FeatureSet    *iiif.FeatureSet
@@ -39,29 +38,24 @@ type IIIFHandler struct {
 }
 
 func NewIIIFHandler(u *url.URL, widths []int, tp string) *IIIFHandler {
-	ih := &IIIFHandler{
-		Base:        u,
-		RegexPrefix: fmt.Sprintf(`^%s`, u.Path),
-		TilePath:    tp,
-		FeatureSet:  iiif.FeaturesLevel1,
-	}
-
-	ih.BaseRegex = regexp.MustCompile(ih.RegexPrefix + `/([^/]+)`)
-	ih.BaseOnlyRegex = regexp.MustCompile(ih.RegexPrefix + `/[^/]+$`)
-	ih.InfoPathRegex = regexp.MustCompile(ih.RegexPrefix + `/([^/]+)/info.json$`)
-
-	// Add features we support beyond level 1
-	fs := ih.FeatureSet
+	// The base feature set is level 1, then we add our extra features, tile sizes, etc
+	fs := iiif.FeaturesLevel1
 	fs.RotationBy90s = true
-
-	// Tile sizes are set fairly statically
 	fs.TileSizes = make([]iiif.TileSize, 0)
 	sf := []int{1, 2, 4, 8, 16, 32, 64}
 	for _, val := range widths {
 		fs.TileSizes = append(fs.TileSizes, iiif.TileSize{Width: val, ScaleFactors: sf})
 	}
 
-	return ih
+	rprefix := fmt.Sprintf(`^%s`, u.Path)
+	return &IIIFHandler{
+		Base:          u,
+		BaseRegex:     regexp.MustCompile(rprefix + `/([^/]+)`),
+		BaseOnlyRegex: regexp.MustCompile(rprefix + `/[^/]+$`),
+		InfoPathRegex: regexp.MustCompile(rprefix + `/([^/]+)/info.json$`),
+		TilePath:      tp,
+		FeatureSet:    fs,
+	}
 }
 
 func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
