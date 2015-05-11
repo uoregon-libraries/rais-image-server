@@ -6,15 +6,6 @@ import (
 	"regexp"
 )
 
-type URL struct {
-	ID       ID
-	Region   Region
-	Size     Size
-	Rotation Rotation
-	Quality  Quality
-	Format   Format
-}
-
 type ID string
 
 func (id ID) Path() string {
@@ -35,6 +26,15 @@ var iiifPathRegex = regexp.MustCompile(fmt.Sprintf(
 	`(color|gray|bitonal|default|native)`,
 	`(jpg|tif|png|gif|jp2|pdf|webp)`,
 ))
+
+type URL struct {
+	ID       ID
+	Region   Region
+	Size     Size
+	Rotation Rotation
+	Quality  Quality
+	Format   Format
+}
 
 func NewURL(path string) *URL {
 	parts := iiifPathRegex.FindStringSubmatch(path)
