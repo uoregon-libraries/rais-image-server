@@ -1,8 +1,16 @@
 package iiif
 
-// FeatureSet represents all possible IIIF 2.0 features that can be represented
-// as a boolean value.  The fields are the same as the string to report
-// features, except that the first character should be lowercased.
+// TileSize represents a supported tile size for a feature set to expose.  This
+// data is serialized in an info request and therefore must have JSON tags.
+type TileSize struct {
+	Width        int   `json:"width"`
+	Height       int   `json:"height,omitempty"`
+	ScaleFactors []int `json:"scaleFactors"`
+}
+
+// FeatureSet represents possible IIIF 2.0 features.  The boolean fields are
+// the same as the string to report features, except that the first character
+// should be lowercased.
 //
 // Note that using this in a different server only gets you so far.  As noted
 // in the Supported() documentation below, verifying complete support is
@@ -48,4 +56,18 @@ type FeatureSet struct {
 	JsonldMediaType     bool
 	ProfileLinkHeader   bool
 	CanonicalLinkHeader bool
+
+	// Non-boolean feature support
+	TileSizes []TileSize
+}
+
+// Info returns the default structure for a FeatureSet's info response JSON.
+// The caller is responsible for filling in image-specific values (ID and
+// dimensions).
+func (fs *FeatureSet) Info() *Info {
+	i := NewInfo()
+	i.Profile = fs.Profile()
+	i.Tiles = fs.TileSizes
+
+	return i
 }

@@ -35,15 +35,13 @@ type IIIFHandler struct {
 	BaseOnlyRegex *regexp.Regexp
 	FeatureSet    *iiif.FeatureSet
 	InfoPathRegex *regexp.Regexp
-	TileSizes     []int
 	TilePath      string
 }
 
-func NewIIIFHandler(u *url.URL, ts []int, tp string) *IIIFHandler {
+func NewIIIFHandler(u *url.URL, widths []int, tp string) *IIIFHandler {
 	ih := &IIIFHandler{
 		Base:        u,
 		RegexPrefix: fmt.Sprintf(`^%s`, u.Path),
-		TileSizes:   ts,
 		TilePath:    tp,
 		FeatureSet:  iiif.FeaturesLevel1,
 	}
@@ -53,7 +51,15 @@ func NewIIIFHandler(u *url.URL, ts []int, tp string) *IIIFHandler {
 	ih.InfoPathRegex = regexp.MustCompile(ih.RegexPrefix + `/([^/]+)/info.json$`)
 
 	// Add features we support beyond level 1
-	ih.FeatureSet.RotationBy90s = true
+	fs := ih.FeatureSet
+	fs.RotationBy90s = true
+
+	// Tile sizes are set fairly statically
+	fs.TileSizes = make([]iiif.TileSize, 0)
+	sf := []int{1, 2, 4, 8, 16, 32, 64}
+	for _, val := range widths {
+		fs.TileSizes = append(fs.TileSizes, iiif.TileSize{Width: val, ScaleFactors: sf})
+	}
 
 	return ih
 }
@@ -114,8 +120,7 @@ func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, id iiif.ID
 		return
 	}
 
-	info := NewIIIFInfo()
-	info.SetTileSizes(ih.TileSizes)
+	info := ih.FeatureSet.Info()
 	rect := jp2.Dimensions()
 	info.Width = rect.Dx()
 	info.Height = rect.Dy()

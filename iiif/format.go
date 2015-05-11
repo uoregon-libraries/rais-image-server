@@ -29,4 +29,3 @@ func (f Format) Valid() bool {
 
 	return false
 }
-
