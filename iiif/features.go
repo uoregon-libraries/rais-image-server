@@ -1,13 +1,13 @@
 package iiif
 
-// FeatureSet represents all possible IIIF 2.0 features that can be encoded
-// into a URL.  The fields are the same as the string to report features,
-// except that the first character should be lowercased.
+// FeatureSet represents all possible IIIF 2.0 features that can be represented
+// as a boolean value.  The fields are the same as the string to report
+// features, except that the first character should be lowercased.
 //
-// Note that using this in a custom server only gets you so far.  As noted in
-// the Supported() documentation below, verifying complete support is trickier
-// than just checking a URL, and a server that doesn't support arbitrary
-// resizing can still advertise specific sizes that will work.
+// Note that using this in a different server only gets you so far.  As noted
+// in the Supported() documentation below, verifying complete support is
+// trickier than just checking a URL, and a server that doesn't support
+// arbitrary resizing can still advertise specific sizes that will work.
 type FeatureSet struct {
 	// Region options: note that full isn't specified but must be supported
 	RegionByPx  bool
@@ -27,7 +27,7 @@ type FeatureSet struct {
 	RotationArbitrary bool
 	Mirroring         bool
 
-	// "Quality", or as normal folk call it, "color depth"
+	// "Quality" (color depth / color space)
 	Default bool
 	Color   bool
 	Gray    bool
