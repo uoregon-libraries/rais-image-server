@@ -1,5 +1,7 @@
 package iiif
 
+type profile interface{}
+
 // Info represents the simplest possible data to provide a valid IIIF
 // information JSON response
 type Info struct {
@@ -9,7 +11,7 @@ type Info struct {
 	Width    int        `json:"width"`
 	Height   int        `json:"height"`
 	Tiles    []TileSize `json:"tiles,omitempty"`
-	Profile  []string   `json:"profile"`
+	Profile  []profile  `json:"profile"`
 }
 
 // NewInfo returns the static *Info data that's the same for any info response

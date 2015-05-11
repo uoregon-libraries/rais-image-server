@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/uoregon-libraries/newspaper-jp2-viewer/color-assert"
 	"github.com/uoregon-libraries/newspaper-jp2-viewer/fakehttp"
+	"github.com/uoregon-libraries/newspaper-jp2-viewer/iiif"
 	"net/http"
 	"net/url"
 	"os"
@@ -55,8 +56,9 @@ func TestInfoHandler404(t *testing.T) {
 func TestInfoHandler(t *testing.T) {
 	w := request("testfile%2Ftest-world.jp2/info.json", t)
 	assert.Equal(-1, w.StatusCode, "Valid info request doesn't explicitly set status code", t)
-	var data IIIFInfo
+	var data iiif.Info
 	json.Unmarshal(w.Output, &data)
+	assert.Equal("http://iiif.io/api/image/2/level1.json", data.Profile[0], "Proper profile string", t)
 	assert.Equal(800, data.Width, "JSON-decoded width", t)
 	assert.Equal(400, data.Height, "JSON-decoded height", t)
 	assert.Equal("http://example.com/foo/bar/testfile%2Ftest-world.jp2", data.ID, "JSON-decoded ID", t)
