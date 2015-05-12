@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/uoregon-libraries/newspaper-jp2-viewer/iiif"
-	"github.com/uoregon-libraries/newspaper-jp2-viewer/openjpeg"
-	"github.com/uoregon-libraries/newspaper-jp2-viewer/transform"
+	"github.com/uoregon-libraries/rais-image-server/iiif"
+	"github.com/uoregon-libraries/rais-image-server/openjpeg"
+	"github.com/uoregon-libraries/rais-image-server/transform"
 	"image"
 	"image/jpeg"
 	"log"

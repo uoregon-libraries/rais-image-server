@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/uoregon-libraries/newspaper-jp2-viewer/openjpeg"
+	"github.com/uoregon-libraries/rais-image-server/openjpeg"
 	"net/http"
 	"net/url"
 	"os"

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/uoregon-libraries/newspaper-jp2-viewer/openjpeg"
+	"github.com/uoregon-libraries/rais-image-server/openjpeg"
 	"image"
 	"image/jpeg"
 	"log"
