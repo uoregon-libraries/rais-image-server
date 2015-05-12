@@ -5,6 +5,10 @@ import (
 	"testing"
 )
 
+var FeaturesLevel0 = FeatureSet0()
+var FeaturesLevel1 = FeatureSet1()
+var FeaturesLevel2 = FeatureSet2()
+
 func TestRegionSupport(t *testing.T) {
 	r := Region{Type: RTFull}
 	assert.True(FeaturesLevel0.SupportsRegion(r), "RTFull supported by FL0", t)
@@ -127,4 +131,18 @@ func TestFormatSupport(t *testing.T) {
 	assert.False(FeaturesLevel0.SupportsFormat(FmtWEBP), "FmtWEBP NOT supported by FL0", t)
 	assert.False(FeaturesLevel1.SupportsFormat(FmtWEBP), "FmtWEBP NOT supported by FL1", t)
 	assert.False(FeaturesLevel2.SupportsFormat(FmtWEBP), "FmtWEBP NOT supported by FL2", t)
+}
+
+func TestInclusion(t *testing.T) {
+	assert.True(FeaturesLevel2.includes(FeaturesLevel2), "FeaturesLevel2.includes(FeaturesLevel2)", t)
+	assert.True(FeaturesLevel2.includes(FeaturesLevel1), "FeaturesLevel2.includes(FeaturesLevel1)", t)
+	assert.True(FeaturesLevel2.includes(FeaturesLevel0), "FeaturesLevel2.includes(FeaturesLevel0)", t)
+
+	assert.False(FeaturesLevel1.includes(FeaturesLevel2), "FeaturesLevel1.includes(FeaturesLevel2)", t)
+	assert.True(FeaturesLevel1.includes(FeaturesLevel1), "FeaturesLevel1.includes(FeaturesLevel1)", t)
+	assert.True(FeaturesLevel1.includes(FeaturesLevel0), "FeaturesLevel1.includes(FeaturesLevel0)", t)
+
+	assert.False(FeaturesLevel0.includes(FeaturesLevel2), "FeaturesLevel0.includes(FeaturesLevel2)", t)
+	assert.False(FeaturesLevel0.includes(FeaturesLevel1), "FeaturesLevel0.includes(FeaturesLevel1)", t)
+	assert.True(FeaturesLevel0.includes(FeaturesLevel0), "FeaturesLevel0.includes(FeaturesLevel0)", t)
 }

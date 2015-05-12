@@ -1,44 +1,53 @@
 package iiif
 
-// FeaturesLevel0: the required features for a level-0-compliant IIIF server
-var FeaturesLevel0 = &FeatureSet{
-	SizeByWhListed: true,
-	Default:        true,
-	Jpg:            true,
+// FeatureSet0 returns a copy of the feature set required for a
+// level-0-compliant IIIF server
+func FeatureSet0() *FeatureSet {
+	return &FeatureSet{
+		SizeByWhListed: true,
+		Default:        true,
+		Jpg:            true,
+	}
 }
 
-// FeaturesLevel1: the required features for a level-1-compliant IIIF server
-var FeaturesLevel1 = &FeatureSet{
-	RegionByPx:      true,
-	SizeByWhListed:  true,
-	SizeByW:         true,
-	SizeByH:         true,
-	SizeByPct:       true,
-	Default:         true,
-	Jpg:             true,
-	BaseUriRedirect: true,
-	Cors:            true,
-	JsonldMediaType: true,
+// FeatureSet1 returns a copy of the feature set required for a
+// level-1-compliant IIIF server
+func FeatureSet1() *FeatureSet {
+	return &FeatureSet{
+		RegionByPx:      true,
+		SizeByWhListed:  true,
+		SizeByW:         true,
+		SizeByH:         true,
+		SizeByPct:       true,
+		Default:         true,
+		Jpg:             true,
+		BaseUriRedirect: true,
+		Cors:            true,
+		JsonldMediaType: true,
+	}
 }
 
-// FeaturesLevel2: the required features for a level-2-compliant IIIF server
-var FeaturesLevel2 = &FeatureSet{
-	RegionByPx:      true,
-	RegionByPct:     true,
-	SizeByWhListed:  true,
-	SizeByW:         true,
-	SizeByH:         true,
-	SizeByPct:       true,
-	SizeByForcedWh:  true,
-	SizeByWh:        true,
-	RotationBy90s:   true,
-	Default:         true,
-	Color:           true,
-	Gray:            true,
-	Bitonal:         true,
-	Jpg:             true,
-	Png:             true,
-	BaseUriRedirect: true,
-	Cors:            true,
-	JsonldMediaType: true,
+// FeatureSet2 returns a copy of the feature set required for a
+// level-2-compliant IIIF server
+func FeatureSet2() *FeatureSet {
+	return &FeatureSet{
+		RegionByPx:      true,
+		RegionByPct:     true,
+		SizeByWhListed:  true,
+		SizeByW:         true,
+		SizeByH:         true,
+		SizeByPct:       true,
+		SizeByForcedWh:  true,
+		SizeByWh:        true,
+		RotationBy90s:   true,
+		Default:         true,
+		Color:           true,
+		Gray:            true,
+		Bitonal:         true,
+		Jpg:             true,
+		Png:             true,
+		BaseUriRedirect: true,
+		Cors:            true,
+		JsonldMediaType: true,
+	}
 }
