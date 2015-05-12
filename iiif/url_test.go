@@ -2,7 +2,7 @@ package iiif
 
 import (
 	"fmt"
-	"github.com/uoregon-libraries/newspaper-jp2-viewer/color-assert"
+	"github.com/uoregon-libraries/rais-image-server/color-assert"
 	"strings"
 	"testing"
 )

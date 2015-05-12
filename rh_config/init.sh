@@ -1,21 +1,20 @@
 #!/bin/sh
 #
-# tileserver This shell script takes care of starting and stopping the tile
-#   server for newspaper JP2 images
+# RAIS This shell script takes care of starting and stopping the RAIS
+#   image server
 #
 # chkconfig:    - 80 20
-# description:  Tile server for newspaper JP2 images
-# processname:  tileserver
-# pidfile:      /var/run/tileserver.pid
+# description:  IIIF server for JP2 images
+# processname:  rais
+# pidfile:      /var/run/rais.pid
 
 ### BEGIN INIT INFO
-# Provides:           tileserver
+# Provides:           rais
 # Required-Start:     $local_fs $remote_fs $network $named $time
 # Required-Stop:      $local_fs $remote_fs $network $named $time
-# Short-Description:  Start and stop jp2 tile server
-# Description:        tileserver serves tiles as JPG images for front-end
-#                     viewers to present a "pan & zoom" view of specially-
-#                     formatted JP2 images
+# Short-Description:  Start and stop RAIS
+# Description:        rais serves various image-manipulation functionality,
+#                     primarily for presenting JP2 images in a web viewer
 ### END INIT INFO
 
 # Source function library.
@@ -35,7 +34,7 @@ fi
 
 . $conffile
 
-prog="jp2tileserver"
+prog="rais-server"
 exec="/opt/chronam-support/$prog"
 tilepath=${TILEPATH:-/opt/chronam/data/batches}
 iiifurl=${IIIFURL:-}
