@@ -1,7 +1,25 @@
 package iiif
 
-// Possible IIIF 2.0 features.  The fields are the same as the string to report
-// features, except that the first character should be lowercased.
+// featuresMap is a simple map for boolean features, used for comparing
+// featuresets and reporting features beyond the reported level
+type featuresMap map[string]bool
+
+// TileSize represents a supported tile size for a feature set to expose.  This
+// data is serialized in an info request and therefore must have JSON tags.
+type TileSize struct {
+	Width        int   `json:"width"`
+	Height       int   `json:"height,omitempty"`
+	ScaleFactors []int `json:"scaleFactors"`
+}
+
+// FeatureSet represents possible IIIF 2.0 features.  The boolean fields are
+// the same as the string to report features, except that the first character
+// should be lowercased.
+//
+// Note that using this in a different server only gets you so far.  As noted
+// in the Supported() documentation below, verifying complete support is
+// trickier than just checking a URL, and a server that doesn't support
+// arbitrary resizing can still advertise specific sizes that will work.
 type FeatureSet struct {
 	// Region options: note that full isn't specified but must be supported
 	RegionByPx  bool
@@ -21,7 +39,7 @@ type FeatureSet struct {
 	RotationArbitrary bool
 	Mirroring         bool
 
-	// "Quality", or as normal folk call it, "color depth"
+	// "Quality" (color depth / color space)
 	Default bool
 	Color   bool
 	Gray    bool
@@ -42,145 +60,83 @@ type FeatureSet struct {
 	JsonldMediaType     bool
 	ProfileLinkHeader   bool
 	CanonicalLinkHeader bool
+
+	// Non-boolean feature support
+	TileSizes []TileSize
 }
 
-var FeaturesLevel0 = &FeatureSet{
-	SizeByWhListed: true,
-	Default:        true,
-	Jpg:            true,
-}
-
-var FeaturesLevel1 = &FeatureSet{
-	RegionByPx:      true,
-	SizeByWhListed:  true,
-	SizeByW:         true,
-	SizeByH:         true,
-	SizeByPct:       true,
-	Default:         true,
-	Jpg:             true,
-	BaseUriRedirect: true,
-	Cors:            true,
-	JsonldMediaType: true,
-}
-
-var FeaturesLevel2 = &FeatureSet{
-	RegionByPx:      true,
-	RegionByPct:     true,
-	SizeByWhListed:  true,
-	SizeByW:         true,
-	SizeByH:         true,
-	SizeByPct:       true,
-	SizeByForcedWh:  true,
-	SizeByWh:        true,
-	RotationBy90s:   true,
-	Default:         true,
-	Color:           true,
-	Gray:            true,
-	Bitonal:         true,
-	Jpg:             true,
-	Png:             true,
-	BaseUriRedirect: true,
-	Cors:            true,
-	JsonldMediaType: true,
-}
-
-// Supported tells us whether or not the given feature set will actually
-// perform the operation represented by the URL instance.
-//
-// Unsupported functionality is expected to report an http status of 501.
-//
-// This doesn't actually work in all cases, such as a level 0 server that has
-// sizes explicitly listed for a given image resize operation.  In those cases,
-// Supported() is probably not worth calling, instead handling just the few
-// supported cases directly and/or checking a custom featureset directly.
-//
-// This also doesn't actually check all possibly supported features - the URL
-// type is useful for parsing a URI path, but doesn't know about e.g.  http
-// features.
-func (fs *FeatureSet) Supported(u *URL) bool {
-	return fs.SupportsRegion(u.Region) &&
-		fs.SupportsSize(u.Size) &&
-		fs.SupportsRotation(u.Rotation) &&
-		fs.SupportsQuality(u.Quality) &&
-		fs.SupportsFormat(u.Format)
-}
-
-func (fs *FeatureSet) SupportsRegion(r Region) bool {
-	switch r.Type {
-	case RTPixel:
-		return fs.RegionByPx
-	case RTPercent:
-		return fs.RegionByPct
-	default:
-		return true
+// toMap converts a FeatureSet's boolean support values into a map suitable for
+// use in comparison to other feature sets.  The strings used are lowercased so
+// they can be used as-is within "formats", "qualities", and/or "supports"
+// arrays.
+func (fs *FeatureSet) toMap() featuresMap {
+	return featuresMap{
+		"regionByPx":          fs.RegionByPx,
+		"regionByPct":         fs.RegionByPct,
+		"sizeByWhListed":      fs.SizeByWhListed,
+		"sizeByW":             fs.SizeByW,
+		"sizeByH":             fs.SizeByH,
+		"sizeByPct":           fs.SizeByPct,
+		"sizeByForcedWh":      fs.SizeByForcedWh,
+		"sizeByWh":            fs.SizeByWh,
+		"sizeAboveFull":       fs.SizeAboveFull,
+		"rotationBy90s":       fs.RotationBy90s,
+		"rotationArbitrary":   fs.RotationArbitrary,
+		"mirroring":           fs.Mirroring,
+		"default":             fs.Default,
+		"color":               fs.Color,
+		"gray":                fs.Gray,
+		"bitonal":             fs.Bitonal,
+		"jpg":                 fs.Jpg,
+		"png":                 fs.Png,
+		"tif":                 fs.Tif,
+		"gif":                 fs.Gif,
+		"jp2":                 fs.Jp2,
+		"pdf":                 fs.Pdf,
+		"webp":                fs.Webp,
+		"baseUriRedirect":     fs.BaseUriRedirect,
+		"cors":                fs.Cors,
+		"jsonldMediaType":     fs.JsonldMediaType,
+		"profileLinkHeader":   fs.ProfileLinkHeader,
+		"canonicalLinkHeader": fs.CanonicalLinkHeader,
 	}
 }
 
-func (fs *FeatureSet) SupportsSize(s Size) bool {
-	switch s.Type {
-	case STScaleToWidth:
-		return fs.SizeByW
-	case STScaleToHeight:
-		return fs.SizeByH
-	case STScalePercent:
-		return fs.SizeByPct
-	case STExact:
-		return fs.SizeByForcedWh
-	case STBestFit:
-		return fs.SizeByWh
-	default:
-		return true
+// FeatureCompare returns which features are in common between two FeatureSets,
+// which are exclusive to a, and which are exclusive to b.  The returned maps
+// will ONLY contain keys with a value of true, as opposed to the full list of
+// features and true/false.  This helps to quickly determine equality, subset
+// status, and superset status.
+func FeatureCompare(a, b *FeatureSet) (union, onlyA, onlyB featuresMap) {
+	union = make(featuresMap)
+	onlyA = make(featuresMap)
+	onlyB = make(featuresMap)
+
+	mapA := a.toMap()
+	mapB := b.toMap()
+
+	for feature, supportedA := range mapA {
+		supportedB := mapB[feature]
+		if supportedA && supportedB {
+			union[feature] = true
+			continue
+		}
+
+		if supportedA {
+			onlyA[feature] = true
+			continue
+		}
+
+		if supportedB {
+			onlyB[feature] = true
+		}
 	}
+
+	return
 }
 
-func (fs *FeatureSet) SupportsRotation(r Rotation) bool {
-	// We check mirroring specially in order to make the degree checks simple
-	if r.Mirror && !fs.Mirroring {
-		return false
-	}
-
-	switch r.Degrees {
-	case 0:
-		return true
-	case 90, 180, 270:
-		return fs.RotationBy90s || fs.RotationArbitrary
-	default:
-		return fs.RotationArbitrary
-	}
-}
-
-func (fs *FeatureSet) SupportsQuality(q Quality) bool {
-	switch q {
-	case QColor:
-		return fs.Color
-	case QGray:
-		return fs.Gray
-	case QBitonal:
-		return fs.Bitonal
-	case QDefault, QNative:
-		return fs.Default
-	default:
-		return false
-	}
-}
-
-func (fs *FeatureSet) SupportsFormat(f Format) bool {
-	switch f {
-	case FmtJPG:
-		return fs.Jpg
-	case FmtTIF:
-		return fs.Tif
-	case FmtPNG:
-		return fs.Png
-	case FmtGIF:
-		return fs.Gif
-	case FmtJP2:
-		return fs.Jp2
-	case FmtPDF:
-		return fs.Pdf
-	case FmtWEBP:
-		return fs.Webp
-	default:
-		return false
-	}
+// includes returns whether or not fs includes all features in fsIncluded
+func (fs *FeatureSet) includes(fsIncluded *FeatureSet) bool {
+	_, _, onlyYours := FeatureCompare(fs, fsIncluded)
+	return len(onlyYours) == 0
 }

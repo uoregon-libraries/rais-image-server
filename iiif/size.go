@@ -5,24 +5,40 @@ import (
 	"strings"
 )
 
+// SizeType represents the type of scaling which will be performed
 type SizeType int
 
 const (
+	// STNone is used when the Size struct wasn't able to be parsed form a string
 	STNone SizeType = iota
+	// STFull means no scaling is requested
 	STFull
+	// STScaleToWidth requests the image be scaled to a set width (aspect ratio
+	// is preserved)
 	STScaleToWidth
+	// STScaleToHeight requests the image be scaled to a set height (aspect ratio
+	// is preserved)
 	STScaleToHeight
+	// STScalePercent requests the image be scaled by a set percent of its size
+	// (aspect ratio is preserved)
 	STScalePercent
+	// STExact requests the image be resized to precise width and height
+	// dimensions (aspect ratio is not preserved)
 	STExact
+	// STBestFit requests the image be resized *near* the given width and height
+	// dimensions (aspect ratio is preserved)
 	STBestFit
 )
 
+// Size represents the type of scaling as well as the parameters for scaling
+// for an IIIF 2.0 server
 type Size struct {
 	Type    SizeType
 	Percent float64
 	W, H    int
 }
 
+// StringToSize creates a Size from a string as seen in an IIIF URL.
 func StringToSize(p string) Size {
 	if p == "full" {
 		return Size{Type: STFull}
@@ -58,6 +74,8 @@ func StringToSize(p string) Size {
 	return s
 }
 
+// Valid returns whether the size has a valid type, and if so, whether the
+// parameters are valid for that type
 func (s Size) Valid() bool {
 	switch s.Type {
 	case STFull:

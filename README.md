@@ -1,12 +1,13 @@
-Newspaper JP2 viewer
+RAIS Image Server
 =======
 
-The JP2 viewer was originally built by [eikeon](https://github.com/eikeon) as a
-proof of concept of a tile server for JP2 images within
+RAIS was originally built by [eikeon](https://github.com/eikeon) as a proof of
+concept of a tile server for JP2 images within
 [chronam](https://github.com/LibraryOfCongress/chronam).  It has been updated
-to allow more command-line options as well as a special command-line
-application for verifying JP2 images can be served.  The University of Oregon's
-primary use case is the [Historic Oregon
+to allow more command-line options and conform to the [IIIF](http://iiif.io/)
+spec.
+
+The University of Oregon's primary use case is the [Historic Oregon
 Newspapers](http://oregonnews.uoregon.edu/) project.
 
 Known Limitations
@@ -60,7 +61,7 @@ Setup
 - Set up the [`GOPATH` environment variable](http://golang.org/doc/code.html#GOPATH)
   - This tells go where to put the project
 - Install the project:
-  - `go get -u github.com/uoregon-libraries/newspaper-jp2-viewer/cmd/jp2tileserver`
+  - `go get -u github.com/uoregon-libraries/rais-image-server/cmd/rais-server`
 
 ### Openjpeg installation
 
@@ -80,18 +81,18 @@ The general build algorthim is fairly straightforward:
 We've specifically tested `openjpeg2-2.1.0-1`, but it stands to reason the
 above steps will work for others as well.
 
-Running the tile server
+Running RAIS
 -----
 
 ### Manually
 
-`$GOPATH/bin/jp2tileserver --address=":8888" --tile-path="/path/to/data/batches"`
+`$GOPATH/bin/rais-server --address=":8888" --tile-path="/path/to/data/batches"`
 
 Note that if you wish to enable [IIIF](http://iiif.io/api/image/2.0/) support,
 you must specify extra information on the command-line:
 
 ```bash
-$GOPATH/bin/jp2tileserver --address=":8888" --tile-path="/path/to/images" \
+$GOPATH/bin/rais-server --address=":8888" --tile-path="/path/to/images" \
   --iiif-url="http://iiif.example.com/images/iiif" --iiif-tile-sizes="512,1024"
 ```
 
@@ -121,10 +122,10 @@ appreciated here!
 
 ### Ubuntu
 
-The original Brikker was able to run on an Amazon EC2 instance, but we haven't
-updated the config files with all the latest changes.  We are no longer
-suggesting the old config files as there are too many changes in the old
-brikker and our current JP2 tile server.
+The original RAIS (previously known as "Brikker") was able to run on an Amazon
+EC2 instance, but we haven't updated the config files with all the latest
+changes.  We are no longer suggesting the old config files as there are too
+many changes in the old brikker and RAIS.
 
 PRs for working configs would be greatly appreciated.
 
@@ -178,5 +179,5 @@ License
 
 <img src="http://i.creativecommons.org/p/zero/1.0/88x31.png" style="border-style: none;" alt="CC0" />
 
-The Newspaper JP2 Viewer is in the public domain under a
+RAIS Image Server is in the public domain under a
 [CC0](http://creativecommons.org/publicdomain/zero/1.0/) license.

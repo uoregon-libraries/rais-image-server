@@ -3,8 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/uoregon-libraries/newspaper-jp2-viewer/iiif"
-	"github.com/uoregon-libraries/newspaper-jp2-viewer/openjpeg"
+	"github.com/uoregon-libraries/rais-image-server/iiif"
+	"github.com/uoregon-libraries/rais-image-server/openjpeg"
+	"github.com/uoregon-libraries/rais-image-server/transform"
 	"image"
 	"image/jpeg"
 	"log"
@@ -29,27 +30,32 @@ func acceptsLD(req *http.Request) bool {
 
 type IIIFHandler struct {
 	Base          *url.URL
-	RegexPrefix   string
 	BaseRegex     *regexp.Regexp
 	BaseOnlyRegex *regexp.Regexp
+	FeatureSet    *iiif.FeatureSet
 	InfoPathRegex *regexp.Regexp
-	TileSizes     []int
 	TilePath      string
 }
 
-func NewIIIFHandler(u *url.URL, ts []int, tp string) *IIIFHandler {
-	ih := &IIIFHandler{
-		Base:          u,
-		RegexPrefix:   fmt.Sprintf(`^%s`, u.Path),
-		TileSizes:     ts,
-		TilePath:      tp,
+func NewIIIFHandler(u *url.URL, widths []int, tp string) *IIIFHandler {
+	// The base feature set is level 1, then we add our extra features, tile sizes, etc
+	fs := iiif.FeatureSet1()
+	fs.RotationBy90s = true
+	fs.TileSizes = make([]iiif.TileSize, 0)
+	sf := []int{1, 2, 4, 8, 16, 32, 64}
+	for _, val := range widths {
+		fs.TileSizes = append(fs.TileSizes, iiif.TileSize{Width: val, ScaleFactors: sf})
 	}
 
-	ih.BaseRegex = regexp.MustCompile(ih.RegexPrefix + `/([^/]+)`)
-	ih.BaseOnlyRegex = regexp.MustCompile(ih.RegexPrefix + `/[^/]+$`)
-	ih.InfoPathRegex = regexp.MustCompile(ih.RegexPrefix + `/([^/]+)/info.json$`)
-
-	return ih
+	rprefix := fmt.Sprintf(`^%s`, u.Path)
+	return &IIIFHandler{
+		Base:          u,
+		BaseRegex:     regexp.MustCompile(rprefix + `/([^/]+)`),
+		BaseOnlyRegex: regexp.MustCompile(rprefix + `/[^/]+$`),
+		InfoPathRegex: regexp.MustCompile(rprefix + `/([^/]+)/info.json$`),
+		TilePath:      tp,
+		FeatureSet:    fs,
+	}
 }
 
 func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
@@ -75,7 +81,7 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 
 	// Check for base path and redirect if that's all we have
 	if ih.BaseOnlyRegex.MatchString(p) {
-		http.Redirect(w, req, p + "/info.json", 303)
+		http.Redirect(w, req, p+"/info.json", 303)
 		return
 	}
 
@@ -108,8 +114,7 @@ func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, id iiif.ID
 		return
 	}
 
-	info := NewIIIFInfo()
-	info.SetTileSizes(ih.TileSizes)
+	info := ih.FeatureSet.Info()
 	rect := jp2.Dimensions()
 	info.Width = rect.Dx()
 	info.Height = rect.Dy()
@@ -125,7 +130,7 @@ func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, id iiif.ID
 	}
 
 	// Set headers - content type is dependent on client
-	ct :=  "application/json"
+	ct := "application/json"
 	if acceptsLD(req) {
 		ct = "application/ld+json"
 	}
@@ -147,7 +152,7 @@ func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif
 	}
 
 	// Do we support this request?  If not, return a 501
-	if !iiif.FeaturesLevel1.Supported(u) {
+	if !ih.FeatureSet.Supported(u) {
 		http.Error(w, "Feature not supported", 501)
 		return
 	}
@@ -188,6 +193,25 @@ func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif
 		http.Error(w, "Unable to decode image", 500)
 		log.Println("Unable to decode image: ", err)
 		return
+	}
+
+	if u.Rotation.Degrees != 0 {
+		var r transform.Rotator
+		switch img0 := img.(type) {
+		case *image.Gray:
+			r = transform.GrayRotator{img0}
+		case *image.RGBA:
+			r = transform.RGBARotator{img0}
+		}
+
+		switch u.Rotation.Degrees {
+		case 90:
+			img = r.Rotate90()
+		case 180:
+			img = r.Rotate180()
+		case 270:
+			img = r.Rotate270()
+		}
 	}
 
 	// Encode as JPEG straight to the client
