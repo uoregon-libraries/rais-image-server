@@ -4,14 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/uoregon-libraries/rais-image-server/iiif"
-	"github.com/uoregon-libraries/rais-image-server/openjpeg"
 	"github.com/uoregon-libraries/rais-image-server/transform"
 	"image"
 	"image/jpeg"
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"strings"
 )
@@ -74,10 +72,19 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 	identifier := iiif.ID(parts[1])
 	filepath := ih.TilePath + "/" + identifier.Path()
 
-	if _, err := os.Stat(filepath); err != nil {
-		http.Error(w, "Image resource does not exist", 404)
+	res, err := NewImageResource(identifier, filepath)
+
+	if err != nil {
+		switch(err) {
+		case ErrImageDoesNotExist:
+			http.Error(w, "Image resource does not exist", 404)
+		default:
+			http.Error(w, err.Error(), 500)
+		}
 		return
 	}
+
+	defer res.Image.CleanupResources()
 
 	// Check for base path and redirect if that's all we have
 	if ih.BaseOnlyRegex.MatchString(p) {
@@ -87,13 +94,13 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 
 	// Check for info path, and dispatch if it matches
 	if ih.InfoPathRegex.MatchString(p) {
-		ih.Info(w, req, identifier)
+		ih.Info(w, req, res)
 		return
 	}
 
 	// No info path should mean a full command path
 	if u := iiif.NewURL(p); u.Valid() {
-		ih.Command(w, req, u)
+		ih.Command(w, req, u, res)
 		return
 	}
 
@@ -101,26 +108,19 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 	http.Error(w, "Invalid IIIF request", 400)
 }
 
-func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, id iiif.ID) {
-	filepath := ih.TilePath + "/" + id.Path()
-	jp2, err := openjpeg.NewJP2Image(filepath)
+func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, res *ImageResource) {
+	rect, err := res.Image.GetDimensions()
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Unable to read image %#v", id), 500)
-		return
-	}
-
-	if err := jp2.ReadHeader(); err != nil {
-		http.Error(w, fmt.Sprintf("Unable to read image dimensions for %#v", id), 500)
+		http.Error(w, fmt.Sprintf("Unable to read image dimensions for %#v", res.ID), 500)
 		return
 	}
 
 	info := ih.FeatureSet.Info()
-	rect := jp2.Dimensions()
 	info.Width = rect.Dx()
 	info.Height = rect.Dy()
 
 	// The info id is actually the full URL to the resource, not just its ID
-	info.ID = ih.Base.String() + "/" + id.String()
+	info.ID = ih.Base.String() + "/" + res.ID.String()
 
 	json, err := json.Marshal(info)
 	if err != nil {
@@ -139,15 +139,13 @@ func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, id iiif.ID
 	w.Write(json)
 }
 
-// Handles crop/resize operations for JP2s.  Note that this is the *wrong* way
-// to handle most image formats.  JP2s are encoded as multi-resolution images,
-// so the resize information actually has to be known before a given region can
-// be cropped.  Otherwise we'd have to decode the whole image instead of just
-// the minimum necessary "layer".
-func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL) {
-	// Get file's last modified time, returning a 404 if we can't stat the file
-	filepath := ih.TilePath + "/" + u.ID.Path()
-	if err := sendHeaders(w, req, filepath); err != nil {
+// Handles image processing operations.  Putting resize into the IIIFImage
+// interface is necessary due to the way openjpeg operates on images - we must
+// know which layer to decode to get the nearest valid image size when
+// doing any resize operations.
+func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL, res *ImageResource) {
+	// Send last modified time
+	if err := sendHeaders(w, req, res.FilePath); err != nil {
 		return
 	}
 
@@ -157,16 +155,6 @@ func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif
 		return
 	}
 
-	// Create JP2 structure - if we can't, the image must be corrupt or otherwise
-	// broken, since we already checked for existence
-	jp2, err := openjpeg.NewJP2Image(filepath)
-	if err != nil {
-		http.Error(w, "Unable to read source image", 500)
-		log.Println("Unable to read source image: ", err)
-		return
-	}
-	defer jp2.CleanupResources()
-
 	if u.Region.Type == iiif.RTPixel {
 		r := image.Rect(
 			int(u.Region.X),
@@ -174,21 +162,21 @@ func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif
 			int(u.Region.X+u.Region.W),
 			int(u.Region.Y+u.Region.H),
 		)
-		jp2.SetCrop(r)
+		res.Image.SetCrop(r)
 	}
 
 	switch u.Size.Type {
 	case iiif.STScaleToWidth:
-		jp2.SetResizeWH(u.Size.W, 0)
+		res.Image.SetResizeWH(u.Size.W, 0)
 	case iiif.STScaleToHeight:
-		jp2.SetResizeWH(0, u.Size.H)
+		res.Image.SetResizeWH(0, u.Size.H)
 	case iiif.STExact:
-		jp2.SetResizeWH(u.Size.W, u.Size.H)
+		res.Image.SetResizeWH(u.Size.W, u.Size.H)
 	case iiif.STScalePercent:
-		jp2.SetScale(u.Size.Percent / 100.0)
+		res.Image.SetScale(u.Size.Percent / 100.0)
 	}
 
-	img, err := jp2.DecodeImage()
+	img, err := res.Image.DecodeImage()
 	if err != nil {
 		http.Error(w, "Unable to decode image", 500)
 		log.Println("Unable to decode image: ", err)
