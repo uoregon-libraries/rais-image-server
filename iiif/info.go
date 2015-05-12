@@ -41,14 +41,17 @@ func (fs *FeatureSet) Info() *Info {
 // baseFeatureSetData returns a FeatureSet instance for the base level as well
 // as the profile URI for a given feature level
 func (fs *FeatureSet) baseFeatureSet() (*FeatureSet, string) {
+	FeaturesLevel2 := FeatureSet2()
 	if fs.includes(FeaturesLevel2) {
 		return FeaturesLevel2, "http://iiif.io/api/image/2/level2.json"
 	}
+
+	FeaturesLevel1 := FeatureSet1()
 	if fs.includes(FeaturesLevel1) {
 		return FeaturesLevel1, "http://iiif.io/api/image/2/level1.json"
 	}
 
-	return FeaturesLevel0, "http://iiif.io/api/image/2/level0.json"
+	return FeatureSet0(), "http://iiif.io/api/image/2/level0.json"
 }
 
 // Profile examines the features in the FeatureSet to determine first which

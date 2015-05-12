@@ -5,6 +5,10 @@ import (
 	"testing"
 )
 
+var FeaturesLevel0 = FeatureSet0()
+var FeaturesLevel1 = FeatureSet1()
+var FeaturesLevel2 = FeatureSet2()
+
 func TestRegionSupport(t *testing.T) {
 	r := Region{Type: RTFull}
 	assert.True(FeaturesLevel0.SupportsRegion(r), "RTFull supported by FL0", t)

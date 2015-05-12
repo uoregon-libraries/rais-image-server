@@ -39,7 +39,7 @@ type IIIFHandler struct {
 
 func NewIIIFHandler(u *url.URL, widths []int, tp string) *IIIFHandler {
 	// The base feature set is level 1, then we add our extra features, tile sizes, etc
-	fs := iiif.FeaturesLevel1
+	fs := iiif.FeatureSet1()
 	fs.RotationBy90s = true
 	fs.TileSizes = make([]iiif.TileSize, 0)
 	sf := []int{1, 2, 4, 8, 16, 32, 64}
