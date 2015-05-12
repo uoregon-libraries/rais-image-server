@@ -2,9 +2,9 @@ package iiif
 
 type profile interface{}
 type extraProfile struct {
-	Formats   []string `json:"formats"`
-	Qualities []string `json:"qualities"`
-	Supports  []string `json:"supports"`
+	Formats   []string `json:"formats,omitempty"`
+	Qualities []string `json:"qualities,omitempty"`
+	Supports  []string `json:"supports,omitempty"`
 }
 
 // Info represents the simplest possible data to provide a valid IIIF
