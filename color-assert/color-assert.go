@@ -59,3 +59,15 @@ func Equal(expected, actual interface{}, message string, t *testing.T) {
 	}
 	success(caller, message, t)
 }
+
+func IncludesString(expected string, list []string, message string, t *testing.T) {
+	caller := getCallerName(1)
+	for _, s := range list {
+		if expected == s {
+			success(caller, message, t)
+			return
+		}
+	}
+
+	failure(caller, fmt.Sprintf("Expected %#v to be included in %#v - %s", expected, list, message), t)
+}
