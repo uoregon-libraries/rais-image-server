@@ -4,8 +4,8 @@ RAIS Image Server
 RAIS was originally built by [eikeon](https://github.com/eikeon) as a proof of
 concept of a tile server for JP2 images within
 [chronam](https://github.com/LibraryOfCongress/chronam).  It has been updated
-to allow more command-line options and conform to the [IIIF](http://iiif.io/)
-spec.
+to allow more command-line options, more source file formats, and conformance
+to the [IIIF](http://iiif.io/) spec.
 
 The University of Oregon's primary use case is the [Historic Oregon
 Newspapers](http://oregonnews.uoregon.edu/) project.
@@ -16,13 +16,13 @@ Known Limitations
 There are probably a lot of *unknown* limitations, so this should be considered
 a very small list of what are likely a lot of problems.
 
-- Resolution factors beyond 6 aren't supported
+- JP2: resolution factors beyond 6 aren't supported
 
 Very large images (as in, hundreds of megapixels) will have performance issues
 as the server will have to manually resize anything smaller than 1/64th of the
 original image.
 
-- Resolution factors below 6 are barely supported
+- JP2: resolution factors below 6 are barely supported
 
 We couldn't figure out how to properly determine the number of resolution
 factors a given image has.  When an image maxes out at res. factor 2, and a
@@ -31,7 +31,7 @@ fail, 3, fail, 2, success.  This has a bit of overhead for each try, so it's
 best to encode at a factor of 6 or else ensure you aren't requesting images
 smaller than 1 / (2 ^ x) times the width/height of the image.
 
-- Only supports RGB and Grayscale
+- JP2: only supports RGB and Grayscale
 
 And I'm not even sure how well we support different variations of those two
 options... or even what variations might exist.  So... good luck?
@@ -52,6 +52,14 @@ there's no way to specify optimal resize targets.
 
 IIIF viewers seem to pick moderately smart choices, but this server probably
 won't work out of the box for, say, a 200+ megapixel image.
+
+- Unknown performance metrics for non-JP2 files
+
+These aren't well-tested since our system is exclusively JP2.  Non-JP2 types
+that are supported (TIFF, JPG, PNG, and GIF) have to be read in fully and then
+cropped and resized in Go.  This will not be as fast as image formats built for
+deep zooming and run under a high-performance image server such as [IIP
+Image](http://iipimage.sourceforge.net/).
 
 Setup
 -----
