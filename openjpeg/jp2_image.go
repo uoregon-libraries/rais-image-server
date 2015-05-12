@@ -186,6 +186,16 @@ func (i *JP2Image) ReadHeader() error {
 	return nil
 }
 
+// GetDimensions reads the JP2 headers and pulls dimensions in order to satisfy
+// the IIIFImage interface
+func (i *JP2Image) GetDimensions() (image.Rectangle, error) {
+	if err := i.ReadHeader(); err != nil {
+		return image.Rectangle{}, err
+	}
+
+	return i.Dimensions(), nil
+}
+
 func (i *JP2Image) Dimensions() image.Rectangle {
 	return image.Rect(int(i.image.x0), int(i.image.y0), int(i.image.x1), int(i.image.y1))
 }
