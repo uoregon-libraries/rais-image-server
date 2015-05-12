@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 )
 
 var (
@@ -51,7 +52,7 @@ func NewImageResource(id iiif.ID, filepath string) (*ImageResource, error) {
 
 	// File exists - is it a valid filetype?
 	var i IIIFImage
-	fileExt := path.Ext(filepath)
+	fileExt := strings.ToLower(path.Ext(filepath))
 	switch fileExt {
 	case ".jp2":
 		i, err = openjpeg.NewJP2Image(filepath)
