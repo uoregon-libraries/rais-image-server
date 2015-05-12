@@ -24,8 +24,8 @@ var (
 // the more unusual use-case.
 type IIIFImage interface {
 	CleanupResources()
-	DecodeImage()            (image.Image, error)
-	GetDimensions()          (image.Rectangle, error)
+	DecodeImage() (image.Image, error)
+	GetDimensions() (image.Rectangle, error)
 	SetCrop(image.Rectangle)
 	SetResizeWH(int, int)
 	SetScale(float64)

@@ -73,7 +73,7 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 	res, err := NewImageResource(identifier, filepath)
 
 	if err != nil {
-		switch(err) {
+		switch err {
 		case ErrImageDoesNotExist:
 			http.Error(w, "Image resource does not exist", 404)
 		default:
