@@ -56,6 +56,8 @@ func NewImageResource(id iiif.ID, filepath string) (*ImageResource, error) {
 	switch fileExt {
 	case ".jp2":
 		i, err = openjpeg.NewJP2Image(filepath)
+	case ".tif", ".tiff", ".png", ".jpg", "jpeg", ".gif":
+		i, err = NewSimpleImage(filepath)
 	default:
 		log.Printf("Image type unknown / invalid: %#v", filepath)
 		return nil, ErrInvalidFiletype
