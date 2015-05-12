@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Compiles and deploys the tile server as a service
+# Compiles and deploys RAIS as a service
 #
 # This is meant as an example for going from development to production.  MANY
 # assumptions are made:
@@ -12,10 +12,10 @@
 # - You are using this with chronam
 
 make clean
-make bin/jp2tileserver
-sudo service tileserver stop
-sudo rm /opt/chronam-support/jp2tileserver
+make bin/rais-server
+sudo service rais stop
+sudo rm /opt/chronam-support/rais-server
 sudo mkdir -p /opt/chronam-support/
-sudo cp rh_config/init.sh /etc/init.d/tileserver
-sudo cp bin/jp2tileserver /opt/chronam-support/jp2tileserver
-sudo service tileserver start
+sudo cp rh_config/init.sh /etc/init.d/rais
+sudo cp bin/rais-server /opt/chronam-support/rais-server
+sudo service rais start
