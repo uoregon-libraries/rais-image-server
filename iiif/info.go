@@ -1,6 +1,11 @@
 package iiif
 
 type profile interface{}
+type extraProfile struct {
+	Formats   []string `json:"formats"`
+	Qualities []string `json:"qualities"`
+	Supports  []string `json:"supports"`
+}
 
 // Info represents the simplest possible data to provide a valid IIIF
 // information JSON response
@@ -55,6 +60,32 @@ func (fs *FeatureSet) Profile() []profile {
 
 	_, extraFeatures, _ := FeatureCompare(fs, baseFS)
 	if len(extraFeatures) > 0 {
+		p = append(p, extraProfileFromFeaturesMap(extraFeatures))
+	}
+
+	return p
+}
+
+func extraProfileFromFeaturesMap(fm featuresMap) extraProfile {
+	p := extraProfile{
+		Formats:   make([]string, 0),
+		Qualities: make([]string, 0),
+		Supports:  make([]string, 0),
+	}
+
+	// By default a featuresMap is created only listing enabled features, so as
+	// long as that doesn't change, we can ignore the boolean
+	for name := range fm {
+		if Quality(name).Valid() {
+			p.Qualities = append(p.Qualities, name)
+			continue
+		}
+		if Format(name).Valid() {
+			p.Formats = append(p.Formats, name)
+			continue
+		}
+
+		p.Supports = append(p.Supports, name)
 	}
 
 	return p
