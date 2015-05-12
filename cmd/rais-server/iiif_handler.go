@@ -156,6 +156,7 @@ func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif
 	img, err := res.Apply(u)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
+		return
 	}
 
 	// Encode as JPEG straight to the client
