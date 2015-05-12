@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/uoregon-libraries/rais-image-server/iiif"
-	"github.com/uoregon-libraries/rais-image-server/transform"
-	"image"
 	"image/jpeg"
 	"log"
 	"net/http"
@@ -155,51 +153,9 @@ func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif
 		return
 	}
 
-	if u.Region.Type == iiif.RTPixel {
-		r := image.Rect(
-			int(u.Region.X),
-			int(u.Region.Y),
-			int(u.Region.X+u.Region.W),
-			int(u.Region.Y+u.Region.H),
-		)
-		res.Image.SetCrop(r)
-	}
-
-	switch u.Size.Type {
-	case iiif.STScaleToWidth:
-		res.Image.SetResizeWH(u.Size.W, 0)
-	case iiif.STScaleToHeight:
-		res.Image.SetResizeWH(0, u.Size.H)
-	case iiif.STExact:
-		res.Image.SetResizeWH(u.Size.W, u.Size.H)
-	case iiif.STScalePercent:
-		res.Image.SetScale(u.Size.Percent / 100.0)
-	}
-
-	img, err := res.Image.DecodeImage()
+	img, err := res.Apply(u)
 	if err != nil {
-		http.Error(w, "Unable to decode image", 500)
-		log.Println("Unable to decode image: ", err)
-		return
-	}
-
-	if u.Rotation.Degrees != 0 {
-		var r transform.Rotator
-		switch img0 := img.(type) {
-		case *image.Gray:
-			r = transform.GrayRotator{img0}
-		case *image.RGBA:
-			r = transform.RGBARotator{img0}
-		}
-
-		switch u.Rotation.Degrees {
-		case 90:
-			img = r.Rotate90()
-		case 180:
-			img = r.Rotate180()
-		case 270:
-			img = r.Rotate270()
-		}
+		http.Error(w, err.Error(), 500)
 	}
 
 	// Encode as JPEG straight to the client

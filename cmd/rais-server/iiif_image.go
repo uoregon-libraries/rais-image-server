@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/uoregon-libraries/rais-image-server/iiif"
 	"github.com/uoregon-libraries/rais-image-server/openjpeg"
+	"github.com/uoregon-libraries/rais-image-server/transform"
 	"image"
 	"log"
 	"os"
@@ -14,6 +15,7 @@ import (
 var (
 	ErrImageDoesNotExist = errors.New("Image file does not exist")
 	ErrInvalidFiletype   = errors.New("Invalid or unknown file type")
+	ErrDecodeImage       = errors.New("Unable to decode image")
 )
 
 // IIIFImage defines an interface for reading images in a generic way.  It's
@@ -65,4 +67,65 @@ func NewImageResource(id iiif.ID, filepath string) (*ImageResource, error) {
 
 	img := &ImageResource{ID: id, Image: i, FilePath: filepath}
 	return img, nil
+}
+
+// Apply runs all image manipulation operations described by the IIIF URL, and
+// returns an image.Image ready for encoding to the client
+func (res *ImageResource) Apply(u *iiif.URL) (image.Image, error) {
+	// Crop and resize have to be prepared before we can decode
+	res.prepCrop(u.Region)
+	res.prepResize(u.Size)
+
+	img, err := res.Image.DecodeImage()
+	if err != nil {
+		log.Println("Unable to decode image: ", err)
+		return nil, ErrDecodeImage
+	}
+
+	if u.Rotation.Degrees != 0 {
+		img = rotate(img, u.Rotation)
+	}
+
+	return img, nil
+}
+
+func (res *ImageResource) prepCrop(r iiif.Region) {
+	if r.Type == iiif.RTPixel {
+		rect := image.Rect(int(r.X), int(r.Y), int(r.X+r.W), int(r.Y+r.H))
+		res.Image.SetCrop(rect)
+	}
+}
+
+func (res *ImageResource) prepResize(s iiif.Size) {
+	switch s.Type {
+	case iiif.STScaleToWidth:
+		res.Image.SetResizeWH(s.W, 0)
+	case iiif.STScaleToHeight:
+		res.Image.SetResizeWH(0, s.H)
+	case iiif.STExact:
+		res.Image.SetResizeWH(s.W, s.H)
+	case iiif.STScalePercent:
+		res.Image.SetScale(s.Percent / 100.0)
+	}
+}
+
+func rotate(img image.Image, rot iiif.Rotation) image.Image {
+	var r transform.Rotator
+	switch img0 := img.(type) {
+	case *image.Gray:
+		r = transform.GrayRotator{img0}
+	case *image.RGBA:
+		r = transform.RGBARotator{img0}
+	}
+
+	switch rot.Degrees {
+	case 90:
+		img = r.Rotate90()
+	case 180:
+		img = r.Rotate180()
+	case 270:
+		img = r.Rotate270()
+	}
+
+	return img
 }
