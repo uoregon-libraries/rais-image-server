@@ -45,10 +45,11 @@ of RAM.  Load testing is highly recommended.
 
 - IIIF Support isn't perfect
 
-The IIIF support adheres to level 1 of the spec, but it isn't as customizable
-as we would prefer.  You can't specify per-image info.json responses; there is
-no way to change the tile scale factors: 1, 2, 4, 8, 16, 32, and 64; and
-there's no way to specify optimal resize targets.
+The IIIF support adheres to level 1 of the spec (as well as some extra
+features), but it isn't as customizable as we would prefer.  You can't specify
+per-image info.json responses; there is no way to change the tile scale
+factors: 1, 2, 4, 8, 16, 32, and 64; and there's no way to specify optimal
+resize targets.
 
 IIIF viewers seem to pick moderately smart choices, but this server probably
 won't work out of the box for, say, a 200+ megapixel image.
@@ -181,6 +182,44 @@ influx of people accessing the same newspaper.  It is highly advisable that the
 `htcacheclean` tool be used in tandem with Apache cache directives, and it's
 probably worth reading [the Apache caching
 guide](http://httpd.apache.org/docs/2.2/caching.html).
+
+IIIF Features
+-----
+
+When running as an IIIF server, you can browse to any valid Image's INFO page
+to see the features supported.  At the moment, there is no smart per-image
+feature support.  Other than possible bugs, we are ensuring we support level 1
+at a minimum, as well as a handful other features beyond level 1.
+
+An example INFO request would look like `http://example.com/iiif/source.jp2/info.json`,
+assuming your server is at `example.com`, the IIIF prefix is `iiif`, and the
+file "source.jp2" exists relative to the configured tile path.
+
+Full list of features supported:
+
+- Region:
+  - "full"
+  - "x,y,w,h": regionByPx
+- Size:
+  - "full"
+  - "w," / sizeByW
+  - ",h" / sizeByH
+  - "pct:x" / sizeByPct
+- Rotation:
+  - 0
+  - "90,180,270" / rotationBy90s
+- Quality:
+  - "default"
+  - "native" (same as "default"
+- Format:
+  - jpg
+  - png
+  - tif
+  - gif
+- HTTP Features:
+  - baseUriRedirect
+  - cors
+  - jsonldMediaType
 
 License
 -----
