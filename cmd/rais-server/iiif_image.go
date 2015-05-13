@@ -37,7 +37,7 @@ type ImageResource struct {
 	FilePath string
 }
 
-// Initializes and returns an IIIFImage for the given id and path.  If the path
+// Initializes and returns an ImageResource for the given id and path.  If the path
 // doesn't resolve to a valid file, or resolves to a file type that isn't
 // supported, an error is returned.  File type is determined by extension, so
 // images will need standard extensions in order to work.
