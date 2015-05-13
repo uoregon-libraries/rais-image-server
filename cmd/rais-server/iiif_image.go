@@ -23,7 +23,6 @@ var (
 // heavily biased toward the way we've had to do our JP2 images since they're
 // the more unusual use-case.
 type IIIFImage interface {
-	CleanupResources()
 	DecodeImage() (image.Image, error)
 	GetDimensions() (image.Rectangle, error)
 	SetCrop(image.Rectangle)

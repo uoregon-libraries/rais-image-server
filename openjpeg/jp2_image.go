@@ -70,6 +70,8 @@ func (i *JP2Image) SetCrop(r image.Rectangle) {
 // and resizing happen here due to the nature of openjpeg, so SetScale,
 // SetResizeWH, and SetCrop must be called before this function.
 func (i *JP2Image) DecodeImage() (image.Image, error) {
+	defer i.CleanupResources()
+
 	// We need the codec to be ready for all operations below
 	if err := i.initializeCodec(); err != nil {
 		goLog(3, "Error initializing codec - aborting")
@@ -205,12 +207,12 @@ func (i *JP2Image) ReadHeader() error {
 // the IIIFImage interface.  The image resource is cleaned up afterward, as this
 // operation has to be usable independently of decoding.
 func (i *JP2Image) GetDimensions() (image.Rectangle, error) {
+	defer i.CleanupResources()
 	if err := i.ReadHeader(); err != nil {
 		return image.Rectangle{}, err
 	}
 
 	d := i.Dimensions()
-	i.CleanupResources()
 	return d, nil
 }
 

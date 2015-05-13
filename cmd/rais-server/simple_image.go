@@ -99,7 +99,3 @@ func (i *SimpleImage) DecodeImage() (image.Image, error) {
 func (i *SimpleImage) GetDimensions() (image.Rectangle, error) {
 	return image.Rect(0, 0, i.conf.Width, i.conf.Height), nil
 }
-
-// This does nothing, but must exist to satisfy the interface
-func (i *SimpleImage) CleanupResources() {
-}

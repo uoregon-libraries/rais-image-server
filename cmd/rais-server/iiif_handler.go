@@ -86,8 +86,6 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	defer res.Image.CleanupResources()
-
 	// Check for base path and redirect if that's all we have
 	if ih.BaseOnlyRegex.MatchString(p) {
 		http.Redirect(w, req, p+"/info.json", 303)
