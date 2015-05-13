@@ -200,6 +200,7 @@ Full list of features supported:
 - Region:
   - "full"
   - "x,y,w,h": regionByPx
+  - "pct:x,y,w,h": regionByPct
 - Size:
   - "full"
   - "w," / sizeByW

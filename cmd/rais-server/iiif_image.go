@@ -76,7 +76,10 @@ func NewImageResource(id iiif.ID, filepath string) (*ImageResource, error) {
 // returns an image.Image ready for encoding to the client
 func (res *ImageResource) Apply(u *iiif.URL) (image.Image, error) {
 	// Crop and resize have to be prepared before we can decode
-	res.prepCrop(u.Region)
+	if err := res.prepCrop(u.Region); err != nil {
+		return nil, err
+	}
+
 	res.prepResize(u.Size)
 
 	img, err := res.Image.DecodeImage()
@@ -92,11 +95,26 @@ func (res *ImageResource) Apply(u *iiif.URL) (image.Image, error) {
 	return img, nil
 }
 
-func (res *ImageResource) prepCrop(r iiif.Region) {
-	if r.Type == iiif.RTPixel {
+func (res *ImageResource) prepCrop(r iiif.Region) error {
+	switch r.Type {
+	case iiif.RTPixel:
 		rect := image.Rect(int(r.X), int(r.Y), int(r.X+r.W), int(r.Y+r.H))
 		res.Image.SetCrop(rect)
+	case iiif.RTPercent:
+		dim, err := res.Image.GetDimensions()
+		if err != nil {
+			return err
+		}
+		rect := image.Rect(
+			int(r.X * float64(dim.Dx()) / 100.0),
+			int(r.Y * float64(dim.Dy()) / 100.0),
+			int((r.X+r.W) * float64(dim.Dx()) / 100.0),
+			int((r.Y+r.H) * float64(dim.Dy()) / 100.0),
+		)
+		res.Image.SetCrop(rect)
 	}
+
+	return nil
 }
 
 func (res *ImageResource) prepResize(s iiif.Size) {
