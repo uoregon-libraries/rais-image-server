@@ -15,13 +15,15 @@ import (
 // only handle a basic "read it all, then crop/resize" flow, and thus should
 // have very careful load testing.
 type SimpleImage struct {
-	file         *os.File
-	conf         image.Config
-	decodeWidth  int
-	decodeHeight int
-	decodeArea   image.Rectangle
-	resize       bool
-	crop         bool
+	file            *os.File
+	conf            image.Config
+	decodeWidth     int
+	decodeHeight    int
+	scaleFactor     float64
+	decodeArea      image.Rectangle
+	resizeByPercent bool
+	resizeByPixels  bool
+	crop            bool
 }
 
 func NewSimpleImage(filename string) (*SimpleImage, error) {
@@ -41,8 +43,6 @@ func NewSimpleImage(filename string) (*SimpleImage, error) {
 	i.decodeWidth = i.conf.Width
 	i.decodeHeight = i.conf.Height
 	i.decodeArea = image.Rect(0, 0, i.decodeWidth, i.decodeHeight)
-	i.resize = false
-	i.crop = false
 
 	return i, nil
 }
@@ -51,16 +51,17 @@ func NewSimpleImage(filename string) (*SimpleImage, error) {
 // percentage from 0 to 1.  This is mutually exclusive with resizing by a set
 // width/height value.
 func (i *SimpleImage) SetScale(m float64) {
-	i.resize = true
-	i.decodeWidth = int(float64(i.conf.Width) * m)
-	i.decodeHeight = int(float64(i.conf.Height) * m)
+	i.resizeByPixels = false
+	i.resizeByPercent = true
+	i.scaleFactor = m
 }
 
 // SetResizeWH sets the image to scale to the given width and height.  If one
 // dimension is 0, the decoded image will preserve the aspect ratio while
 // scaling to the non-zero dimension.
 func (i *SimpleImage) SetResizeWH(width, height int) {
-	i.resize = true
+	i.resizeByPercent = false
+	i.resizeByPixels = true
 	i.decodeWidth = width
 	i.decodeHeight = height
 }
@@ -88,7 +89,13 @@ func (i *SimpleImage) DecodeImage() (image.Image, error) {
 		img = dst
 	}
 
-	if i.resize {
+	if i.resizeByPercent {
+		i.decodeWidth = int(float64(i.decodeArea.Dx()) * i.scaleFactor)
+		i.decodeHeight = int(float64(i.decodeArea.Dy()) * i.scaleFactor)
+		i.resizeByPixels = true
+	}
+
+	if i.resizeByPixels {
 		img = resize.Resize(uint(i.decodeWidth), uint(i.decodeHeight), img, resize.Bilinear)
 	}
 
