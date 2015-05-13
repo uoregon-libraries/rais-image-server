@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"github.com/uoregon-libraries/rais-image-server/iiif"
 	"github.com/uoregon-libraries/rais-image-server/openjpeg"
 	"github.com/uoregon-libraries/rais-image-server/transform"
@@ -17,6 +16,7 @@ var (
 	ErrImageDoesNotExist = errors.New("Image file does not exist")
 	ErrInvalidFiletype   = errors.New("Invalid or unknown file type")
 	ErrDecodeImage       = errors.New("Unable to decode image")
+	ErrBadImageFile      = errors.New("Unable to read image")
 )
 
 // IIIFImage defines an interface for reading images in a generic way.  It's
@@ -65,7 +65,7 @@ func NewImageResource(id iiif.ID, filepath string) (*ImageResource, error) {
 
 	if err != nil {
 		log.Printf("Unable to read image %#v: %s", filepath)
-		return nil, errors.New(fmt.Sprintf("Unable to read image %#v: %s", id, err))
+		return nil, ErrBadImageFile
 	}
 
 	img := &ImageResource{ID: id, Image: i, FilePath: filepath}
