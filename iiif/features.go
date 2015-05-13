@@ -39,7 +39,7 @@ type FeatureSet struct {
 	RotationArbitrary bool
 	Mirroring         bool
 
-	// "Quality" (color depth / color space)
+	// "Quality" (color model / color depth)
 	Default bool
 	Color   bool
 	Gray    bool
