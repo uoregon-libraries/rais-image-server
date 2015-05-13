@@ -151,8 +151,8 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 		// don't care about the *source* image's alpha.  It's worth noting that
 		// this will almost certainly blow up on any JP2 that isn't using RGB.
 
-		area := width*height
-		bytes := area<<2
+		area := width * height
+		bytes := area << 2
 		realData := make([]uint8, bytes)
 
 		red := JP2ComponentData(comps[0])
@@ -171,7 +171,7 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 			offset++
 		}
 
-		img = &image.RGBA{Pix: realData, Stride: width<<2, Rect: bounds}
+		img = &image.RGBA{Pix: realData, Stride: width << 2, Rect: bounds}
 	}
 
 	if i.resizeByPixels {
