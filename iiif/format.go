@@ -15,7 +15,7 @@ const (
 )
 
 // Formats is the definitive list of all possible Format constants
-var Formats = []Format{FmtJPG, FmtTIF, FmtPNG, FmtJP2, FmtPDF, FmtWEBP}
+var Formats = []Format{FmtJPG, FmtTIF, FmtPNG, FmtGIF, FmtJP2, FmtPDF, FmtWEBP}
 
 // Valid returns whether a given Format string is valid.  Since a Format can be
 // created via Format("blah"), this ensures the format is, in fact, within the

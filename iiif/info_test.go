@@ -38,13 +38,15 @@ func TestLevel1MissingFeaturesProfile(t *testing.T) {
 	fs.Png = true
 	fs.Pdf = true
 	fs.Jp2 = true
+	fs.Gif = true
 	i = fs.Info()
 	extra = i.Profile[1].(extraProfile)
 	assert.Equal(2, len(extra.Qualities), "There are 2 extra qualities now", t)
-	assert.Equal(3, len(extra.Formats), "There are 3 extra formats now", t)
+	assert.Equal(4, len(extra.Formats), "There are 4 extra formats now", t)
 	assert.IncludesString("color", extra.Qualities, "Extra quality support", t)
 	assert.IncludesString("bitonal", extra.Qualities, "Extra quality support", t)
 	assert.IncludesString("png", extra.Formats, "Extra format support", t)
 	assert.IncludesString("pdf", extra.Formats, "Extra format support", t)
 	assert.IncludesString("jp2", extra.Formats, "Extra format support", t)
+	assert.IncludesString("gif", extra.Formats, "Extra format support", t)
 }
