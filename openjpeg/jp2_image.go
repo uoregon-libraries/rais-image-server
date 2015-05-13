@@ -80,12 +80,12 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 	// full image - which means reading in the image header and then cleaning up
 	// all previously-initialized data
 	if (i.resizeByPixels || i.resizeByPercent) && !i.crop {
-		if err := i.ReadHeader(); err != nil {
+		var err error
+		i.decodeArea, err = i.GetDimensions()
+		if err != nil {
 			goLog(3, "Error getting dimensions - aborting")
 			return nil, err
 		}
-		i.decodeArea = i.Dimensions()
-		i.CleanupResources()
 	}
 
 	// If resize is by percent, we now have the decode area, and can use that to
@@ -202,13 +202,16 @@ func (i *JP2Image) ReadHeader() error {
 }
 
 // GetDimensions reads the JP2 headers and pulls dimensions in order to satisfy
-// the IIIFImage interface
+// the IIIFImage interface.  The image resource is cleaned up afterward, as this
+// operation has to be usable independently of decoding.
 func (i *JP2Image) GetDimensions() (image.Rectangle, error) {
 	if err := i.ReadHeader(); err != nil {
 		return image.Rectangle{}, err
 	}
 
-	return i.Dimensions(), nil
+	d := i.Dimensions()
+	i.CleanupResources()
+	return d, nil
 }
 
 func (i *JP2Image) Dimensions() image.Rectangle {
