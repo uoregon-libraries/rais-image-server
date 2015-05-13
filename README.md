@@ -213,10 +213,10 @@ Full list of features supported:
   - "default"
   - "native" (same as "default"
 - Format:
-  - jpg
+  - jpg (This is the best format for a speedy encode and small download)
   - png
   - tif
-  - gif
+  - gif (Note that this is VERY slow for some reason!)
 - HTTP Features:
   - baseUriRedirect
   - cors
