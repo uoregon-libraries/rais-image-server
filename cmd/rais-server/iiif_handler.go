@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/uoregon-libraries/rais-image-server/iiif"
-	"image/jpeg"
 	"log"
+	"mime"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -37,6 +37,9 @@ func NewIIIFHandler(u *url.URL, widths []int, tp string) *IIIFHandler {
 	// The base feature set is level 1, then we add our extra features, tile sizes, etc
 	fs := iiif.FeatureSet1()
 	fs.RotationBy90s = true
+	fs.Png = true
+	fs.Gif = true
+	fs.Tif = true
 	fs.TileSizes = make([]iiif.TileSize, 0)
 	sf := []int{1, 2, 4, 8, 16, 32, 64}
 	for _, val := range widths {
@@ -159,10 +162,10 @@ func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif
 		return
 	}
 
-	// Encode as JPEG straight to the client
-	if err = jpeg.Encode(w, img, &jpeg.Options{Quality: 80}); err != nil {
-		http.Error(w, "Unable to encode jpeg", 500)
-		log.Println("Unable to encode JPEG:", err)
+	w.Header().Set("Content-Type", mime.TypeByExtension("."+string(u.Format)))
+	if err = EncodeImage(w, img, u.Format); err != nil {
+		http.Error(w, "Unable to encode", 500)
+		log.Printf("Unable to encode to %s: %s", u.Format, err)
 		return
 	}
 }
