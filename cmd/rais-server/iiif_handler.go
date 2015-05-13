@@ -41,6 +41,8 @@ func NewIIIFHandler(u *url.URL, widths []int, tp string) *IIIFHandler {
 	fs.Png = true
 	fs.Gif = true
 	fs.Tif = true
+	fs.Color = true
+	fs.Gray = true
 	fs.TileSizes = make([]iiif.TileSize, 0)
 	sf := []int{1, 2, 4, 8, 16, 32, 64}
 	for _, val := range widths {

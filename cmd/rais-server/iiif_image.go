@@ -6,6 +6,8 @@ import (
 	"github.com/uoregon-libraries/rais-image-server/openjpeg"
 	"github.com/uoregon-libraries/rais-image-server/transform"
 	"image"
+	"image/color"
+	"image/draw"
 	"log"
 	"os"
 	"path"
@@ -91,6 +93,14 @@ func (res *ImageResource) Apply(u *iiif.URL) (image.Image, error) {
 		img = rotate(img, u.Rotation)
 	}
 
+	// Unless I'm missing something, QColor doesn't actually change an image -
+	// e.g., if it's already color, nothing happens.  If it's grayscale, there's
+	// nothing to do (obviously we shouldn't report it, but oh well)
+	switch u.Quality {
+	case iiif.QGray:
+		img = grayscale(img)
+	}
+
 	return img, nil
 }
 
@@ -148,4 +158,16 @@ func rotate(img image.Image, rot iiif.Rotation) image.Image {
 	}
 
 	return img
+}
+
+func grayscale(img image.Image) image.Image {
+	cm := img.ColorModel()
+	if cm == color.GrayModel || cm == color.Gray16Model {
+		return img
+	}
+
+	b := img.Bounds()
+	dst := image.NewGray(image.Rect(0, 0, b.Dx(), b.Dy()))
+	draw.Draw(dst, b, img, b.Min, draw.Src)
+	return dst
 }
