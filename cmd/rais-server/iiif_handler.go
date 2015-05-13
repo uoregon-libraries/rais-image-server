@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/uoregon-libraries/rais-image-server/iiif"
-	"image/jpeg"
 	"log"
 	"net/http"
 	"net/url"
@@ -159,10 +158,9 @@ func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif
 		return
 	}
 
-	// Encode as JPEG straight to the client
-	if err = jpeg.Encode(w, img, &jpeg.Options{Quality: 80}); err != nil {
-		http.Error(w, "Unable to encode jpeg", 500)
-		log.Println("Unable to encode JPEG:", err)
+	if err = EncodeImage(w, img, u.Format); err != nil {
+		http.Error(w, "Unable to encode", 500)
+		log.Printf("Unable to encode to %s: %s", u.Format, err)
 		return
 	}
 }
