@@ -91,6 +91,7 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Encode as JPEG straight to the client
+	w.Header().Set("Content-Type", "image/jpeg")
 	if err = jpeg.Encode(w, img, &jpeg.Options{Quality: 80}); err != nil {
 		http.Error(w, "Unable to encode tile", 500)
 		log.Println("Unable to encode tile into JPEG:", err)
@@ -137,6 +138,7 @@ func ResizeHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Encode as JPEG straight to the client
+	w.Header().Set("Content-Type", "image/jpeg")
 	if err = jpeg.Encode(w, img, &jpeg.Options{Quality: 80}); err != nil {
 		http.Error(w, "Unable to encode tile", 500)
 		log.Println("Unable to encode tile into JPEG:", err)

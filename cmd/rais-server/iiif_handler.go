@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/uoregon-libraries/rais-image-server/iiif"
 	"log"
+	"mime"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -158,6 +159,7 @@ func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif
 		return
 	}
 
+	w.Header().Set("Content-Type", mime.TypeByExtension("."+string(u.Format)))
 	if err = EncodeImage(w, img, u.Format); err != nil {
 		http.Error(w, "Unable to encode", 500)
 		log.Printf("Unable to encode to %s: %s", u.Format, err)
