@@ -117,10 +117,10 @@ func (res *ImageResource) prepCrop(r iiif.Region) error {
 			return err
 		}
 		rect := image.Rect(
-			int(r.X * float64(dim.Dx()) / 100.0),
-			int(r.Y * float64(dim.Dy()) / 100.0),
-			int((r.X+r.W) * float64(dim.Dx()) / 100.0),
-			int((r.Y+r.H) * float64(dim.Dy()) / 100.0),
+			int(r.X*float64(dim.Dx())/100.0),
+			int(r.Y*float64(dim.Dy())/100.0),
+			int((r.X+r.W)*float64(dim.Dx())/100.0),
+			int((r.Y+r.H)*float64(dim.Dy())/100.0),
 		)
 		res.Image.SetCrop(rect)
 	}
