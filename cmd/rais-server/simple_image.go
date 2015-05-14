@@ -23,7 +23,6 @@ type SimpleImage struct {
 	decodeArea      image.Rectangle
 	resizeByPercent bool
 	resizeByPixels  bool
-	crop            bool
 }
 
 func NewSimpleImage(filename string) (*SimpleImage, error) {
@@ -67,7 +66,6 @@ func (i *SimpleImage) SetResizeWH(width, height int) {
 }
 
 func (i *SimpleImage) SetCrop(r image.Rectangle) {
-	i.crop = true
 	i.decodeArea = r
 }
 
@@ -81,7 +79,7 @@ func (i *SimpleImage) DecodeImage() (image.Image, error) {
 		return nil, err
 	}
 
-	if i.crop {
+	if i.decodeArea != img.Bounds() {
 		srcB := img.Bounds()
 		dstB := i.decodeArea
 		dst := image.NewRGBA(image.Rect(0, 0, dstB.Dx(), dstB.Dy()))
