@@ -219,6 +219,30 @@ resize targets.
 IIIF viewers seem to pick moderately smart choices, but this server probably
 won't work out of the box for, say, a 200+ megapixel image.
 
+Since there are no per-image info.json responses, the quality choices are, to
+some degree, incorrect.  A grayscale image will report it has a color, gray,
+and bitonal qualities available, when in fact it only has gray and bitonal.
+
+It should also be noted that GIF output is amazingly slow.  Given that GIF
+output isn't even an IIIF level 2 feature, we aren't planning to put much time
+into troubleshooting the issue.  GIFs are available, but not likely to be used
+except as one-offs.
+
+- Not all JP2 files are created equally
+
+Our newspaper JP2s are encoded in a way that makes them *very* friendly to
+pan-and-zoom systems.  They are encoded with tiling, which allows pieces of
+the JP2 to be read independently, and significantly reduces the memory needed
+to serve the data up to a viewer on the fly.
+
+JP2s that aren't encoded like this will not be nearly as memory- and
+CPU-efficient.  We'd recommend tiling JP2s at a size of around 1024x1024.
+
+Additionally, grayscale images will require one-third the memory and processing
+power when compared to color images.  If your sources are grayscale, but you
+encode to RGB for better preservation, consider building grayscale derivatives
+for web display.
+
 - Unknown performance metrics for non-JP2 files
 
 These aren't well-tested since our system is exclusively JP2.  Non-JP2 types
@@ -226,6 +250,11 @@ that are supported (TIFF, JPG, PNG, and GIF) have to be read in fully and then
 cropped and resized in Go.  This will not be as fast as image formats built for
 deep zooming and run under a high-performance image server such as [IIP
 Image](http://iipimage.sourceforge.net/).
+
+As an example: TIFF files are usually fast to process, but can potentially take
+up a great deal of memory.  In some cases, the speed outweighs the memory
+costs, as the decoding happens so fast the RAM is able to be freed before it
+becomes a problem.  Again, load-testing is extremely important here.
 
 License
 -----
