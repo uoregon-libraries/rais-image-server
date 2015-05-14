@@ -180,9 +180,7 @@ func bitonal(img image.Image) image.Image {
 	b := imgGray.Bounds()
 	imgBitonal := image.NewGray(image.Rect(0, 0, b.Dx(), b.Dy()))
 	for i, pixel := range imgGray.Pix {
-		if pixel <= 190 {
-			imgBitonal.Pix[i] = 0
-		} else {
+		if pixel > 190 {
 			imgBitonal.Pix[i] = 255
 		}
 	}
