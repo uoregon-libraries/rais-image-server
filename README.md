@@ -139,6 +139,9 @@ Full list of features supported:
 - Quality:
   - "default"
   - "native" (same as "default")
+  - "color"
+  - "gray"
+  - "bitonal"
 - Format:
   - jpg (This is the best format for a speedy encode and small download)
   - png
