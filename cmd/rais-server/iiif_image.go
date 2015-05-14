@@ -99,6 +99,8 @@ func (res *ImageResource) Apply(u *iiif.URL) (image.Image, error) {
 	switch u.Quality {
 	case iiif.QGray:
 		img = grayscale(img)
+	case iiif.QBitonal:
+		img = bitonal(img)
 	}
 
 	return img, nil
@@ -170,4 +172,20 @@ func grayscale(img image.Image) image.Image {
 	dst := image.NewGray(image.Rect(0, 0, b.Dx(), b.Dy()))
 	draw.Draw(dst, b, img, b.Min, draw.Src)
 	return dst
+}
+
+func bitonal(img image.Image) image.Image {
+	// First turn the image into 8-bit grayscale for easier manipulation
+	imgGray := grayscale(img).(*image.Gray)
+	b := imgGray.Bounds()
+	imgBitonal := image.NewGray(image.Rect(0, 0, b.Dx(), b.Dy()))
+	for i, pixel := range imgGray.Pix {
+		if pixel <= 190 {
+			imgBitonal.Pix[i] = 0
+		} else {
+			imgBitonal.Pix[i] = 255
+		}
+	}
+
+	return imgBitonal
 }
