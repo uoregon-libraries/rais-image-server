@@ -1,5 +1,9 @@
 package iiif
 
+import (
+	"sort"
+)
+
 type profile interface{}
 type extraProfile struct {
 	Formats   []string `json:"formats,omitempty"`
@@ -90,6 +94,10 @@ func extraProfileFromFeaturesMap(fm featuresMap) extraProfile {
 
 		p.Supports = append(p.Supports, name)
 	}
+
+	sort.Strings(p.Qualities)
+	sort.Strings(p.Formats)
+	sort.Strings(p.Supports)
 
 	return p
 }
