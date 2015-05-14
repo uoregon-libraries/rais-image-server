@@ -133,6 +133,7 @@ Full list of features supported:
   - "w," / sizeByW
   - ",h" / sizeByH
   - "pct:x" / sizeByPct
+  - "sizeAboveFull"
 - Rotation:
   - 0
   - "90,180,270" / rotationBy90s
