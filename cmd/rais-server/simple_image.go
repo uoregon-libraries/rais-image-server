@@ -100,7 +100,12 @@ func (i *SimpleImage) DecodeImage() (image.Image, error) {
 	return img, nil
 }
 
-// GetDimensions returns the config data as a rectangle
-func (i *SimpleImage) GetDimensions() (image.Rectangle, error) {
-	return image.Rect(0, 0, i.conf.Width, i.conf.Height), nil
+// GetWidth returns the image width
+func (i *SimpleImage) GetWidth() int {
+	return i.conf.Width
+}
+
+// GetHeight returns the image height
+func (i *SimpleImage) GetHeight() int {
+	return i.conf.Height
 }

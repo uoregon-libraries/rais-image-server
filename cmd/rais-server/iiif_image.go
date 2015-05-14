@@ -26,7 +26,8 @@ var (
 // the more unusual use-case.
 type IIIFImage interface {
 	DecodeImage() (image.Image, error)
-	GetDimensions() (image.Rectangle, error)
+	GetWidth() int
+	GetHeight() int
 	SetCrop(image.Rectangle)
 	SetResizeWH(int, int)
 	SetScale(float64)
@@ -36,7 +37,6 @@ type ImageResource struct {
 	Image      IIIFImage
 	ID         iiif.ID
 	FilePath   string
-	Dimensions image.Rectangle
 }
 
 // Initializes and returns an ImageResource for the given id and path.  If the path
@@ -71,11 +71,6 @@ func NewImageResource(id iiif.ID, filepath string) (*ImageResource, error) {
 	}
 
 	img := &ImageResource{ID: id, Image: i, FilePath: filepath}
-	img.Dimensions, err = i.GetDimensions()
-	if err != nil {
-		log.Printf("Unable to read image %#v dimensions: %s", id, err)
-		return nil, err
-	}
 	return img, nil
 }
 
@@ -109,19 +104,19 @@ func (res *ImageResource) Apply(u *iiif.URL) (image.Image, error) {
 }
 
 func (res *ImageResource) prep(r iiif.Region, s iiif.Size) {
-	var crop = res.Dimensions
+	w, h := res.Image.GetWidth(), res.Image.GetHeight()
+
 	switch r.Type {
 	case iiif.RTPixel:
 		crop = image.Rect(int(r.X), int(r.Y), int(r.X+r.W), int(r.Y+r.H))
 	case iiif.RTPercent:
 		crop = image.Rect(
-			int(r.X*float64(crop.Dx())/100.0),
-			int(r.Y*float64(crop.Dy())/100.0),
-			int((r.X+r.W)*float64(crop.Dx())/100.0),
-			int((r.Y+r.H)*float64(crop.Dy())/100.0),
+			int(r.X*float64(w)/100.0),
+			int(r.Y*float64(h)/100.0),
+			int((r.X+r.W)*float64(w)/100.0),
+			int((r.Y+r.H)*float64(h)/100.0),
 		)
 	}
-
 	res.Image.SetCrop(crop)
 
 	switch s.Type {
