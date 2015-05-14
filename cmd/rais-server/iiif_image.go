@@ -33,9 +33,10 @@ type IIIFImage interface {
 }
 
 type ImageResource struct {
-	Image    IIIFImage
-	ID       iiif.ID
-	FilePath string
+	Image      IIIFImage
+	ID         iiif.ID
+	FilePath   string
+	Dimensions image.Rectangle
 }
 
 // Initializes and returns an ImageResource for the given id and path.  If the path
@@ -70,6 +71,11 @@ func NewImageResource(id iiif.ID, filepath string) (*ImageResource, error) {
 	}
 
 	img := &ImageResource{ID: id, Image: i, FilePath: filepath}
+	img.Dimensions, err = i.GetDimensions()
+	if err != nil {
+		log.Printf("Unable to read image %#v dimensions: %s", id, err)
+		return nil, err
+	}
 	return img, nil
 }
 
@@ -112,10 +118,7 @@ func (res *ImageResource) prepCrop(r iiif.Region) error {
 		rect := image.Rect(int(r.X), int(r.Y), int(r.X+r.W), int(r.Y+r.H))
 		res.Image.SetCrop(rect)
 	case iiif.RTPercent:
-		dim, err := res.Image.GetDimensions()
-		if err != nil {
-			return err
-		}
+		dim := res.Dimensions
 		rect := image.Rect(
 			int(r.X*float64(dim.Dx())/100.0),
 			int(r.Y*float64(dim.Dy())/100.0),
