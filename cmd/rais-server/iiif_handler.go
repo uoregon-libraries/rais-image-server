@@ -34,17 +34,45 @@ type IIIFHandler struct {
 }
 
 func NewIIIFHandler(u *url.URL, widths []int, tp string) *IIIFHandler {
-	// The base feature set is level 1, then we add our extra features, tile sizes, etc
-	fs := iiif.FeatureSet1()
-	fs.RegionByPct = true
-	fs.RotationBy90s = true
-	fs.Png = true
-	fs.Gif = true
-	fs.Tif = true
-	fs.Color = true
-	fs.Gray = true
-	fs.Bitonal = true
-	fs.SizeAboveFull = true
+	// Set up the features we support individually, and let the info magic figure
+	// out how best to report it
+	fs := &iiif.FeatureSet{
+		RegionByPx: true,
+		RegionByPct: true,
+
+		SizeByWhListed: true,
+		SizeByW: true,
+		SizeByH: true,
+		SizeByPct: true,
+		SizeByWh: false,
+		SizeByForcedWh: true,
+		SizeAboveFull: true,
+
+		RotationBy90s: true,
+		RotationArbitrary: false,
+		Mirroring: false,
+
+		Default: true,
+		Color: true,
+		Gray: true,
+		Bitonal: true,
+
+		Jpg: true,
+		Png: true,
+		Gif: true,
+		Tif: true,
+		Jp2: false,
+		Pdf: false,
+		Webp: false,
+
+		BaseUriRedirect: true,
+		Cors: true,
+		JsonldMediaType: true,
+		ProfileLinkHeader: false,
+		CanonicalLinkHeader: false,
+	}
+
+	// Set up tile sizes - scale factors are hard-coded for now
 	fs.TileSizes = make([]iiif.TileSize, 0)
 	sf := []int{1, 2, 4, 8, 16, 32, 64}
 	for _, val := range widths {
