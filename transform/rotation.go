@@ -17,7 +17,7 @@ type GrayRotator struct {
 	*image.Gray
 }
 
-// Rotate90 does a simple 90-degree clockwise rotation, returning a new *image.Gray
+// Rotate90 does a simple 90-degree clockwise rotation, returning a new image.Image
 func (src GrayRotator) Rotate90() image.Image {
 	srcB := src.Bounds()
 	srcWidth := srcB.Dx()
@@ -39,7 +39,7 @@ func (src GrayRotator) Rotate90() image.Image {
 	return dst
 }
 
-// Rotate180 does a simple 180-degree clockwise rotation, returning a new *image.Gray
+// Rotate180 does a simple 180-degree clockwise rotation, returning a new image.Image
 func (src GrayRotator) Rotate180() image.Image {
 	srcB := src.Bounds()
 	srcWidth := srcB.Dx()
@@ -61,7 +61,7 @@ func (src GrayRotator) Rotate180() image.Image {
 	return dst
 }
 
-// Rotate270 does a simple 270-degree clockwise rotation, returning a new *image.Gray
+// Rotate270 does a simple 270-degree clockwise rotation, returning a new image.Image
 func (src GrayRotator) Rotate270() image.Image {
 	srcB := src.Bounds()
 	srcWidth := srcB.Dx()
@@ -88,7 +88,7 @@ type RGBARotator struct {
 	*image.RGBA
 }
 
-// Rotate90 does a simple 90-degree clockwise rotation, returning a new *image.RGBA
+// Rotate90 does a simple 90-degree clockwise rotation, returning a new image.Image
 func (src RGBARotator) Rotate90() image.Image {
 	srcB := src.Bounds()
 	srcWidth := srcB.Dx()
@@ -110,7 +110,7 @@ func (src RGBARotator) Rotate90() image.Image {
 	return dst
 }
 
-// Rotate180 does a simple 180-degree clockwise rotation, returning a new *image.RGBA
+// Rotate180 does a simple 180-degree clockwise rotation, returning a new image.Image
 func (src RGBARotator) Rotate180() image.Image {
 	srcB := src.Bounds()
 	srcWidth := srcB.Dx()
@@ -132,7 +132,7 @@ func (src RGBARotator) Rotate180() image.Image {
 	return dst
 }
 
-// Rotate270 does a simple 270-degree clockwise rotation, returning a new *image.RGBA
+// Rotate270 does a simple 270-degree clockwise rotation, returning a new image.Image
 func (src RGBARotator) Rotate270() image.Image {
 	srcB := src.Bounds()
 	srcWidth := srcB.Dx()

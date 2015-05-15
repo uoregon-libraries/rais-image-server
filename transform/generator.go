@@ -11,7 +11,8 @@ import (
 )
 
 type rotation struct {
-	Degrees        int
+	Method         string
+	Comment        string
 	getDstXBase    string
 	GetDstY        string
 	DimensionOrder string
@@ -41,21 +42,24 @@ func (r rotation) GetDstX(i int) string {
 }
 
 var rotate90 rotation = rotation{
-	Degrees:        90,
+	Method:         "Rotate90",
+	Comment:        "does a simple 90-degree clockwise rotation, returning a new image.Image",
 	getDstXBase:    "(maxY - 1 - y)",
 	GetDstY:        "x",
 	DimensionOrder: "srcHeight, srcWidth",
 }
 
 var rotate180 rotation = rotation{
-	Degrees:        180,
+	Method:         "Rotate180",
+	Comment:        "does a simple 180-degree clockwise rotation, returning a new image.Image",
 	getDstXBase:    "(maxX - 1 - x)",
 	GetDstY:        "(maxY - 1 - y)",
 	DimensionOrder: "srcWidth, srcHeight",
 }
 
 var rotate270 rotation = rotation{
-	Degrees:        270,
+	Method:         "Rotate270",
+	Comment:        "does a simple 270-degree clockwise rotation, returning a new image.Image",
 	getDstXBase:    "y",
 	GetDstY:        "(maxX - 1 - x)",
 	DimensionOrder: "srcHeight, srcWidth",
