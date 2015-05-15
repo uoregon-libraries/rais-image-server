@@ -7,22 +7,27 @@ import (
 )
 
 type Rotator interface {
-	Rotate90() image.Image
-	Rotate180() image.Image
-	Rotate270() image.Image
-}
+	Image() image.Image
+{{range $Rotations}}	{{.Method}}()
+{{end}}}
 
 {{range .Types}}
 {{$Type := .}}
 
 // {{.Shortstring}}Rotator decorates {{.String}} with rotation functions
 type {{.Shortstring}}Rotator struct {
-	{{.String}}
+	Img {{.String}}
+}
+
+// Image returns the underlying image as an image.Image value
+func (r *{{$Type.Shortstring}}Rotator) Image() image.Image {
+	return r.Img
 }
 
 {{range $Rotations}}
-// Rotate{{.Degrees}} does a simple {{.Degrees}}-degree clockwise rotation, returning a new {{$Type.String}}
-func (src {{$Type.Shortstring}}Rotator) Rotate{{.Degrees}}() image.Image {
+// {{.Method}} {{.Comment}}
+func (r *{{$Type.Shortstring}}Rotator) {{.Method}}() {
+	src := r.Img
 	srcB := src.Bounds()
 	srcWidth := srcB.Dx()
 	srcHeight := srcB.Dy()
@@ -40,7 +45,7 @@ func (src {{$Type.Shortstring}}Rotator) Rotate{{.Degrees}}() image.Image {
 		}
 	}
 
-	return dst
+	r.Img = dst
 }
 {{end}}
 {{end}}

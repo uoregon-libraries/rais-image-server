@@ -11,7 +11,8 @@ import (
 )
 
 type rotation struct {
-	Degrees        int
+	Method         string
+	Comment        string
 	getDstXBase    string
 	GetDstY        string
 	DimensionOrder string
@@ -41,24 +42,35 @@ func (r rotation) GetDstX(i int) string {
 }
 
 var rotate90 rotation = rotation{
-	Degrees:        90,
+	Method:         "Rotate90",
+	Comment:        "does a simple 90-degree clockwise rotation",
 	getDstXBase:    "(maxY - 1 - y)",
 	GetDstY:        "x",
 	DimensionOrder: "srcHeight, srcWidth",
 }
 
 var rotate180 rotation = rotation{
-	Degrees:        180,
+	Method:         "Rotate180",
+	Comment:        "does a simple 180-degree clockwise rotation",
 	getDstXBase:    "(maxX - 1 - x)",
 	GetDstY:        "(maxY - 1 - y)",
 	DimensionOrder: "srcWidth, srcHeight",
 }
 
 var rotate270 rotation = rotation{
-	Degrees:        270,
+	Method:         "Rotate270",
+	Comment:        "does a simple 270-degree clockwise rotation",
 	getDstXBase:    "y",
 	GetDstY:        "(maxX - 1 - x)",
 	DimensionOrder: "srcHeight, srcWidth",
+}
+
+var rotateMirror rotation = rotation{
+	Method:         "Mirror",
+	Comment:        "flips the image around its vertical axis",
+	getDstXBase:    "(maxX - 1 - x)",
+	GetDstY:        "y",
+	DimensionOrder: "srcWidth, srcHeight",
 }
 
 type imageType struct {
@@ -98,7 +110,7 @@ func main() {
 	}
 
 	p := Page{
-		Rotations: []rotation{rotate90, rotate180, rotate270},
+		Rotations: []rotation{rotate90, rotate180, rotate270, rotateMirror},
 		Types:     []imageType{typeGray, typeRGBA},
 	}
 

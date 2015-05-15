@@ -50,7 +50,7 @@ func NewIIIFHandler(u *url.URL, widths []int, tp string) *IIIFHandler {
 
 		RotationBy90s: true,
 		RotationArbitrary: false,
-		Mirroring: false,
+		Mirroring: true,
 
 		Default: true,
 		Color: true,

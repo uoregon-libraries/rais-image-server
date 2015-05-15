@@ -60,6 +60,7 @@ lint:
 # Cleanup
 clean:
 	rm -f bin/*
+	rm transform/rotation.go
 
 distclean: clean
 	rm -f $(GO_PROJECT_SYMLINK)
