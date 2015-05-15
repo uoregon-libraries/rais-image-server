@@ -85,7 +85,7 @@ func (res *ImageResource) Apply(u *iiif.URL) (image.Image, error) {
 		return nil, ErrDecodeImage
 	}
 
-	if u.Rotation.Degrees != 0 {
+	if u.Rotation.Mirror || u.Rotation.Degrees != 0 {
 		img = rotate(img, u.Rotation)
 	}
 
@@ -155,6 +155,10 @@ func rotate(img image.Image, rot iiif.Rotation) image.Image {
 		r = &transform.GrayRotator{Img: img0}
 	case *image.RGBA:
 		r = &transform.RGBARotator{Img: img0}
+	}
+
+	if rot.Mirror {
+		r.Mirror()
 	}
 
 	switch rot.Degrees {
