@@ -23,6 +23,8 @@ type JP2Image struct {
 	image           *C.opj_image_t
 	decodeWidth     int
 	decodeHeight    int
+	srcWidth        int
+	srcHeight       int
 	scaleFactor     float64
 	decodeArea      image.Rectangle
 	crop            bool
@@ -33,6 +35,10 @@ type JP2Image struct {
 func NewJP2Image(filename string) (*JP2Image, error) {
 	i := &JP2Image{filename: filename}
 	runtime.SetFinalizer(i, finalizer)
+
+	if err := i.readDimensions(); err != nil {
+		return nil, err
+	}
 
 	if err := i.initializeStream(); err != nil {
 		return nil, err
@@ -82,12 +88,7 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 	// full image - which means reading in the image header and then cleaning up
 	// all previously-initialized data
 	if (i.resizeByPixels || i.resizeByPercent) && !i.crop {
-		var err error
-		i.decodeArea, err = i.GetDimensions()
-		if err != nil {
-			goLog(3, "Error getting dimensions - aborting")
-			return nil, err
-		}
+		i.decodeArea = image.Rect(0, 0, i.srcWidth, i.srcHeight)
 	}
 
 	// If resize is by percent, we now have the decode area, and can use that to
@@ -203,21 +204,30 @@ func (i *JP2Image) ReadHeader() error {
 	return nil
 }
 
-// GetDimensions reads the JP2 headers and pulls dimensions in order to satisfy
-// the IIIFImage interface.  The image resource is cleaned up afterward, as this
-// operation has to be usable independently of decoding.
-func (i *JP2Image) GetDimensions() (image.Rectangle, error) {
+// getDimensions reads the JP2 headers and pulls dimensions into srcWidth and
+// srcHeight.  The image resource is cleaned up afterward, as this operation
+// has to be usable independently of decoding.  This shouldn't be called after
+// width and height are stored.
+func (i *JP2Image) readDimensions() error {
 	defer i.CleanupResources()
 	if err := i.ReadHeader(); err != nil {
-		return image.Rectangle{}, err
+		return err
 	}
 
-	d := i.Dimensions()
-	return d, nil
+	d := image.Rect(int(i.image.x0), int(i.image.y0), int(i.image.x1), int(i.image.y1))
+	i.srcWidth = d.Dx()
+	i.srcHeight = d.Dy()
+	return nil
 }
 
-func (i *JP2Image) Dimensions() image.Rectangle {
-	return image.Rect(int(i.image.x0), int(i.image.y0), int(i.image.x1), int(i.image.y1))
+// GetWidth returns the image width
+func (i *JP2Image) GetWidth() int {
+	return i.srcWidth
+}
+
+// GetHeight returns the image height
+func (i *JP2Image) GetHeight() int {
+	return i.srcHeight
 }
 
 // Attempts to set the progression level to the given value, then re-read the
