@@ -15,11 +15,12 @@ type Rotator interface {
 
 // GrayRotator decorates *image.Gray with rotation functions
 type GrayRotator struct {
-	*image.Gray
+	Img *image.Gray
 }
 
 // Rotate90 does a simple 90-degree clockwise rotation, returning a new image.Image
-func (src GrayRotator) Rotate90() image.Image {
+func (r *GrayRotator) Rotate90() image.Image {
+	src := r.Img
 	srcB := src.Bounds()
 	srcWidth := srcB.Dx()
 	srcHeight := srcB.Dy()
@@ -37,11 +38,13 @@ func (src GrayRotator) Rotate90() image.Image {
 		}
 	}
 
+	r.Img = dst
 	return dst
 }
 
 // Rotate180 does a simple 180-degree clockwise rotation, returning a new image.Image
-func (src GrayRotator) Rotate180() image.Image {
+func (r *GrayRotator) Rotate180() image.Image {
+	src := r.Img
 	srcB := src.Bounds()
 	srcWidth := srcB.Dx()
 	srcHeight := srcB.Dy()
@@ -59,11 +62,13 @@ func (src GrayRotator) Rotate180() image.Image {
 		}
 	}
 
+	r.Img = dst
 	return dst
 }
 
 // Rotate270 does a simple 270-degree clockwise rotation, returning a new image.Image
-func (src GrayRotator) Rotate270() image.Image {
+func (r *GrayRotator) Rotate270() image.Image {
+	src := r.Img
 	srcB := src.Bounds()
 	srcWidth := srcB.Dx()
 	srcHeight := srcB.Dy()
@@ -81,11 +86,13 @@ func (src GrayRotator) Rotate270() image.Image {
 		}
 	}
 
+	r.Img = dst
 	return dst
 }
 
 // Mirror flips the image around its vertical axis, returning a new image.Image
-func (src GrayRotator) Mirror() image.Image {
+func (r *GrayRotator) Mirror() image.Image {
+	src := r.Img
 	srcB := src.Bounds()
 	srcWidth := srcB.Dx()
 	srcHeight := srcB.Dy()
@@ -103,16 +110,18 @@ func (src GrayRotator) Mirror() image.Image {
 		}
 	}
 
+	r.Img = dst
 	return dst
 }
 
 // RGBARotator decorates *image.RGBA with rotation functions
 type RGBARotator struct {
-	*image.RGBA
+	Img *image.RGBA
 }
 
 // Rotate90 does a simple 90-degree clockwise rotation, returning a new image.Image
-func (src RGBARotator) Rotate90() image.Image {
+func (r *RGBARotator) Rotate90() image.Image {
+	src := r.Img
 	srcB := src.Bounds()
 	srcWidth := srcB.Dx()
 	srcHeight := srcB.Dy()
@@ -130,11 +139,13 @@ func (src RGBARotator) Rotate90() image.Image {
 		}
 	}
 
+	r.Img = dst
 	return dst
 }
 
 // Rotate180 does a simple 180-degree clockwise rotation, returning a new image.Image
-func (src RGBARotator) Rotate180() image.Image {
+func (r *RGBARotator) Rotate180() image.Image {
+	src := r.Img
 	srcB := src.Bounds()
 	srcWidth := srcB.Dx()
 	srcHeight := srcB.Dy()
@@ -152,11 +163,13 @@ func (src RGBARotator) Rotate180() image.Image {
 		}
 	}
 
+	r.Img = dst
 	return dst
 }
 
 // Rotate270 does a simple 270-degree clockwise rotation, returning a new image.Image
-func (src RGBARotator) Rotate270() image.Image {
+func (r *RGBARotator) Rotate270() image.Image {
+	src := r.Img
 	srcB := src.Bounds()
 	srcWidth := srcB.Dx()
 	srcHeight := srcB.Dy()
@@ -174,11 +187,13 @@ func (src RGBARotator) Rotate270() image.Image {
 		}
 	}
 
+	r.Img = dst
 	return dst
 }
 
 // Mirror flips the image around its vertical axis, returning a new image.Image
-func (src RGBARotator) Mirror() image.Image {
+func (r *RGBARotator) Mirror() image.Image {
+	src := r.Img
 	srcB := src.Bounds()
 	srcWidth := srcB.Dx()
 	srcHeight := srcB.Dy()
@@ -196,6 +211,7 @@ func (src RGBARotator) Mirror() image.Image {
 		}
 	}
 
+	r.Img = dst
 	return dst
 }
 

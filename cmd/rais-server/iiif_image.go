@@ -152,9 +152,9 @@ func rotate(img image.Image, rot iiif.Rotation) image.Image {
 	var r transform.Rotator
 	switch img0 := img.(type) {
 	case *image.Gray:
-		r = transform.GrayRotator{img0}
+		r = &transform.GrayRotator{Img: img0}
 	case *image.RGBA:
-		r = transform.RGBARotator{img0}
+		r = &transform.RGBARotator{Img: img0}
 	}
 
 	switch rot.Degrees {

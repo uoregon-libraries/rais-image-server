@@ -15,12 +15,13 @@ type Rotator interface {
 
 // {{.Shortstring}}Rotator decorates {{.String}} with rotation functions
 type {{.Shortstring}}Rotator struct {
-	{{.String}}
+	Img {{.String}}
 }
 
 {{range $Rotations}}
 // {{.Method}} {{.Comment}}
-func (src {{$Type.Shortstring}}Rotator) {{.Method}}() image.Image {
+func (r *{{$Type.Shortstring}}Rotator) {{.Method}}() image.Image {
+	src := r.Img
 	srcB := src.Bounds()
 	srcWidth := srcB.Dx()
 	srcHeight := srcB.Dy()
@@ -38,6 +39,7 @@ func (src {{$Type.Shortstring}}Rotator) {{.Method}}() image.Image {
 		}
 	}
 
+	r.Img = dst
 	return dst
 }
 {{end}}
