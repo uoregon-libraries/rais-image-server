@@ -21,8 +21,6 @@ type SimpleImage struct {
 	decodeHeight    int
 	scaleFactor     float64
 	decodeArea      image.Rectangle
-	resizeByPercent bool
-	resizeByPixels  bool
 }
 
 func NewSimpleImage(filename string) (*SimpleImage, error) {
@@ -46,21 +44,10 @@ func NewSimpleImage(filename string) (*SimpleImage, error) {
 	return i, nil
 }
 
-// SetScale sets the image to scale by the given multiplier, typically a
-// percentage from 0 to 1.  This is mutually exclusive with resizing by a set
-// width/height value.
-func (i *SimpleImage) SetScale(m float64) {
-	i.resizeByPixels = false
-	i.resizeByPercent = true
-	i.scaleFactor = m
-}
-
 // SetResizeWH sets the image to scale to the given width and height.  If one
 // dimension is 0, the decoded image will preserve the aspect ratio while
 // scaling to the non-zero dimension.
 func (i *SimpleImage) SetResizeWH(width, height int) {
-	i.resizeByPercent = false
-	i.resizeByPixels = true
 	i.decodeWidth = width
 	i.decodeHeight = height
 }
@@ -87,13 +74,7 @@ func (i *SimpleImage) DecodeImage() (image.Image, error) {
 		img = dst
 	}
 
-	if i.resizeByPercent {
-		i.decodeWidth = int(float64(i.decodeArea.Dx()) * i.scaleFactor)
-		i.decodeHeight = int(float64(i.decodeArea.Dy()) * i.scaleFactor)
-		i.resizeByPixels = true
-	}
-
-	if i.resizeByPixels {
+	if i.decodeWidth != i.decodeArea.Dx() || i.decodeHeight != i.decodeArea.Dy() {
 		img = resize.Resize(uint(i.decodeWidth), uint(i.decodeHeight), img, resize.Bilinear)
 	}
 

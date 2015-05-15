@@ -28,8 +28,6 @@ type JP2Image struct {
 	scaleFactor     float64
 	decodeArea      image.Rectangle
 	srcRect         image.Rectangle
-	resizeByPercent bool
-	resizeByPixels  bool
 }
 
 func NewJP2Image(filename string) (*JP2Image, error) {
@@ -52,23 +50,12 @@ func NewJP2Image(filename string) (*JP2Image, error) {
 	return i, nil
 }
 
-// SetScale sets the image to scale by the given multiplier, typically a
-// percentage from 0 to 1.  This is mutually exclusive with resizing by a set
-// width/height value.
-func (i *JP2Image) SetScale(m float64) {
-	i.scaleFactor = m
-	i.resizeByPercent = true
-	i.resizeByPixels = false
-}
-
 // SetResizeWH sets the image to scale to the given width and height.  If one
 // dimension is 0, the decoded image will preserve the aspect ratio while
 // scaling to the non-zero dimension.
 func (i *JP2Image) SetResizeWH(width, height int) {
 	i.decodeWidth = width
 	i.decodeHeight = height
-	i.resizeByPixels = true
-	i.resizeByPercent = false
 }
 
 func (i *JP2Image) SetCrop(r image.Rectangle) {
@@ -88,17 +75,9 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 		return nil, err
 	}
 
-	// If resize is by percent, we now have the decode area, and can use that to
-	// get pixel dimensions
-	if i.resizeByPercent {
-		i.decodeWidth = int(float64(i.decodeArea.Dx()) * i.scaleFactor)
-		i.decodeHeight = int(float64(i.decodeArea.Dy()) * i.scaleFactor)
-		i.resizeByPixels = true
-	}
-
 	// Get progression level if we're resizing to specific dimensions (it's zero
 	// if there isn't any scaling of the output)
-	if i.resizeByPixels {
+	if i.decodeWidth != i.decodeArea.Dx() || i.decodeHeight != i.decodeArea.Dy() {
 		level := desiredProgressionLevel(i.decodeArea, i.decodeWidth, i.decodeHeight)
 		if err := i.SetDynamicProgressionLevel(level); err != nil {
 			goLog(3, "Unable to set dynamic progression level - aborting")
@@ -174,7 +153,7 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 		img = &image.RGBA{Pix: realData, Stride: width << 2, Rect: bounds}
 	}
 
-	if i.resizeByPixels {
+	if i.decodeWidth != i.decodeArea.Dx() || i.decodeHeight != i.decodeArea.Dy() {
 		img = resize.Resize(uint(i.decodeWidth), uint(i.decodeHeight), img, resize.Bilinear)
 	}
 

@@ -30,7 +30,6 @@ type IIIFImage interface {
 	GetHeight() int
 	SetCrop(image.Rectangle)
 	SetResizeWH(int, int)
-	SetScale(float64)
 }
 
 type ImageResource struct {
@@ -120,16 +119,19 @@ func (res *ImageResource) prep(r iiif.Region, s iiif.Size) {
 	}
 	res.Image.SetCrop(crop)
 
+	w, h = crop.Dx(), crop.Dy()
 	switch s.Type {
 	case iiif.STScaleToWidth:
-		res.Image.SetResizeWH(s.W, 0)
+		w, h = s.W, 0
 	case iiif.STScaleToHeight:
-		res.Image.SetResizeWH(0, s.H)
+		w, h = 0, s.H
 	case iiif.STExact:
-		res.Image.SetResizeWH(s.W, s.H)
+		w, h = s.W, s.H
 	case iiif.STScalePercent:
-		res.Image.SetScale(s.Percent / 100.0)
+		w = int(float64(crop.Dx()) * s.Percent / 100.0)
+		h = int(float64(crop.Dy()) * s.Percent / 100.0)
 	}
+	res.Image.SetResizeWH(w, h)
 }
 
 func rotate(img image.Image, rot iiif.Rotation) image.Image {
