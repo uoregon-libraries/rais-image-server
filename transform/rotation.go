@@ -10,6 +10,7 @@ type Rotator interface {
 	Rotate90() image.Image
 	Rotate180() image.Image
 	Rotate270() image.Image
+	Mirror() image.Image
 }
 
 // GrayRotator decorates *image.Gray with rotation functions
@@ -83,6 +84,28 @@ func (src GrayRotator) Rotate270() image.Image {
 	return dst
 }
 
+// Mirror flips the image around its vertical axis, returning a new image.Image
+func (src GrayRotator) Mirror() image.Image {
+	srcB := src.Bounds()
+	srcWidth := srcB.Dx()
+	srcHeight := srcB.Dy()
+
+	dst := image.NewGray(image.Rect(0, 0, srcWidth, srcHeight))
+
+	var x, y, srcPix, dstPix int64
+	maxX, maxY := int64(srcWidth), int64(srcHeight)
+	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	for y = 0; y < maxY; y++ {
+		for x = 0; x < maxX; x++ {
+			srcPix = y*srcStride + x
+			dstPix = y*dstStride + (maxX - 1 - x)
+			dst.Pix[dstPix] = src.Pix[srcPix]
+		}
+	}
+
+	return dst
+}
+
 // RGBARotator decorates *image.RGBA with rotation functions
 type RGBARotator struct {
 	*image.RGBA
@@ -147,6 +170,28 @@ func (src RGBARotator) Rotate270() image.Image {
 		for x = 0; x < maxX; x++ {
 			srcPix = y*srcStride + (x << 2)
 			dstPix = (maxX-1-x)*dstStride + (y << 2)
+			copy(dst.Pix[dstPix:dstPix+4], src.Pix[srcPix:srcPix+4])
+		}
+	}
+
+	return dst
+}
+
+// Mirror flips the image around its vertical axis, returning a new image.Image
+func (src RGBARotator) Mirror() image.Image {
+	srcB := src.Bounds()
+	srcWidth := srcB.Dx()
+	srcHeight := srcB.Dy()
+
+	dst := image.NewRGBA(image.Rect(0, 0, srcWidth, srcHeight))
+
+	var x, y, srcPix, dstPix int64
+	maxX, maxY := int64(srcWidth), int64(srcHeight)
+	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	for y = 0; y < maxY; y++ {
+		for x = 0; x < maxX; x++ {
+			srcPix = y*srcStride + (x << 2)
+			dstPix = y*dstStride + ((maxX - 1 - x) << 2)
 			copy(dst.Pix[dstPix:dstPix+4], src.Pix[srcPix:srcPix+4])
 		}
 	}

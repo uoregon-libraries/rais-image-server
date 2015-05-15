@@ -65,6 +65,14 @@ var rotate270 rotation = rotation{
 	DimensionOrder: "srcHeight, srcWidth",
 }
 
+var rotateMirror rotation = rotation{
+	Method:         "Mirror",
+	Comment:        "flips the image around its vertical axis, returning a new image.Image",
+	getDstXBase:    "(maxX - 1 - x)",
+	GetDstY:        "y",
+	DimensionOrder: "srcWidth, srcHeight",
+}
+
 type imageType struct {
 	String            string
 	Shortstring       string
@@ -102,7 +110,7 @@ func main() {
 	}
 
 	p := Page{
-		Rotations: []rotation{rotate90, rotate180, rotate270},
+		Rotations: []rotation{rotate90, rotate180, rotate270, rotateMirror},
 		Types:     []imageType{typeGray, typeRGBA},
 	}
 
