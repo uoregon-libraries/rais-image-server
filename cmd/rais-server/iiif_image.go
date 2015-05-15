@@ -127,11 +127,25 @@ func (res *ImageResource) prep(r iiif.Region, s iiif.Size) {
 		w, h = 0, s.H
 	case iiif.STExact:
 		w, h = s.W, s.H
+	case iiif.STBestFit:
+		w, h = res.getBestFit(w, h, s)
 	case iiif.STScalePercent:
 		w = int(float64(crop.Dx()) * s.Percent / 100.0)
 		h = int(float64(crop.Dy()) * s.Percent / 100.0)
 	}
 	res.Image.SetResizeWH(w, h)
+}
+
+// Preserving the aspect ratio, determines the proper scaling factor to get
+// width and height adjusted to fit within the width and height of the desired
+// size operation
+func (res *ImageResource) getBestFit(width, height int, s iiif.Size) (int, int) {
+	fW, fH, fsW, fsH := float64(width), float64(height), float64(s.W), float64(s.H)
+	sf := fsW / fW
+	if sf * fH > fsH {
+		sf = fsH / fH
+	}
+	return int(sf * fW), int(sf * fH)
 }
 
 func rotate(img image.Image, rot iiif.Rotation) image.Image {

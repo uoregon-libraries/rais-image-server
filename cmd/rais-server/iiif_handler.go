@@ -44,7 +44,7 @@ func NewIIIFHandler(u *url.URL, widths []int, tp string) *IIIFHandler {
 		SizeByW: true,
 		SizeByH: true,
 		SizeByPct: true,
-		SizeByWh: false,
+		SizeByWh: true,
 		SizeByForcedWh: true,
 		SizeAboveFull: true,
 
