@@ -21,9 +21,6 @@ type SimpleImage struct {
 	decodeHeight    int
 	scaleFactor     float64
 	decodeArea      image.Rectangle
-	resizeByPercent bool
-	resizeByPixels  bool
-	crop            bool
 }
 
 func NewSimpleImage(filename string) (*SimpleImage, error) {
@@ -47,27 +44,15 @@ func NewSimpleImage(filename string) (*SimpleImage, error) {
 	return i, nil
 }
 
-// SetScale sets the image to scale by the given multiplier, typically a
-// percentage from 0 to 1.  This is mutually exclusive with resizing by a set
-// width/height value.
-func (i *SimpleImage) SetScale(m float64) {
-	i.resizeByPixels = false
-	i.resizeByPercent = true
-	i.scaleFactor = m
-}
-
 // SetResizeWH sets the image to scale to the given width and height.  If one
 // dimension is 0, the decoded image will preserve the aspect ratio while
 // scaling to the non-zero dimension.
 func (i *SimpleImage) SetResizeWH(width, height int) {
-	i.resizeByPercent = false
-	i.resizeByPixels = true
 	i.decodeWidth = width
 	i.decodeHeight = height
 }
 
 func (i *SimpleImage) SetCrop(r image.Rectangle) {
-	i.crop = true
 	i.decodeArea = r
 }
 
@@ -81,7 +66,9 @@ func (i *SimpleImage) DecodeImage() (image.Image, error) {
 		return nil, err
 	}
 
-	if i.crop {
+	// Draw a new image of the requested size if the decode area isn't the same
+	// rectangle as the source image
+	if i.decodeArea != img.Bounds() {
 		srcB := img.Bounds()
 		dstB := i.decodeArea
 		dst := image.NewRGBA(image.Rect(0, 0, dstB.Dx(), dstB.Dy()))
@@ -89,20 +76,19 @@ func (i *SimpleImage) DecodeImage() (image.Image, error) {
 		img = dst
 	}
 
-	if i.resizeByPercent {
-		i.decodeWidth = int(float64(i.decodeArea.Dx()) * i.scaleFactor)
-		i.decodeHeight = int(float64(i.decodeArea.Dy()) * i.scaleFactor)
-		i.resizeByPixels = true
-	}
-
-	if i.resizeByPixels {
+	if i.decodeWidth != i.decodeArea.Dx() || i.decodeHeight != i.decodeArea.Dy() {
 		img = resize.Resize(uint(i.decodeWidth), uint(i.decodeHeight), img, resize.Bilinear)
 	}
 
 	return img, nil
 }
 
-// GetDimensions returns the config data as a rectangle
-func (i *SimpleImage) GetDimensions() (image.Rectangle, error) {
-	return image.Rect(0, 0, i.conf.Width, i.conf.Height), nil
+// GetWidth returns the image width
+func (i *SimpleImage) GetWidth() int {
+	return i.conf.Width
+}
+
+// GetHeight returns the image height
+func (i *SimpleImage) GetHeight() int {
+	return i.conf.Height
 }

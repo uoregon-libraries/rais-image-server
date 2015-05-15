@@ -141,15 +141,9 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 }
 
 func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, res *ImageResource) {
-	rect, err := res.Image.GetDimensions()
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Unable to read image dimensions for %#v", res.ID), 500)
-		return
-	}
-
 	info := ih.FeatureSet.Info()
-	info.Width = rect.Dx()
-	info.Height = rect.Dy()
+	info.Width = res.Image.GetWidth()
+	info.Height = res.Image.GetHeight()
 
 	// The info id is actually the full URL to the resource, not just its ID
 	info.ID = ih.Base.String() + "/" + res.ID.String()

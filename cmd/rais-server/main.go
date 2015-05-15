@@ -37,7 +37,6 @@ func main() {
 	openjpeg.LogLevel = logLevel
 
 	http.HandleFunc("/images/tiles/", TileHandler)
-	http.HandleFunc("/images/info/", InfoHandler)
 	http.HandleFunc("/images/resize/", ResizeHandler)
 
 	iiifBase, err := url.Parse(iiifURL)

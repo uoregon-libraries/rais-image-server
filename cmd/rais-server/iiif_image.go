@@ -26,16 +26,16 @@ var (
 // the more unusual use-case.
 type IIIFImage interface {
 	DecodeImage() (image.Image, error)
-	GetDimensions() (image.Rectangle, error)
+	GetWidth() int
+	GetHeight() int
 	SetCrop(image.Rectangle)
 	SetResizeWH(int, int)
-	SetScale(float64)
 }
 
 type ImageResource struct {
-	Image    IIIFImage
-	ID       iiif.ID
-	FilePath string
+	Image      IIIFImage
+	ID         iiif.ID
+	FilePath   string
 }
 
 // Initializes and returns an ImageResource for the given id and path.  If the path
@@ -77,11 +77,7 @@ func NewImageResource(id iiif.ID, filepath string) (*ImageResource, error) {
 // returns an image.Image ready for encoding to the client
 func (res *ImageResource) Apply(u *iiif.URL) (image.Image, error) {
 	// Crop and resize have to be prepared before we can decode
-	if err := res.prepCrop(u.Region); err != nil {
-		return nil, err
-	}
-
-	res.prepResize(u.Size)
+	res.prep(u.Region, u.Size)
 
 	img, err := res.Image.DecodeImage()
 	if err != nil {
@@ -106,39 +102,36 @@ func (res *ImageResource) Apply(u *iiif.URL) (image.Image, error) {
 	return img, nil
 }
 
-func (res *ImageResource) prepCrop(r iiif.Region) error {
+func (res *ImageResource) prep(r iiif.Region, s iiif.Size) {
+	w, h := res.Image.GetWidth(), res.Image.GetHeight()
+	crop := image.Rect(0, 0, w, h)
+
 	switch r.Type {
 	case iiif.RTPixel:
-		rect := image.Rect(int(r.X), int(r.Y), int(r.X+r.W), int(r.Y+r.H))
-		res.Image.SetCrop(rect)
+		crop = image.Rect(int(r.X), int(r.Y), int(r.X+r.W), int(r.Y+r.H))
 	case iiif.RTPercent:
-		dim, err := res.Image.GetDimensions()
-		if err != nil {
-			return err
-		}
-		rect := image.Rect(
-			int(r.X*float64(dim.Dx())/100.0),
-			int(r.Y*float64(dim.Dy())/100.0),
-			int((r.X+r.W)*float64(dim.Dx())/100.0),
-			int((r.Y+r.H)*float64(dim.Dy())/100.0),
+		crop = image.Rect(
+			int(r.X*float64(w)/100.0),
+			int(r.Y*float64(h)/100.0),
+			int((r.X+r.W)*float64(w)/100.0),
+			int((r.Y+r.H)*float64(h)/100.0),
 		)
-		res.Image.SetCrop(rect)
 	}
+	res.Image.SetCrop(crop)
 
-	return nil
-}
-
-func (res *ImageResource) prepResize(s iiif.Size) {
+	w, h = crop.Dx(), crop.Dy()
 	switch s.Type {
 	case iiif.STScaleToWidth:
-		res.Image.SetResizeWH(s.W, 0)
+		w, h = s.W, 0
 	case iiif.STScaleToHeight:
-		res.Image.SetResizeWH(0, s.H)
+		w, h = 0, s.H
 	case iiif.STExact:
-		res.Image.SetResizeWH(s.W, s.H)
+		w, h = s.W, s.H
 	case iiif.STScalePercent:
-		res.Image.SetScale(s.Percent / 100.0)
+		w = int(float64(crop.Dx()) * s.Percent / 100.0)
+		h = int(float64(crop.Dy()) * s.Percent / 100.0)
 	}
+	res.Image.SetResizeWH(w, h)
 }
 
 func rotate(img image.Image, rot iiif.Rotation) image.Image {
