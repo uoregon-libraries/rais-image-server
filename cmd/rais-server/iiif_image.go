@@ -105,6 +105,7 @@ func (res *ImageResource) Apply(u *iiif.URL) (image.Image, error) {
 
 func (res *ImageResource) prep(r iiif.Region, s iiif.Size) {
 	w, h := res.Image.GetWidth(), res.Image.GetHeight()
+	var crop image.Rectangle
 
 	switch r.Type {
 	case iiif.RTPixel:
