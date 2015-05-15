@@ -159,14 +159,14 @@ func rotate(img image.Image, rot iiif.Rotation) image.Image {
 
 	switch rot.Degrees {
 	case 90:
-		img = r.Rotate90()
+		r.Rotate90()
 	case 180:
-		img = r.Rotate180()
+		r.Rotate180()
 	case 270:
-		img = r.Rotate270()
+		r.Rotate270()
 	}
 
-	return img
+	return r.Image()
 }
 
 func grayscale(img image.Image) image.Image {

@@ -7,7 +7,8 @@ import (
 )
 
 type Rotator interface {
-{{range $Rotations}}	{{.Method}}() image.Image
+	Image() image.Image
+{{range $Rotations}}	{{.Method}}()
 {{end}}}
 
 {{range .Types}}
@@ -18,9 +19,14 @@ type {{.Shortstring}}Rotator struct {
 	Img {{.String}}
 }
 
+// Image returns the underlying image as an image.Image value
+func (r *{{$Type.Shortstring}}Rotator) Image() image.Image {
+	return r.Img
+}
+
 {{range $Rotations}}
 // {{.Method}} {{.Comment}}
-func (r *{{$Type.Shortstring}}Rotator) {{.Method}}() image.Image {
+func (r *{{$Type.Shortstring}}Rotator) {{.Method}}() {
 	src := r.Img
 	srcB := src.Bounds()
 	srcWidth := srcB.Dx()
@@ -40,7 +46,6 @@ func (r *{{$Type.Shortstring}}Rotator) {{.Method}}() image.Image {
 	}
 
 	r.Img = dst
-	return dst
 }
 {{end}}
 {{end}}

@@ -43,7 +43,7 @@ func (r rotation) GetDstX(i int) string {
 
 var rotate90 rotation = rotation{
 	Method:         "Rotate90",
-	Comment:        "does a simple 90-degree clockwise rotation, returning a new image.Image",
+	Comment:        "does a simple 90-degree clockwise rotation",
 	getDstXBase:    "(maxY - 1 - y)",
 	GetDstY:        "x",
 	DimensionOrder: "srcHeight, srcWidth",
@@ -51,7 +51,7 @@ var rotate90 rotation = rotation{
 
 var rotate180 rotation = rotation{
 	Method:         "Rotate180",
-	Comment:        "does a simple 180-degree clockwise rotation, returning a new image.Image",
+	Comment:        "does a simple 180-degree clockwise rotation",
 	getDstXBase:    "(maxX - 1 - x)",
 	GetDstY:        "(maxY - 1 - y)",
 	DimensionOrder: "srcWidth, srcHeight",
@@ -59,7 +59,7 @@ var rotate180 rotation = rotation{
 
 var rotate270 rotation = rotation{
 	Method:         "Rotate270",
-	Comment:        "does a simple 270-degree clockwise rotation, returning a new image.Image",
+	Comment:        "does a simple 270-degree clockwise rotation",
 	getDstXBase:    "y",
 	GetDstY:        "(maxX - 1 - x)",
 	DimensionOrder: "srcHeight, srcWidth",
@@ -67,7 +67,7 @@ var rotate270 rotation = rotation{
 
 var rotateMirror rotation = rotation{
 	Method:         "Mirror",
-	Comment:        "flips the image around its vertical axis, returning a new image.Image",
+	Comment:        "flips the image around its vertical axis",
 	getDstXBase:    "(maxX - 1 - x)",
 	GetDstY:        "y",
 	DimensionOrder: "srcWidth, srcHeight",
