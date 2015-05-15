@@ -66,6 +66,8 @@ func (i *SimpleImage) DecodeImage() (image.Image, error) {
 		return nil, err
 	}
 
+	// Draw a new image of the requested size if the decode area isn't the same
+	// rectangle as the source image
 	if i.decodeArea != img.Bounds() {
 		srcB := img.Bounds()
 		dstB := i.decodeArea
