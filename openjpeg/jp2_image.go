@@ -27,7 +27,7 @@ type JP2Image struct {
 	srcHeight       int
 	scaleFactor     float64
 	decodeArea      image.Rectangle
-	crop            bool
+	srcRect         image.Rectangle
 	resizeByPercent bool
 	resizeByPixels  bool
 }
@@ -43,6 +43,11 @@ func NewJP2Image(filename string) (*JP2Image, error) {
 	if err := i.initializeStream(); err != nil {
 		return nil, err
 	}
+
+	// Default to no cropping, full size
+	i.decodeArea = image.Rect(0, 0, i.srcWidth, i.srcHeight)
+	i.decodeWidth = i.srcWidth
+	i.decodeHeight = i.srcHeight
 
 	return i, nil
 }
@@ -68,7 +73,6 @@ func (i *JP2Image) SetResizeWH(width, height int) {
 
 func (i *JP2Image) SetCrop(r image.Rectangle) {
 	i.decodeArea = r
-	i.crop = true
 }
 
 // DecodeImage returns an image.Image that holds the decoded image data,
@@ -82,13 +86,6 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 	if err := i.initializeCodec(); err != nil {
 		goLog(3, "Error initializing codec - aborting")
 		return nil, err
-	}
-
-	// If we want to resize, but not crop, we have to set the decode area to the
-	// full image - which means reading in the image header and then cleaning up
-	// all previously-initialized data
-	if (i.resizeByPixels || i.resizeByPercent) && !i.crop {
-		i.decodeArea = image.Rect(0, 0, i.srcWidth, i.srcHeight)
 	}
 
 	// If resize is by percent, we now have the decode area, and can use that to
@@ -118,7 +115,7 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 	goLog(6, fmt.Sprintf("x0: %d, x1: %d, y0: %d, y1: %d", i.image.x0, i.image.x1, i.image.y0, i.image.y1))
 
 	// Setting decode area has to happen *after* reading the header / image data
-	if i.crop {
+	if i.decodeArea != i.srcRect {
 		r := i.decodeArea
 		if C.opj_set_decode_area(i.codec, i.image, C.OPJ_INT32(r.Min.X), C.OPJ_INT32(r.Min.Y), C.OPJ_INT32(r.Max.X), C.OPJ_INT32(r.Max.Y)) == C.OPJ_FALSE {
 			return nil, errors.New("failed to set the decoded area")
@@ -214,9 +211,9 @@ func (i *JP2Image) readDimensions() error {
 		return err
 	}
 
-	d := image.Rect(int(i.image.x0), int(i.image.y0), int(i.image.x1), int(i.image.y1))
-	i.srcWidth = d.Dx()
-	i.srcHeight = d.Dy()
+	i.srcRect = image.Rect(int(i.image.x0), int(i.image.y0), int(i.image.x1), int(i.image.y1))
+	i.srcWidth = i.srcRect.Dx()
+	i.srcHeight = i.srcRect.Dy()
 	return nil
 }
 
