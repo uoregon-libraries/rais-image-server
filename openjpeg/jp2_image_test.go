@@ -1,6 +1,7 @@
 package openjpeg
 
 import (
+	"github.com/uoregon-libraries/rais-image-server/color-assert"
 	"image"
 	"os"
 	"testing"
@@ -28,9 +29,8 @@ func TestNewJP2Image(t *testing.T) {
 func TestDimensions(t *testing.T) {
 	jp2 := jp2i()
 	jp2.ReadHeader()
-	if jp2.Dimensions() != image.Rect(0, 0, 800, 400) {
-		t.Error("Dimensions were incorrect for the test jp2")
-	}
+	assert.Equal(800, jp2.GetWidth(), "jp2 width is 800px", t)
+	assert.Equal(400, jp2.GetHeight(), "jp2 height is 400px", t)
 }
 
 func TestDirectConversion(t *testing.T) {
