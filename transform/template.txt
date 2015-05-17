@@ -6,41 +6,53 @@ import (
 	"image"
 )
 
+// Rotator implements simple 90-degree rotations in addition to mirroring for
+// IIIF compliance.  After each operation, the underlying image is replaced
+// with the new image.  It's important to note, however, that the source image
+// is never directly changed.  A new image is drawn, and the old is simply
+// forgotten by the Rotator.
 type Rotator interface {
-	Rotate90() image.Image
-	Rotate180() image.Image
-	Rotate270() image.Image
-}
+	Image() image.Image
+{{range $Rotations}}	{{.Method}}()
+{{end}}}
 
 {{range .Types}}
 {{$Type := .}}
 
 // {{.Shortstring}}Rotator decorates {{.String}} with rotation functions
 type {{.Shortstring}}Rotator struct {
-	{{.String}}
+	Img {{.String}}
+}
+
+// Image returns the underlying image as an image.Image value
+func (r *{{$Type.Shortstring}}Rotator) Image() image.Image {
+	return r.Img
 }
 
 {{range $Rotations}}
-// Rotate{{.Degrees}} does a simple {{.Degrees}}-degree clockwise rotation, returning a new {{$Type.String}}
-func (src {{$Type.Shortstring}}Rotator) Rotate{{.Degrees}}() image.Image {
+// {{.Method}} {{.Comment}}
+func (r *{{$Type.Shortstring}}Rotator) {{.Method}}() {
+	src := r.Img
 	srcB := src.Bounds()
 	srcWidth := srcB.Dx()
 	srcHeight := srcB.Dy()
 
 	dst := {{$Type.ConstructorMethod}}(image.Rect(0, 0, {{.DimensionOrder}}))
 
-	var x, y, srcPix, dstPix int64
+	var x, y, srcIdx, dstIdx int64
 	maxX, maxY := int64(srcWidth), int64(srcHeight)
 	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	srcPix := src.Pix
+	dstPix := dst.Pix
 	for y = 0; y < maxY; y++ {
 		for x = 0; x < maxX; x++ {
-			srcPix = y*srcStride + {{.GetSrcX $Type.ByteSize}}
-			dstPix = {{.GetDstY}}*dstStride + {{.GetDstX $Type.ByteSize}}
+			srcIdx = y*srcStride + {{.GetSrcX $Type.ByteSize}}
+			dstIdx = {{.GetDstY}}*dstStride + {{.GetDstX $Type.ByteSize}}
 			{{$Type.CopyStatement}}
 		}
 	}
 
-	return dst
+	r.Img = dst
 }
 {{end}}
 {{end}}

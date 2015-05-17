@@ -37,7 +37,6 @@ func main() {
 	openjpeg.LogLevel = logLevel
 
 	http.HandleFunc("/images/tiles/", TileHandler)
-	http.HandleFunc("/images/info/", InfoHandler)
 	http.HandleFunc("/images/resize/", ResizeHandler)
 
 	iiifBase, err := url.Parse(iiifURL)
@@ -60,7 +59,7 @@ func main() {
 }
 
 func parseInts(intStrings string) []int {
-	iList := make([]int, 0)
+	var iList []int
 
 	if intStrings == "" {
 		return iList

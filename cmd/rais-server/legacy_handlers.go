@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/uoregon-libraries/rais-image-server/openjpeg"
 	"image"
 	"image/jpeg"
@@ -14,33 +13,6 @@ import (
 var tilePathRegex = regexp.MustCompile(`^/images/tiles/(?P<path>.+)/image_(?P<width>\d+)x(?P<height>\d+)_from_(?P<x1>\d+),(?P<y1>\d+)_to_(?P<x2>\d+),(?P<y2>\d+).jpg`)
 var resizePathRegex = regexp.MustCompile(`^/images/resize/(.+)/(\d+)x(\d+)`)
 var infoPathRegex = regexp.MustCompile(`^/images/info/(.+)$`)
-
-func InfoHandler(w http.ResponseWriter, req *http.Request) {
-	// Extract request path's regex parts into local variables
-	parts := infoPathRegex.FindStringSubmatch(req.URL.Path)
-
-	if parts == nil {
-		http.Error(w, "Invalid info request", 400)
-		return
-	}
-
-	path := parts[1]
-	filepath := tilePath + "/" + path
-	jp2, err := openjpeg.NewJP2Image(filepath)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Unable to read JP2 file from %#v", path), 500)
-		return
-	}
-
-	if err := jp2.ReadHeader(); err != nil {
-		http.Error(w, fmt.Sprintf("Unable to read JP2 dimensions for %#v", path), 500)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	rect := jp2.Dimensions()
-	fmt.Fprintf(w, `{"size": [%d, %d]}`, rect.Dx(), rect.Dy())
-}
 
 func TileHandler(w http.ResponseWriter, req *http.Request) {
 	// Extract request path's regex parts into local variables
@@ -91,6 +63,7 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Encode as JPEG straight to the client
+	w.Header().Set("Content-Type", "image/jpeg")
 	if err = jpeg.Encode(w, img, &jpeg.Options{Quality: 80}); err != nil {
 		http.Error(w, "Unable to encode tile", 500)
 		log.Println("Unable to encode tile into JPEG:", err)
@@ -137,6 +110,7 @@ func ResizeHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Encode as JPEG straight to the client
+	w.Header().Set("Content-Type", "image/jpeg")
 	if err = jpeg.Encode(w, img, &jpeg.Options{Quality: 80}); err != nil {
 		http.Error(w, "Unable to encode tile", 500)
 		log.Println("Unable to encode tile into JPEG:", err)

@@ -1,5 +1,9 @@
 package iiif
 
+import (
+	"sort"
+)
+
 type profile interface{}
 type extraProfile struct {
 	Formats   []string `json:"formats,omitempty"`
@@ -69,14 +73,14 @@ func (fs *FeatureSet) Profile() []profile {
 	return p
 }
 
-func extraProfileFromFeaturesMap(fm featuresMap) extraProfile {
+func extraProfileFromFeaturesMap(fm FeaturesMap) extraProfile {
 	p := extraProfile{
 		Formats:   make([]string, 0),
 		Qualities: make([]string, 0),
 		Supports:  make([]string, 0),
 	}
 
-	// By default a featuresMap is created only listing enabled features, so as
+	// By default a FeaturesMap is created only listing enabled features, so as
 	// long as that doesn't change, we can ignore the boolean
 	for name := range fm {
 		if Quality(name).Valid() {
@@ -90,6 +94,10 @@ func extraProfileFromFeaturesMap(fm featuresMap) extraProfile {
 
 		p.Supports = append(p.Supports, name)
 	}
+
+	sort.Strings(p.Qualities)
+	sort.Strings(p.Formats)
+	sort.Strings(p.Supports)
 
 	return p
 }

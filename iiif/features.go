@@ -1,8 +1,8 @@
 package iiif
 
-// featuresMap is a simple map for boolean features, used for comparing
+// FeaturesMap is a simple map for boolean features, used for comparing
 // featuresets and reporting features beyond the reported level
-type featuresMap map[string]bool
+type FeaturesMap map[string]bool
 
 // TileSize represents a supported tile size for a feature set to expose.  This
 // data is serialized in an info request and therefore must have JSON tags.
@@ -39,7 +39,7 @@ type FeatureSet struct {
 	RotationArbitrary bool
 	Mirroring         bool
 
-	// "Quality" (color depth / color space)
+	// "Quality" (color model / color depth)
 	Default bool
 	Color   bool
 	Gray    bool
@@ -69,8 +69,8 @@ type FeatureSet struct {
 // use in comparison to other feature sets.  The strings used are lowercased so
 // they can be used as-is within "formats", "qualities", and/or "supports"
 // arrays.
-func (fs *FeatureSet) toMap() featuresMap {
-	return featuresMap{
+func (fs *FeatureSet) toMap() FeaturesMap {
+	return FeaturesMap{
 		"regionByPx":          fs.RegionByPx,
 		"regionByPct":         fs.RegionByPct,
 		"sizeByWhListed":      fs.SizeByWhListed,
@@ -107,10 +107,10 @@ func (fs *FeatureSet) toMap() featuresMap {
 // will ONLY contain keys with a value of true, as opposed to the full list of
 // features and true/false.  This helps to quickly determine equality, subset
 // status, and superset status.
-func FeatureCompare(a, b *FeatureSet) (union, onlyA, onlyB featuresMap) {
-	union = make(featuresMap)
-	onlyA = make(featuresMap)
-	onlyB = make(featuresMap)
+func FeatureCompare(a, b *FeatureSet) (union, onlyA, onlyB FeaturesMap) {
+	union = make(FeaturesMap)
+	onlyA = make(FeaturesMap)
+	onlyB = make(FeaturesMap)
 
 	mapA := a.toMap()
 	mapB := b.toMap()

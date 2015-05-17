@@ -1,3 +1,12 @@
+// Package assert offers some very simple helper methods for testing.  Not
+// meant for external use per se, though there's nothing tying this to our
+// codebase / project.
+//
+// Assertion methods (Equal, True, False, etc) expect a `message` string to be
+// passed in, which should be a simple explanation that will help you
+// understand what went wrong, such as "foo.Bar is 25".  Wordy messages won't
+// necessarily help debugging as assert functions should report as much
+// information as they can about where an assertion went wrong.
 package assert
 
 import (
@@ -9,6 +18,10 @@ import (
 
 var re = regexp.MustCompile(`^.*jp2tileserver\.(.*)$`)
 
+// Caller represents data used by an assertion to show the file/function/line
+// of where an assertion went wrong, rather than using the built-in system
+// which would report the "failure" function every time, since all asserts that
+// fail eventually find their way in there.
 type Caller struct {
 	Func     *runtime.Func
 	Name     string
@@ -38,6 +51,7 @@ func failure(caller *Caller, message string, t *testing.T) {
 	t.FailNow()
 }
 
+// True fails the tests if `expression` isn't the boolean value `true`
 func True(expression bool, message string, t *testing.T) {
 	caller := getCallerName(1)
 	if !expression {
@@ -47,10 +61,14 @@ func True(expression bool, message string, t *testing.T) {
 	success(caller, message, t)
 }
 
+// False is a convenience method wrapping True and negating the expression
 func False(exp bool, m string, t *testing.T) {
 	True(!exp, m, t)
 }
 
+// Equal verifies that `expected` and `actual` are the same as per "!=" rules.
+// This makes it work well for simple types, but more complex types will still
+// need specialized checks.
 func Equal(expected, actual interface{}, message string, t *testing.T) {
 	caller := getCallerName(1)
 	if expected != actual {
@@ -60,6 +78,8 @@ func Equal(expected, actual interface{}, message string, t *testing.T) {
 	success(caller, message, t)
 }
 
+// IncludesString checks `list` for inclusion of `string`, reporting failure if
+// it is not present.
 func IncludesString(expected string, list []string, message string, t *testing.T) {
 	caller := getCallerName(1)
 	for _, s := range list {

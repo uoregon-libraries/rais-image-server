@@ -17,22 +17,26 @@ import (
 
 // Container for our simple JP2 operations
 type JP2Image struct {
-	filename        string
-	stream          *C.opj_stream_t
-	codec           *C.opj_codec_t
-	image           *C.opj_image_t
-	decodeWidth     int
-	decodeHeight    int
-	scaleFactor     float64
-	decodeArea      image.Rectangle
-	crop            bool
-	resizeByPercent bool
-	resizeByPixels  bool
+	filename     string
+	stream       *C.opj_stream_t
+	codec        *C.opj_codec_t
+	image        *C.opj_image_t
+	decodeWidth  int
+	decodeHeight int
+	srcWidth     int
+	srcHeight    int
+	scaleFactor  float64
+	decodeArea   image.Rectangle
+	srcRect      image.Rectangle
 }
 
 func NewJP2Image(filename string) (*JP2Image, error) {
 	i := &JP2Image{filename: filename}
 	runtime.SetFinalizer(i, finalizer)
+
+	if err := i.readDimensions(); err != nil {
+		return nil, err
+	}
 
 	if err := i.initializeStream(); err != nil {
 		return nil, err
@@ -41,28 +45,16 @@ func NewJP2Image(filename string) (*JP2Image, error) {
 	return i, nil
 }
 
-// SetScale sets the image to scale by the given multiplier, typically a
-// percentage from 0 to 1.  This is mutually exclusive with resizing by a set
-// width/height value.
-func (i *JP2Image) SetScale(m float64) {
-	i.scaleFactor = m
-	i.resizeByPercent = true
-	i.resizeByPixels = false
-}
-
 // SetResizeWH sets the image to scale to the given width and height.  If one
 // dimension is 0, the decoded image will preserve the aspect ratio while
 // scaling to the non-zero dimension.
 func (i *JP2Image) SetResizeWH(width, height int) {
 	i.decodeWidth = width
 	i.decodeHeight = height
-	i.resizeByPixels = true
-	i.resizeByPercent = false
 }
 
 func (i *JP2Image) SetCrop(r image.Rectangle) {
 	i.decodeArea = r
-	i.crop = true
 }
 
 // DecodeImage returns an image.Image that holds the decoded image data,
@@ -70,35 +62,26 @@ func (i *JP2Image) SetCrop(r image.Rectangle) {
 // and resizing happen here due to the nature of openjpeg, so SetScale,
 // SetResizeWH, and SetCrop must be called before this function.
 func (i *JP2Image) DecodeImage() (image.Image, error) {
+	defer i.CleanupResources()
+
 	// We need the codec to be ready for all operations below
 	if err := i.initializeCodec(); err != nil {
 		goLog(3, "Error initializing codec - aborting")
 		return nil, err
 	}
 
-	// If we want to resize, but not crop, we have to set the decode area to the
-	// full image - which means reading in the image header and then cleaning up
-	// all previously-initialized data
-	if (i.resizeByPixels || i.resizeByPercent) && !i.crop {
-		if err := i.ReadHeader(); err != nil {
-			goLog(3, "Error getting dimensions - aborting")
-			return nil, err
-		}
-		i.decodeArea = i.Dimensions()
-		i.CleanupResources()
+	if i.decodeArea == image.ZR {
+		i.decodeArea = image.Rect(0, 0, i.srcWidth, i.srcHeight)
 	}
 
-	// If resize is by percent, we now have the decode area, and can use that to
-	// get pixel dimensions
-	if i.resizeByPercent {
-		i.decodeWidth = int(float64(i.decodeArea.Dx()) * i.scaleFactor)
-		i.decodeHeight = int(float64(i.decodeArea.Dy()) * i.scaleFactor)
-		i.resizeByPixels = true
+	if i.decodeWidth == 0 && i.decodeHeight == 0 {
+		i.decodeWidth = i.decodeArea.Dx()
+		i.decodeHeight = i.decodeArea.Dy()
 	}
 
 	// Get progression level if we're resizing to specific dimensions (it's zero
 	// if there isn't any scaling of the output)
-	if i.resizeByPixels {
+	if i.decodeWidth != i.decodeArea.Dx() || i.decodeHeight != i.decodeArea.Dy() {
 		level := desiredProgressionLevel(i.decodeArea, i.decodeWidth, i.decodeHeight)
 		if err := i.SetDynamicProgressionLevel(level); err != nil {
 			goLog(3, "Unable to set dynamic progression level - aborting")
@@ -115,7 +98,7 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 	goLog(6, fmt.Sprintf("x0: %d, x1: %d, y0: %d, y1: %d", i.image.x0, i.image.x1, i.image.y0, i.image.y1))
 
 	// Setting decode area has to happen *after* reading the header / image data
-	if i.crop {
+	if i.decodeArea != i.srcRect {
 		r := i.decodeArea
 		if C.opj_set_decode_area(i.codec, i.image, C.OPJ_INT32(r.Min.X), C.OPJ_INT32(r.Min.Y), C.OPJ_INT32(r.Max.X), C.OPJ_INT32(r.Max.Y)) == C.OPJ_FALSE {
 			return nil, errors.New("failed to set the decoded area")
@@ -136,30 +119,45 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 	compsSlice.Len = int(i.image.numcomps)
 	compsSlice.Data = uintptr(unsafe.Pointer(i.image.comps))
 
-	bounds := image.Rect(0, 0, int(comps[0].w), int(comps[0].h))
+	width := int(comps[0].w)
+	height := int(comps[0].h)
+	bounds := image.Rect(0, 0, width, height)
 	var img image.Image
 
 	// We assume grayscale if we don't have at least 3 components, because it's
 	// probably the safest default
 	if len(comps) < 3 {
-		img = &image.Gray{Pix: JP2ComponentData(comps[0]), Stride: bounds.Dx(), Rect: bounds}
+		img = &image.Gray{Pix: JP2ComponentData(comps[0]), Stride: width, Rect: bounds}
 	} else {
 		// If we have 3+ components, we only care about the first three - I have no
 		// idea what else we might have other than alpha, and as a tile server, we
-		// don't care about alpha.  It's worth noting that this will almost certainly
-		// blow up on any JP2 that isn't using RGB.
-		realData := make([]uint8, (bounds.Dx()*bounds.Dy())<<2)
-		for x, comp := range comps[0:3] {
-			compData := JP2ComponentData(comp)
-			for y, point := range compData {
-				realData[y*4+x] = point
-			}
+		// don't care about the *source* image's alpha.  It's worth noting that
+		// this will almost certainly blow up on any JP2 that isn't using RGB.
+
+		area := width * height
+		bytes := area << 2
+		realData := make([]uint8, bytes)
+
+		red := JP2ComponentData(comps[0])
+		green := JP2ComponentData(comps[1])
+		blue := JP2ComponentData(comps[2])
+
+		offset := 0
+		for i := 0; i < area; i++ {
+			realData[offset] = red[i]
+			offset++
+			realData[offset] = green[i]
+			offset++
+			realData[offset] = blue[i]
+			offset++
+			realData[offset] = 255
+			offset++
 		}
 
-		img = &image.RGBA{Pix: realData, Stride: bounds.Dx() << 2, Rect: bounds}
+		img = &image.RGBA{Pix: realData, Stride: width << 2, Rect: bounds}
 	}
 
-	if i.resizeByPixels {
+	if i.decodeWidth != i.decodeArea.Dx() || i.decodeHeight != i.decodeArea.Dy() {
 		img = resize.Resize(uint(i.decodeWidth), uint(i.decodeHeight), img, resize.Bilinear)
 	}
 
@@ -186,8 +184,30 @@ func (i *JP2Image) ReadHeader() error {
 	return nil
 }
 
-func (i *JP2Image) Dimensions() image.Rectangle {
-	return image.Rect(int(i.image.x0), int(i.image.y0), int(i.image.x1), int(i.image.y1))
+// getDimensions reads the JP2 headers and pulls dimensions into srcWidth and
+// srcHeight.  The image resource is cleaned up afterward, as this operation
+// has to be usable independently of decoding.  This shouldn't be called after
+// width and height are stored.
+func (i *JP2Image) readDimensions() error {
+	defer i.CleanupResources()
+	if err := i.ReadHeader(); err != nil {
+		return err
+	}
+
+	i.srcRect = image.Rect(int(i.image.x0), int(i.image.y0), int(i.image.x1), int(i.image.y1))
+	i.srcWidth = i.srcRect.Dx()
+	i.srcHeight = i.srcRect.Dy()
+	return nil
+}
+
+// GetWidth returns the image width
+func (i *JP2Image) GetWidth() int {
+	return i.srcWidth
+}
+
+// GetHeight returns the image height
+func (i *JP2Image) GetHeight() int {
+	return i.srcHeight
 }
 
 // Attempts to set the progression level to the given value, then re-read the

@@ -7,6 +7,8 @@ GOBIN=$(GOROOT)/bin/go
 # Dependencies
 IMGRESIZEDEP=github.com/nfnt/resize
 IMGRESIZE=$(GOPATH)/src/$(IMGRESIZEDEP)
+IMGTIFFDEP=golang.org/x/image/tiff
+IMGTIFF=$(GOPATH)/src/$(IMGTIFFDEP)
 
 # All library files contribute to the need to recompile (except tests!  How do
 # we skip those?)
@@ -25,9 +27,11 @@ transform/rotation.go: transform/generator.go transform/template.txt
 	gofmt -l -w -s transform/rotation.go
 
 # Dependency-getters
-deps: $(IMGRESIZE)
+deps: $(IMGRESIZE) $(IMGTIFF)
 $(IMGRESIZE):
 	$(GOBIN) get $(IMGRESIZEDEP)
+$(IMGTIFF):
+	$(GOBIN) get $(IMGTIFF)
 
 # dir/symlink creation - mandatory for any binary building to work
 #
@@ -56,6 +60,7 @@ lint:
 # Cleanup
 clean:
 	rm -f bin/*
+	rm transform/rotation.go
 
 distclean: clean
 	rm -f $(GO_PROJECT_SYMLINK)
