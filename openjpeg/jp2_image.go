@@ -42,11 +42,6 @@ func NewJP2Image(filename string) (*JP2Image, error) {
 		return nil, err
 	}
 
-	// Default to no cropping, full size
-	i.decodeArea = image.Rect(0, 0, i.srcWidth, i.srcHeight)
-	i.decodeWidth = i.srcWidth
-	i.decodeHeight = i.srcHeight
-
 	return i, nil
 }
 
@@ -73,6 +68,15 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 	if err := i.initializeCodec(); err != nil {
 		goLog(3, "Error initializing codec - aborting")
 		return nil, err
+	}
+
+	if i.decodeArea == image.ZR {
+		i.decodeArea = image.Rect(0, 0, i.srcWidth, i.srcHeight)
+	}
+
+	if i.decodeWidth == 0 && i.decodeHeight == 0 {
+		i.decodeWidth = i.decodeArea.Dx()
+		i.decodeHeight = i.decodeArea.Dy()
 	}
 
 	// Get progression level if we're resizing to specific dimensions (it's zero

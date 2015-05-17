@@ -36,11 +36,6 @@ func NewSimpleImage(filename string) (*SimpleImage, error) {
 	}
 	i.file.Seek(0, 0)
 
-	// Default to full size, no crop
-	i.decodeWidth = i.conf.Width
-	i.decodeHeight = i.conf.Height
-	i.decodeArea = image.Rect(0, 0, i.decodeWidth, i.decodeHeight)
-
 	return i, nil
 }
 
@@ -64,6 +59,15 @@ func (i *SimpleImage) DecodeImage() (image.Image, error) {
 	img, _, err := image.Decode(i.file)
 	if err != nil {
 		return nil, err
+	}
+
+	if i.decodeArea == image.ZR {
+		i.decodeArea = image.Rect(0, 0, i.conf.Width, i.conf.Height)
+	}
+
+	if i.decodeWidth == 0 && i.decodeHeight == 0 {
+		i.decodeWidth = i.conf.Width
+		i.decodeHeight = i.conf.Height
 	}
 
 	// Draw a new image of the requested size if the decode area isn't the same
