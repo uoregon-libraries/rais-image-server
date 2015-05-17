@@ -6,6 +6,11 @@ import (
 	"image"
 )
 
+// Rotator implements simple 90-degree rotations in addition to mirroring for
+// IIIF compliance.  After each operation, the underlying image is replaced
+// with the new image.  It's important to note, however, that the source image
+// is never directly changed.  A new image is drawn, and the old is simply
+// forgotten by the Rotator.
 type Rotator interface {
 	Image() image.Image
 	Rotate90()
