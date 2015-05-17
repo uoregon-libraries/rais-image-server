@@ -34,13 +34,15 @@ func (r *{{$Type.Shortstring}}Rotator) {{.Method}}() {
 
 	dst := {{$Type.ConstructorMethod}}(image.Rect(0, 0, {{.DimensionOrder}}))
 
-	var x, y, srcPix, dstPix int64
+	var x, y, srcIdx, dstIdx int64
 	maxX, maxY := int64(srcWidth), int64(srcHeight)
 	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	srcPix := src.Pix
+	dstPix := dst.Pix
 	for y = 0; y < maxY; y++ {
 		for x = 0; x < maxX; x++ {
-			srcPix = y*srcStride + {{.GetSrcX $Type.ByteSize}}
-			dstPix = {{.GetDstY}}*dstStride + {{.GetDstX $Type.ByteSize}}
+			srcIdx = y*srcStride + {{.GetSrcX $Type.ByteSize}}
+			dstIdx = {{.GetDstY}}*dstStride + {{.GetDstX $Type.ByteSize}}
 			{{$Type.CopyStatement}}
 		}
 	}

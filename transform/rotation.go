@@ -33,14 +33,16 @@ func (r *GrayRotator) Rotate90() {
 
 	dst := image.NewGray(image.Rect(0, 0, srcHeight, srcWidth))
 
-	var x, y, srcPix, dstPix int64
+	var x, y, srcIdx, dstIdx int64
 	maxX, maxY := int64(srcWidth), int64(srcHeight)
 	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	srcPix := src.Pix
+	dstPix := dst.Pix
 	for y = 0; y < maxY; y++ {
 		for x = 0; x < maxX; x++ {
-			srcPix = y*srcStride + x
-			dstPix = x*dstStride + (maxY - 1 - y)
-			dst.Pix[dstPix] = src.Pix[srcPix]
+			srcIdx = y*srcStride + x
+			dstIdx = x*dstStride + (maxY - 1 - y)
+			dstPix[dstIdx] = srcPix[srcIdx]
 		}
 	}
 
@@ -56,14 +58,16 @@ func (r *GrayRotator) Rotate180() {
 
 	dst := image.NewGray(image.Rect(0, 0, srcWidth, srcHeight))
 
-	var x, y, srcPix, dstPix int64
+	var x, y, srcIdx, dstIdx int64
 	maxX, maxY := int64(srcWidth), int64(srcHeight)
 	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	srcPix := src.Pix
+	dstPix := dst.Pix
 	for y = 0; y < maxY; y++ {
 		for x = 0; x < maxX; x++ {
-			srcPix = y*srcStride + x
-			dstPix = (maxY-1-y)*dstStride + (maxX - 1 - x)
-			dst.Pix[dstPix] = src.Pix[srcPix]
+			srcIdx = y*srcStride + x
+			dstIdx = (maxY-1-y)*dstStride + (maxX - 1 - x)
+			dstPix[dstIdx] = srcPix[srcIdx]
 		}
 	}
 
@@ -79,14 +83,16 @@ func (r *GrayRotator) Rotate270() {
 
 	dst := image.NewGray(image.Rect(0, 0, srcHeight, srcWidth))
 
-	var x, y, srcPix, dstPix int64
+	var x, y, srcIdx, dstIdx int64
 	maxX, maxY := int64(srcWidth), int64(srcHeight)
 	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	srcPix := src.Pix
+	dstPix := dst.Pix
 	for y = 0; y < maxY; y++ {
 		for x = 0; x < maxX; x++ {
-			srcPix = y*srcStride + x
-			dstPix = (maxX-1-x)*dstStride + y
-			dst.Pix[dstPix] = src.Pix[srcPix]
+			srcIdx = y*srcStride + x
+			dstIdx = (maxX-1-x)*dstStride + y
+			dstPix[dstIdx] = srcPix[srcIdx]
 		}
 	}
 
@@ -102,14 +108,16 @@ func (r *GrayRotator) Mirror() {
 
 	dst := image.NewGray(image.Rect(0, 0, srcWidth, srcHeight))
 
-	var x, y, srcPix, dstPix int64
+	var x, y, srcIdx, dstIdx int64
 	maxX, maxY := int64(srcWidth), int64(srcHeight)
 	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	srcPix := src.Pix
+	dstPix := dst.Pix
 	for y = 0; y < maxY; y++ {
 		for x = 0; x < maxX; x++ {
-			srcPix = y*srcStride + x
-			dstPix = y*dstStride + (maxX - 1 - x)
-			dst.Pix[dstPix] = src.Pix[srcPix]
+			srcIdx = y*srcStride + x
+			dstIdx = y*dstStride + (maxX - 1 - x)
+			dstPix[dstIdx] = srcPix[srcIdx]
 		}
 	}
 
@@ -135,14 +143,16 @@ func (r *RGBARotator) Rotate90() {
 
 	dst := image.NewRGBA(image.Rect(0, 0, srcHeight, srcWidth))
 
-	var x, y, srcPix, dstPix int64
+	var x, y, srcIdx, dstIdx int64
 	maxX, maxY := int64(srcWidth), int64(srcHeight)
 	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	srcPix := src.Pix
+	dstPix := dst.Pix
 	for y = 0; y < maxY; y++ {
 		for x = 0; x < maxX; x++ {
-			srcPix = y*srcStride + (x << 2)
-			dstPix = x*dstStride + ((maxY - 1 - y) << 2)
-			copy(dst.Pix[dstPix:dstPix+4], src.Pix[srcPix:srcPix+4])
+			srcIdx = y*srcStride + (x << 2)
+			dstIdx = x*dstStride + ((maxY - 1 - y) << 2)
+			copy(dstPix[dstIdx:dstIdx+4], srcPix[srcIdx:srcIdx+4])
 		}
 	}
 
@@ -158,14 +168,16 @@ func (r *RGBARotator) Rotate180() {
 
 	dst := image.NewRGBA(image.Rect(0, 0, srcWidth, srcHeight))
 
-	var x, y, srcPix, dstPix int64
+	var x, y, srcIdx, dstIdx int64
 	maxX, maxY := int64(srcWidth), int64(srcHeight)
 	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	srcPix := src.Pix
+	dstPix := dst.Pix
 	for y = 0; y < maxY; y++ {
 		for x = 0; x < maxX; x++ {
-			srcPix = y*srcStride + (x << 2)
-			dstPix = (maxY-1-y)*dstStride + ((maxX - 1 - x) << 2)
-			copy(dst.Pix[dstPix:dstPix+4], src.Pix[srcPix:srcPix+4])
+			srcIdx = y*srcStride + (x << 2)
+			dstIdx = (maxY-1-y)*dstStride + ((maxX - 1 - x) << 2)
+			copy(dstPix[dstIdx:dstIdx+4], srcPix[srcIdx:srcIdx+4])
 		}
 	}
 
@@ -181,14 +193,16 @@ func (r *RGBARotator) Rotate270() {
 
 	dst := image.NewRGBA(image.Rect(0, 0, srcHeight, srcWidth))
 
-	var x, y, srcPix, dstPix int64
+	var x, y, srcIdx, dstIdx int64
 	maxX, maxY := int64(srcWidth), int64(srcHeight)
 	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	srcPix := src.Pix
+	dstPix := dst.Pix
 	for y = 0; y < maxY; y++ {
 		for x = 0; x < maxX; x++ {
-			srcPix = y*srcStride + (x << 2)
-			dstPix = (maxX-1-x)*dstStride + (y << 2)
-			copy(dst.Pix[dstPix:dstPix+4], src.Pix[srcPix:srcPix+4])
+			srcIdx = y*srcStride + (x << 2)
+			dstIdx = (maxX-1-x)*dstStride + (y << 2)
+			copy(dstPix[dstIdx:dstIdx+4], srcPix[srcIdx:srcIdx+4])
 		}
 	}
 
@@ -204,14 +218,16 @@ func (r *RGBARotator) Mirror() {
 
 	dst := image.NewRGBA(image.Rect(0, 0, srcWidth, srcHeight))
 
-	var x, y, srcPix, dstPix int64
+	var x, y, srcIdx, dstIdx int64
 	maxX, maxY := int64(srcWidth), int64(srcHeight)
 	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	srcPix := src.Pix
+	dstPix := dst.Pix
 	for y = 0; y < maxY; y++ {
 		for x = 0; x < maxX; x++ {
-			srcPix = y*srcStride + (x << 2)
-			dstPix = y*dstStride + ((maxX - 1 - x) << 2)
-			copy(dst.Pix[dstPix:dstPix+4], src.Pix[srcPix:srcPix+4])
+			srcIdx = y*srcStride + (x << 2)
+			dstIdx = y*dstStride + ((maxX - 1 - x) << 2)
+			copy(dstPix[dstIdx:dstIdx+4], srcPix[srcIdx:srcIdx+4])
 		}
 	}
 

@@ -85,7 +85,7 @@ var typeGray = imageType{
 	String:            "*image.Gray",
 	Shortstring:       "Gray",
 	ConstructorMethod: "image.NewGray",
-	CopyStatement:     "dst.Pix[dstPix] = src.Pix[srcPix]",
+	CopyStatement:     "dstPix[dstIdx] = srcPix[srcIdx]",
 	ByteSize:          1,
 }
 
@@ -93,7 +93,7 @@ var typeRGBA = imageType{
 	String:            "*image.RGBA",
 	Shortstring:       "RGBA",
 	ConstructorMethod: "image.NewRGBA",
-	CopyStatement:     "copy(dst.Pix[dstPix:dstPix+4], src.Pix[srcPix:srcPix+4])",
+	CopyStatement:     "copy(dstPix[dstIdx:dstIdx+4], srcPix[srcIdx:srcIdx+4])",
 	ByteSize:          4,
 }
 
