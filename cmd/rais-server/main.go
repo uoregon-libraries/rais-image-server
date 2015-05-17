@@ -59,7 +59,7 @@ func main() {
 }
 
 func parseInts(intStrings string) []int {
-	iList := make([]int, 0)
+	var iList []int
 
 	if intStrings == "" {
 		return iList
