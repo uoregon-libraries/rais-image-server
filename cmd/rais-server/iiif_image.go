@@ -33,9 +33,9 @@ type IIIFImage interface {
 }
 
 type ImageResource struct {
-	Image      IIIFImage
-	ID         iiif.ID
-	FilePath   string
+	Image    IIIFImage
+	ID       iiif.ID
+	FilePath string
 }
 
 // Initializes and returns an ImageResource for the given id and path.  If the path
@@ -142,7 +142,7 @@ func (res *ImageResource) prep(r iiif.Region, s iiif.Size) {
 func (res *ImageResource) getBestFit(width, height int, s iiif.Size) (int, int) {
 	fW, fH, fsW, fsH := float64(width), float64(height), float64(s.W), float64(s.H)
 	sf := fsW / fW
-	if sf * fH > fsH {
+	if sf*fH > fsH {
 		sf = fsH / fH
 	}
 	return int(sf * fW), int(sf * fH)

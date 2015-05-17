@@ -37,38 +37,38 @@ func NewIIIFHandler(u *url.URL, widths []int, tp string) *IIIFHandler {
 	// Set up the features we support individually, and let the info magic figure
 	// out how best to report it
 	fs := &iiif.FeatureSet{
-		RegionByPx: true,
+		RegionByPx:  true,
 		RegionByPct: true,
 
 		SizeByWhListed: true,
-		SizeByW: true,
-		SizeByH: true,
-		SizeByPct: true,
-		SizeByWh: true,
+		SizeByW:        true,
+		SizeByH:        true,
+		SizeByPct:      true,
+		SizeByWh:       true,
 		SizeByForcedWh: true,
-		SizeAboveFull: true,
+		SizeAboveFull:  true,
 
-		RotationBy90s: true,
+		RotationBy90s:     true,
 		RotationArbitrary: false,
-		Mirroring: true,
+		Mirroring:         true,
 
 		Default: true,
-		Color: true,
-		Gray: true,
+		Color:   true,
+		Gray:    true,
 		Bitonal: true,
 
-		Jpg: true,
-		Png: true,
-		Gif: true,
-		Tif: true,
-		Jp2: false,
-		Pdf: false,
+		Jpg:  true,
+		Png:  true,
+		Gif:  true,
+		Tif:  true,
+		Jp2:  false,
+		Pdf:  false,
 		Webp: false,
 
-		BaseUriRedirect: true,
-		Cors: true,
-		JsonldMediaType: true,
-		ProfileLinkHeader: false,
+		BaseUriRedirect:     true,
+		Cors:                true,
+		JsonldMediaType:     true,
+		ProfileLinkHeader:   false,
 		CanonicalLinkHeader: false,
 	}
 

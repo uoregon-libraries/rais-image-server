@@ -17,17 +17,17 @@ import (
 
 // Container for our simple JP2 operations
 type JP2Image struct {
-	filename        string
-	stream          *C.opj_stream_t
-	codec           *C.opj_codec_t
-	image           *C.opj_image_t
-	decodeWidth     int
-	decodeHeight    int
-	srcWidth        int
-	srcHeight       int
-	scaleFactor     float64
-	decodeArea      image.Rectangle
-	srcRect         image.Rectangle
+	filename     string
+	stream       *C.opj_stream_t
+	codec        *C.opj_codec_t
+	image        *C.opj_image_t
+	decodeWidth  int
+	decodeHeight int
+	srcWidth     int
+	srcHeight    int
+	scaleFactor  float64
+	decodeArea   image.Rectangle
+	srcRect      image.Rectangle
 }
 
 func NewJP2Image(filename string) (*JP2Image, error) {

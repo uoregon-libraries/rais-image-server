@@ -15,12 +15,12 @@ import (
 // only handle a basic "read it all, then crop/resize" flow, and thus should
 // have very careful load testing.
 type SimpleImage struct {
-	file            *os.File
-	conf            image.Config
-	decodeWidth     int
-	decodeHeight    int
-	scaleFactor     float64
-	decodeArea      image.Rectangle
+	file         *os.File
+	conf         image.Config
+	decodeWidth  int
+	decodeHeight int
+	scaleFactor  float64
+	decodeArea   image.Rectangle
 }
 
 func NewSimpleImage(filename string) (*SimpleImage, error) {
