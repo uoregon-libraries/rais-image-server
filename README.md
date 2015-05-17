@@ -115,8 +115,8 @@ IIIF Features
 
 When running as an IIIF server, you can browse to any valid Image's INFO page
 to see the features supported.  At the moment, there is no smart per-image
-feature support.  Other than possible bugs, we are ensuring we support level 1
-at a minimum, as well as a handful other features beyond level 1.
+feature support.  Other than possible bugs, we are ensuring we support level 2
+at a minimum, as well as a handful other features beyond level 2.
 
 An example INFO request would look like `http://example.com/iiif/source.jp2/info.json`,
 assuming your server is at `example.com`, the IIIF prefix is `iiif`, and the
@@ -133,10 +133,13 @@ Full list of features supported:
   - "w," / sizeByW
   - ",h" / sizeByH
   - "pct:x" / sizeByPct
+  - "w,h" / sizeByForcedWH
+  - "!w,h" / sizeByWH
   - "sizeAboveFull"
 - Rotation:
   - 0
   - "90,180,270" / rotationBy90s
+  - "!0,!90,!180,!270" / mirroring
 - Quality:
   - "default"
   - "native" (same as "default")
@@ -210,7 +213,7 @@ of RAM.  Load testing is highly recommended.
 
 - IIIF Support isn't perfect
 
-The IIIF support adheres to level 1 of the spec (as well as some extra
+The IIIF support adheres to level 2 of the spec (as well as some extra
 features), but it isn't as customizable as we would prefer.  You can't specify
 per-image info.json responses; there is no way to change the tile scale
 factors: 1, 2, 4, 8, 16, 32, and 64; and there's no way to specify optimal
