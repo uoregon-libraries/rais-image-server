@@ -184,6 +184,18 @@ Known Limitations
 There are probably a lot of *unknown* limitations, so this should be considered
 a very small list of what are likely a lot of problems.
 
+- Non-JP2 source files are **SLOW**
+
+Go's built-in image decoding, at least for TIFF images, leaves a lot of room
+for improvement.  I mean, a whole lot.  With no load, a fairly decent server
+was giving us individual tiles in 6+ seconds.  Panning and zooming quickly shot
+that up around 40 seconds.  That same server never exceeded 250ms for JP2
+tiles, even panning and zooming in an attempt to slow it down.
+
+Until we get some time to bind to libtiff, TIFF support should be considered an
+abomination of nature that will eat babies and squish your web server.  PRs
+to fix this would be absolutely lovely.
+
 - JP2: resolution factors beyond 6 aren't supported
 
 Very large images (as in, hundreds of megapixels) will have performance issues
