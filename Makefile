@@ -12,7 +12,7 @@ IMGTIFF=$(GOPATH)/src/$(IMGTIFFDEP)
 
 # All library files contribute to the need to recompile (except tests!  How do
 # we skip those?)
-SRCS := openjpeg/*.go iiif/*.go magick/*.go
+SRCS := openjpeg/*.go iiif/*.go magick/*.go openjpeg/*.[ch] magick/*.[ch]
 
 .PHONY: all generate binaries test format lint clean distclean
 
