@@ -12,11 +12,6 @@ import (
 	"unsafe"
 )
 
-// This string never changes, and is used for the life of the app, so it's safe
-// not to free
-var cRGBA = C.CString("RGBA")
-var ssizeZero = C.ssize_t(0)
-
 // Image returns a native Go image interface.  For now, this is always RGBA for
 // simplicity, but it would be a good idea to use a gray image when it makes
 // sense to improve performance and RAM usage.
@@ -37,7 +32,7 @@ func (i *Image) Image() (image.Image, error) {
 	w := C.size_t(i.decodeWidth)
 	h := C.size_t(i.decodeHeight)
 
-	C.ExportImagePixels(i.image, ssizeZero, ssizeZero, w, h, cRGBA, C.CharPixel, ptr, exception)
+	C.ExportRGBA(i.image, w, h, ptr, exception)
 
 	img.Pix = pi.([]uint8)
 

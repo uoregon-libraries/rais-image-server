@@ -79,7 +79,7 @@ func (i *Image) doResize(w, h int) error {
 	exception := C.AcquireExceptionInfo()
 	defer C.DestroyExceptionInfo(exception)
 
-	newImg := C.AdaptiveResizeImage(i.image, C.size_t(w), C.size_t(h), exception)
+	newImg := C.Resize(i.image, C.size_t(w), C.size_t(h), exception)
 	if C.HasError(exception) == 1 {
 		return makeError(exception)
 	}
@@ -92,12 +92,7 @@ func (i *Image) doCrop(r image.Rectangle) error {
 	exception := C.AcquireExceptionInfo()
 	defer C.DestroyExceptionInfo(exception)
 
-	var ri C.RectangleInfo
-	ri.width = C.size_t(r.Dx())
-	ri.height = C.size_t(r.Dy())
-	ri.x = C.ssize_t(r.Min.X)
-	ri.y = C.ssize_t(r.Min.Y)
-
+	var ri = C.MakeRectangle(C.int(r.Min.X), C.int(r.Min.Y), C.int(r.Dx()), C.int(r.Dy()))
 	newImg := C.CropImage(i.image, &ri, exception)
 	if C.HasError(exception) == 1 {
 		return makeError(exception)
