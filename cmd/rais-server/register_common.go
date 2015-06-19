@@ -1,9 +1,8 @@
 package main
 
+import "github.com/uoregon-libraries/rais-image-server/magick"
+
 func init() {
-	// Known extensions Go handles internally - note that if we want to properly
-	// deal with pyramidal TIFFs, that's going to require something beyond a per-
-	// extension registry.
 	extList := []string{".tif", ".tiff", ".png", ".jpg", "jpeg", ".gif"}
 	for _, ext := range extList {
 		RegisterDecoder(ext, decodeCommonFile)
@@ -11,5 +10,5 @@ func init() {
 }
 
 func decodeCommonFile(path string) (IIIFImage, error) {
-	return NewSimpleImage(path)
+	return magick.NewImage(path)
 }
