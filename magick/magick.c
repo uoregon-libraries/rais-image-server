@@ -13,6 +13,8 @@ int HasError(ExceptionInfo *exception) {
   assert(exception->signature == MagickSignature);
   if (exception->exceptions  == (void *) NULL)
     return 0;
+  if (exception->semaphore == (void *) NULL)
+    return 0;
 
   LockSemaphoreInfo(exception->semaphore);
   ResetLinkedListIterator((LinkedListInfo *) exception->exceptions);
