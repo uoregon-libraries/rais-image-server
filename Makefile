@@ -12,7 +12,7 @@ IMGTIFF=$(GOPATH)/src/$(IMGTIFFDEP)
 
 # All library files contribute to the need to recompile (except tests!  How do
 # we skip those?)
-SRCS := openjpeg/*.go iiif/*.go
+SRCS := openjpeg/*.go iiif/*.go magick/*.go openjpeg/*.[ch] magick/*.[ch]
 
 .PHONY: all generate binaries test format lint clean distclean
 
@@ -31,7 +31,7 @@ deps: $(IMGRESIZE) $(IMGTIFF)
 $(IMGRESIZE):
 	$(GOBIN) get $(IMGRESIZEDEP)
 $(IMGTIFF):
-	$(GOBIN) get $(IMGTIFF)
+	$(GOBIN) get $(IMGTIFFDEP)
 
 # dir/symlink creation - mandatory for any binary building to work
 #
@@ -45,11 +45,11 @@ $(SYMLINK_EXISTS):
 # Binary building rules
 binaries: bin/rais-server
 bin/rais-server: $(SYMLINK_EXISTS) $(IMGRESIZE) $(SRCS) cmd/rais-server/*.go transform/rotation.go
-	$(GOBIN) build -o bin/rais-server ./cmd/rais-server
+	$(GOBIN) build -tags jp2 -o bin/rais-server ./cmd/rais-server
 
 # Testing
 test: $(SYMLINK_EXISTS) $(IMGRESIZE)
-	$(GOBIN) test ./openjpeg ./cmd/rais-server ./iiif ./fakehttp
+	$(GOBIN) test -tags jp2 ./openjpeg ./cmd/rais-server ./iiif ./fakehttp
 
 format:
 	find . -name "*.go" | xargs gofmt -l -w -s
@@ -60,7 +60,7 @@ lint:
 # Cleanup
 clean:
 	rm -f bin/*
-	rm transform/rotation.go
+	rm -f transform/rotation.go
 
 distclean: clean
 	rm -f $(GO_PROJECT_SYMLINK)

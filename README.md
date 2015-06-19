@@ -14,17 +14,27 @@ Newspapers](http://oregonnews.uoregon.edu/) project.
 Setup
 -----
 
-- Install openjpeg 2.1 (see below)
+- *Optional*: Install openjpeg 2.1 (see below)
+- Install imagemagick development files (`yum install ImageMagick-devel` on RHEL)
 - [Install go](http://golang.org/doc/install)
 - Set up the [`GOPATH` environment variable](http://golang.org/doc/code.html#GOPATH)
   - This tells go where to put the project
-- Install the project:
+- Install the project without JP2 support:
   - `go get -u github.com/uoregon-libraries/rais-image-server/cmd/rais-server`
+- *OR* install with JP2 support:
+  - `go get -u -tags jp2 github.com/uoregon-libraries/rais-image-server/cmd/rais-server`
+
+Please note that if you clone the repository from github, the makefile assumes
+JP2 support in order to make development easier for me.
 
 ### Openjpeg installation
 
-Openjpeg 2.1 must be installed for this to work.  The previous approach which
-used a checkout of the subversion repository is no longer supported.
+Openjpeg 2.1 must be installed to handle JP2 source images.  This is
+**optional**, but if you have (or can build) tiled JP2 images, they will be
+extremely space- and RAM-efficient, as well as being fairly fast.  In our
+tests, TIFFs are slower with only a moderate load (a single user deliberately
+panning and zooming quickly).
+
 Installation depends on operating system, but we were able to rebuild the
 Fedora SRPM for RedHat 6 and CentOS 7.
 
@@ -255,9 +265,9 @@ deep zooming and run under a high-performance image server such as [IIP
 Image](http://iipimage.sourceforge.net/).
 
 As an example: TIFF files are usually fast to process, but can potentially take
-up a great deal of memory.  In some cases, the speed outweighs the memory
-costs, as the decoding happens so fast the RAM is able to be freed before it
-becomes a problem.  Again, load-testing is extremely important here.
+up a great deal of memory.  Sometimes this is okay, but it's a bottleneck
+quickly when running a tiling server.  In our limited testing, TIFFs outperform
+tiled JP2s only when load is extremely light.
 
 License
 -----

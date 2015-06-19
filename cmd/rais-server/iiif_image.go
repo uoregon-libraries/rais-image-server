@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"github.com/uoregon-libraries/rais-image-server/iiif"
-	"github.com/uoregon-libraries/rais-image-server/openjpeg"
 	"github.com/uoregon-libraries/rais-image-server/transform"
 	"image"
 	"image/color"
@@ -51,19 +50,15 @@ func NewImageResource(id iiif.ID, filepath string) (*ImageResource, error) {
 		return nil, ErrImageDoesNotExist
 	}
 
-	// File exists - is it a valid filetype?
-	var i IIIFImage
-	fileExt := strings.ToLower(path.Ext(filepath))
-	switch fileExt {
-	case ".jp2":
-		i, err = openjpeg.NewJP2Image(filepath)
-	case ".tif", ".tiff", ".png", ".jpg", "jpeg", ".gif":
-		i, err = NewSimpleImage(filepath)
-	default:
+	// File exists - is its extension registered?
+	decoder, ok := ExtDecoders[strings.ToLower(path.Ext(filepath))]
+	if !ok {
 		log.Printf("Image type unknown / invalid: %#v", filepath)
 		return nil, ErrInvalidFiletype
 	}
 
+	// We have a decoder for the file type - attempt to decode
+	i, err := decoder(filepath)
 	if err != nil {
 		log.Printf("Unable to read image %#v: %s", filepath)
 		return nil, ErrBadImageFile

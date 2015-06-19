@@ -1,12 +1,14 @@
 package openjpeg
 
 // #cgo LDFLAGS: -lopenjp2
+// #include <stdlib.h>
 // #include "handlers.h"
 import "C"
 
 import (
 	"errors"
 	"fmt"
+	"unsafe"
 )
 
 func finalizer(i *JP2Image) {
@@ -18,7 +20,10 @@ func (i *JP2Image) initializeStream() error {
 		return nil
 	}
 
-	i.stream = C.opj_stream_create_default_file_stream(C.CString(i.filename), 1)
+	cFilename := C.CString(i.filename)
+	defer C.free(unsafe.Pointer(cFilename))
+
+	i.stream = C.opj_stream_create_default_file_stream(cFilename, 1)
 	if i.stream == nil {
 		return errors.New(fmt.Sprintf("Failed to create stream in %#v", i.filename))
 	}

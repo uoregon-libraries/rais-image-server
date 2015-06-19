@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/uoregon-libraries/rais-image-server/openjpeg"
 	"image"
 	"image/jpeg"
 	"log"
@@ -42,20 +41,18 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Create JP2 structure
-	jp2, err := openjpeg.NewJP2Image(filepath)
+	res, err := NewImageResource("", filepath)
 	if err != nil {
 		http.Error(w, "Unable to read source image", 500)
 		log.Println("Unable to read source image: ", err)
 		return
 	}
-
-	defer jp2.CleanupResources()
+	i := res.Image
 
 	// Pull raw tile data
-	jp2.SetResizeWH(width, height)
-	jp2.SetCrop(r)
-	img, err := jp2.DecodeImage()
+	i.SetResizeWH(width, height)
+	i.SetCrop(r)
+	img, err := i.DecodeImage()
 	if err != nil {
 		http.Error(w, "Unable to decode image", 500)
 		log.Println("Unable to decode image: ", err)
@@ -90,19 +87,17 @@ func ResizeHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Create JP2 structure
-	jp2, err := openjpeg.NewJP2Image(filepath)
+	res, err := NewImageResource("", filepath)
 	if err != nil {
 		http.Error(w, "Unable to read source image", 500)
 		log.Println("Unable to read source image: ", err)
 		return
 	}
-
-	defer jp2.CleanupResources()
+	i := res.Image
 
 	// Pull raw tile data
-	jp2.SetResizeWH(width, height)
-	img, err := jp2.DecodeImage()
+	i.SetResizeWH(width, height)
+	img, err := i.DecodeImage()
 	if err != nil {
 		http.Error(w, "Unable to decode image", 500)
 		log.Println("Unable to decode image: ", err)

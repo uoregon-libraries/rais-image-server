@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/uoregon-libraries/rais-image-server/openjpeg"
 	"net/http"
 	"net/url"
 	"os"
@@ -19,13 +18,11 @@ func main() {
 
 	var tileSizeString, iiifURL string
 	var address string
-	var logLevel int
 
 	flag.StringVar(&iiifURL, "iiif-url", "", `Base URL for serving IIIF requests, e.g., "http://example.com:8888/images/iiif"`)
 	flag.StringVar(&tileSizeString, "iiif-tile-sizes", "512", `Tile sizes for IIIF, e.g., "256,512,1024"`)
 	flag.StringVar(&address, "address", ":8888", "http service address")
 	flag.StringVar(&tilePath, "tile-path", "", "Base path for JP2 images")
-	flag.IntVar(&logLevel, "log-level", 4, "Log level: 0-7 (lower is less verbose)")
 	flag.Parse()
 
 	if tilePath == "" {
@@ -33,8 +30,6 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-
-	openjpeg.LogLevel = logLevel
 
 	http.HandleFunc("/images/tiles/", TileHandler)
 	http.HandleFunc("/images/resize/", ResizeHandler)
