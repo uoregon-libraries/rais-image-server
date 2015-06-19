@@ -12,7 +12,7 @@ IMGTIFF=$(GOPATH)/src/$(IMGTIFFDEP)
 
 # All library files contribute to the need to recompile (except tests!  How do
 # we skip those?)
-SRCS := openjpeg/*.go iiif/*.go
+SRCS := openjpeg/*.go iiif/*.go magick/*.go
 
 .PHONY: all generate binaries test format lint clean distclean
 
@@ -31,7 +31,7 @@ deps: $(IMGRESIZE) $(IMGTIFF)
 $(IMGRESIZE):
 	$(GOBIN) get $(IMGRESIZEDEP)
 $(IMGTIFF):
-	$(GOBIN) get $(IMGTIFF)
+	$(GOBIN) get $(IMGTIFFDEP)
 
 # dir/symlink creation - mandatory for any binary building to work
 #
