@@ -4,6 +4,16 @@ Release notes
 The top of this file contains the latest stable release and relevant notes
 about what has changed since the previous release.
 
+Release 2.1
+-----
+
+- Adds ImageMagick bindings for significantly faster TIFF decoding
+- Makes JP2 support optional, off by default
+- Allows chronam handler to use non-JP2 files
+- Fixes a minor memory leak
+- Removes annoying JP2 logging
+- Makes it easier to register different backends for various image types
+
 Release 2.0
 -----
 

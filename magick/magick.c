@@ -21,11 +21,7 @@ int HasError(ExceptionInfo *exception) {
   p=(const ExceptionInfo *) GetNextValueInLinkedList((LinkedListInfo *)
     exception->exceptions);
   while (p != (const ExceptionInfo *) NULL) {
-    if ((p->severity >= WarningException) && (p->severity < ErrorException))
-      result = 1;
-    if ((p->severity >= ErrorException) && (p->severity < FatalErrorException))
-      result = 1;
-    if (p->severity >= FatalErrorException)
+    if (p->severity >= ErrorException)
       result = 1;
     p=(const ExceptionInfo *) GetNextValueInLinkedList((LinkedListInfo *)
       exception->exceptions);
