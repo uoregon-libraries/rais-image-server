@@ -24,7 +24,6 @@ type Image struct {
 	imageInfo    (*C.ImageInfo)
 	decodeWidth  int
 	decodeHeight int
-	scaleFactor  float64
 	decodeArea   image.Rectangle
 }
 
@@ -115,6 +114,22 @@ func (i *Image) DecodeImage() (image.Image, error) {
 	if i.decodeWidth == 0 && i.decodeHeight == 0 {
 		i.decodeWidth = w
 		i.decodeHeight = h
+	}
+
+	if i.decodeWidth == 0 || i.decodeHeight == 0 {
+		srcW64 := float64(i.GetWidth())
+		srcH64 := float64(i.GetHeight())
+		h64 := float64(i.decodeHeight)
+		w64 := float64(i.decodeWidth)
+
+		if w64 == 0 {
+			scale := h64 / srcH64
+			i.decodeWidth = int(scale * srcW64)
+		}
+		if h64 == 0 {
+			scale := w64 / srcW64
+			i.decodeHeight = int(scale * srcH64)
+		}
 	}
 
 	// Crop if decode area isn't the same as the full image
