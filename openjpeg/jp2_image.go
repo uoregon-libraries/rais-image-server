@@ -25,7 +25,6 @@ type JP2Image struct {
 	decodeHeight int
 	srcWidth     int
 	srcHeight    int
-	scaleFactor  float64
 	decodeArea   image.Rectangle
 	srcRect      image.Rectangle
 }

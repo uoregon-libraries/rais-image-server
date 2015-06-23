@@ -24,7 +24,6 @@ type Image struct {
 	imageInfo    (*C.ImageInfo)
 	decodeWidth  int
 	decodeHeight int
-	scaleFactor  float64
 	decodeArea   image.Rectangle
 }
 
