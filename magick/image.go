@@ -116,6 +116,22 @@ func (i *Image) DecodeImage() (image.Image, error) {
 		i.decodeHeight = h
 	}
 
+	if i.decodeWidth == 0 || i.decodeHeight == 0 {
+		srcW64 := float64(i.GetWidth())
+		srcH64 := float64(i.GetHeight())
+		h64 := float64(i.decodeHeight)
+		w64 := float64(i.decodeWidth)
+
+		if w64 == 0 {
+			scale := h64 / srcH64
+			i.decodeWidth = int(scale * srcW64)
+		}
+		if h64 == 0 {
+			scale := w64 / srcW64
+			i.decodeHeight = int(scale * srcH64)
+		}
+	}
+
 	// Crop if decode area isn't the same as the full image
 	if i.decodeArea != image.Rect(0, 0, w, h) {
 		err := i.doCrop(i.decodeArea)
