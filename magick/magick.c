@@ -30,18 +30,6 @@ int HasError(ExceptionInfo *exception) {
 	return result;
 }
 
-Image *ReadImageFromBlob(ImageInfo *image_info, void *blob, size_t length) {
-  Image *image;
-  ExceptionInfo *exception;
-  exception = AcquireExceptionInfo();
-  image_info->blob = blob;
-  image_info->length = length;
-  image = ReadImage(image_info, exception);
-  CatchException(exception);
-  DestroyExceptionInfo(exception);
-  return image;
-}
-
 void ExportRGBA(Image *image, size_t w, size_t h, void *pixels, ExceptionInfo *e) {
 	ExportImagePixels(image, 0, 0, w, h, "RGBA", CharPixel, pixels, e);
 }
