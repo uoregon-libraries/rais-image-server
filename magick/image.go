@@ -48,7 +48,8 @@ func NewImage(filename string) (*Image, error) {
 
 	info := C.AcquireImageInfo()
 	C.SetImageInfoFilename(info, cFilename)
-	image := C.ReadImage(info, exception)
+
+	image := C.ReadImages(info, exception)
 	if C.HasError(exception) == 1 {
 		C.DestroyImageInfo(info)
 		return nil, makeError(exception)
