@@ -4,6 +4,16 @@ Release notes
 The top of this file contains the latest stable release and relevant notes
 about what has changed since the previous release.
 
+Release 2.3
+-----
+
+- Fixes HUGE memory leak when handling pyramidal TIFFs
+
+Release 2.2
+-----
+
+- Fixes bug with IIIF requests on non-JP2 sources
+
 Release 2.1
 -----
 
