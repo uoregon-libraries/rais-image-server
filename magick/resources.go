@@ -12,7 +12,11 @@ func finalizer(i *Image) {
 
 func (i *Image) CleanupImage() {
 	if i.image != nil {
-		C.DestroyImage(i.image)
+		if i.image.next != nil {
+			C.DestroyImageList(i.image)
+		} else {
+			C.DestroyImage(i.image)
+		}
 		i.image = nil
 	}
 }
