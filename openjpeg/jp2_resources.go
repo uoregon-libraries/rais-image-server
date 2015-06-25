@@ -1,6 +1,7 @@
 package openjpeg
 
-// #cgo LDFLAGS: -lopenjp2
+// #cgo pkg-config: libopenjp2
+// #include <openjpeg.h>
 // #include <stdlib.h>
 // #include "handlers.h"
 import "C"
