@@ -4,6 +4,11 @@ Release notes
 The top of this file contains the latest stable release and relevant notes
 about what has changed since the previous release.
 
+Release 2.4
+-----
+
+- Improves JP2 library detection when building with `-tags jp2`
+
 Release 2.3
 -----
 
