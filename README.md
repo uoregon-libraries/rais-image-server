@@ -191,8 +191,10 @@ guide](http://httpd.apache.org/docs/2.2/caching.html).
 Known Limitations
 -----
 
-There are probably a lot of *unknown* limitations, so this should be considered
-a very small list of what are likely a lot of problems.
+RAIS was built first and foremost to serve tiles for JP2s that always have exactly
+six resolution factors ("zoom levels") and are tiled.  It has been *amazing* for us
+within that context, but we don't know much about other uses, so outside of that
+context, there may be issues worth consideration.
 
 - JP2: resolution factors beyond 6 aren't supported
 
