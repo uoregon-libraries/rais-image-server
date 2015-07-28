@@ -12,9 +12,14 @@ RUN dnf install -y golang
 RUN dnf install -y ImageMagick-devel
 RUN dnf install -y git
 
-# Grab the RAIS repo and compile it with JP2 support
+# Grab the RAIS dependencies
 ENV GOPATH /tmp/go
-RUN go get -u -tags jp2 github.com/uoregon-libraries/rais-image-server/cmd/rais-server
+RUN go get github.com/nfnt/resize
+RUN go get golang.org/x/image/tiff
+
+# Copy the RAIS repo into the container and build RAIS
+ADD . /tmp/go/src/github.com/uoregon-libraries/rais-image-server
+RUN go install -tags jp2 github.com/uoregon-libraries/rais-image-server/cmd/rais-server
 
 RUN mkdir /opt/rais
 RUN cp /tmp/go/bin/rais-server /opt/rais

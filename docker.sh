@@ -8,7 +8,7 @@
 
 docker stop rais
 docker rm rais
-docker build -t rais:master .
+docker build -t rais:edge .
 
 # All possible environmental overrides are included below for clarity:
 # - PORT: the port RAIS listens on, defaults to 12415
@@ -21,4 +21,4 @@ docker run -d \
   -e IIIFURL="http://localhost:12415/iiif" \
   -p 12415:12415 \
   -v $(pwd)/testfile:/var/local/images \
-  rais:master
+  rais:edge
