@@ -17,7 +17,7 @@ docker build -t rais:edge .
 docker run -d \
   --name rais \
   -e PORT=12415 \
-  -e TILESIZES=512 \
+  -e TILESIZES=512,1024 \
   -e IIIFURL="http://localhost:12415/iiif" \
   -p 12415:12415 \
   -v $(pwd)/testfile:/var/local/images \
