@@ -17,37 +17,36 @@ Setup
 [Docker](https://www.docker.com/) is the preferred way to install and run RAIS.
 
 See the [manual installation instructions](MANUAL-INSTALL.md) if you don't want to use
-Docker, or you want to see exactly what's going on behind the scenes, but note
-that the [Dockerfile](Dockerfile) will be a useful reference as well.
+Docker, or you want to see exactly what's going on behind the scenes.
+
+Note that the Docker files can be useful for reference to see how the system is
+built on Fedora:
+
+- [Dockerfile.libs](docker/Dockerfile.libs) is the base docker image used for
+  building and production
+- [Dockerfile.build](docker/Dockerfile.build) is the build system, which
+  installs go and git in order to create the RAIS binary.
+- [Dockerfile.prod](docker/Dockerfile.prod) is the production image, based on
+  the "libs" image and the compiled binary.
 
 ### Dockerhub
 
-**TODO**: WIP
-
-### DIY
-
-You can clone the repository and build the docker image manually:
-
-```bash
-git clone https://github.com/uoregon-libraries/rais-image-server.git
-cd rais-image-server
-docker build -t rais:master .
-```
-
-### Running the container
-
-You can see an example in [docker.sh](docker.sh), but it looks like this:
+You can see an example in [rundocker.sh](rundocker.sh), but it looks like this:
 
 ```bash
 docker run -d \
   --name rais \
+  --privileged=true \
   -e PORT=12415 \
   -e TILESIZES=512,1024 \
   -e IIIFURL="http://localhost:12415/iiif" \
   -p 12415:12415 \
   -v $(pwd)/testfile:/var/local/images \
-  rais:edge
+  uolibraries/rais
 ```
+
+On the first run, there will be a large download to get the container, but
+after that it will be cached locally.
 
 Note that the environmental variables are optional, though IIIFURL will almost
 certainly need to be changed in production:
@@ -61,6 +60,17 @@ then just configure the port/url/volume mount as needed.
 
 Once the container has been created, it can then be started and stopped via the
 usual docker commands.
+
+### Build locally
+
+You can clone the repository and build the docker image manually if you want to
+create an image from a fork or development:
+
+```bash
+git clone https://github.com/uoregon-libraries/rais-image-server.git
+cd rais-image-server
+make docker
+```
 
 Using with chronam
 -----
