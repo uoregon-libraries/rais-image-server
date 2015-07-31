@@ -11,6 +11,7 @@
 # - IIIFURL: what RAIS reports as its server URL, defaults to localhost:$PORT/iiif
 docker run -d \
   --name rais \
+  --privileged=true \
   -e PORT=12415 \
   -e TILESIZES=512,1024 \
   -e IIIFURL="http://localhost:12415/iiif" \
