@@ -1,0 +1,6 @@
+FROM fedora:22
+MAINTAINER Jeremy Echols <jechols@uoregon.edu>
+
+# Install image dependencies for the build and prod images
+RUN dnf install -y openjpeg2-devel
+RUN dnf install -y ImageMagick-devel
