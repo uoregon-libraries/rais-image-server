@@ -1,0 +1,17 @@
+FROM uolibraries/rais:libs
+MAINTAINER Jeremy Echols <jechols@uoregon.edu>
+
+# Install all the build dependencies
+RUN dnf install -y golang
+RUN dnf install -y git
+ENV GOPATH /tmp/go
+RUN go get github.com/nfnt/resize
+RUN go get golang.org/x/image/tiff
+
+# Copy in the code and compile it
+ADD cmd /tmp/go/src/github.com/uoregon-libraries/rais-image-server/cmd
+ADD iiif /tmp/go/src/github.com/uoregon-libraries/rais-image-server/iiif
+ADD magick /tmp/go/src/github.com/uoregon-libraries/rais-image-server/magick
+ADD openjpeg /tmp/go/src/github.com/uoregon-libraries/rais-image-server/openjpeg
+ADD transform /tmp/go/src/github.com/uoregon-libraries/rais-image-server/transform
+RUN go install -tags jp2 github.com/uoregon-libraries/rais-image-server/cmd/rais-server

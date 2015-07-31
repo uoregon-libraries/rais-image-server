@@ -1,0 +1,11 @@
+FROM uolibraries/rais:libs
+MAINTAINER Jeremy Echols <jechols@uoregon.edu>
+
+ADD bin /opt/rais
+
+ENV PORT 12415
+ENV TILESIZES 512
+ENV IIIFURL http://localhost:$PORT/iiif
+
+EXPOSE $PORT
+ENTRYPOINT /opt/rais/rais-server --iiif-url $IIIFURL --address ":$PORT" --iiif-tile-sizes "$TILESIZES" --tile-path /var/local/images
