@@ -47,7 +47,7 @@ $(SYMLINK_EXISTS):
 
 # Binary building rules
 binaries: bin/rais-server
-bin/rais-server: $(SYMLINK_EXISTS) $(IMGRESIZE) $(SRCS) cmd/rais-server/*.go transform/rotation.go
+bin/rais-server: $(SYMLINK_EXISTS) deps $(SRCS) cmd/rais-server/*.go transform/rotation.go
 	$(GOBIN) build -tags jp2 -o bin/rais-server ./cmd/rais-server
 
 # Testing
