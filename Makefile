@@ -69,13 +69,10 @@ distclean: clean
 	rm -f $(GO_PROJECT_SYMLINK)
 	rmdir --ignore-fail-on-non-empty $(GO_NAMESPACE_DIR)
 
-# Rebuild docker containers
+# (Re)build the separated docker containers
 docker:
-	docker stop rais || true
-	docker rm rais || true
-	docker build --rm -t uolibraries/rais:libs -f docker/Dockerfile.libs $(MakefileDir)
-	docker build --rm -t uolibraries/rais:build -f docker/Dockerfile.build $(MakefileDir)
-	mkdir -p $(MakefileDir)/docker/bin
-	docker run --rm -it -v $(MakefileDir)/docker/bin:/tmp/hostbin uolibraries/rais:build cp /tmp/go/bin/rais-server /tmp/hostbin
-	docker build --rm -t uolibraries/rais -f docker/Dockerfile.prod $(MakefileDir)
-	rm -rf $(MakefileDir)/docker/bin
+	docker build --rm -t build -f docker/Dockerfile.build $(MakefileDir)
+	mkdir -p $(MakefileDir)docker/bin
+	docker run --rm -it -v $(MakefileDir)docker/bin:/tmp/hostbin build cp /tmp/go/bin/rais-server /tmp/hostbin
+	docker build --rm -t uolibraries/rais:prod -f docker/Dockerfile.prod $(MakefileDir)
+	rm -rf $(MakefileDir)docker/bin

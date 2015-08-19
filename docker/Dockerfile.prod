@@ -1,5 +1,9 @@
-FROM uolibraries/rais:libs
+FROM fedora:22
 MAINTAINER Jeremy Echols <jechols@uoregon.edu>
+
+# Install the runtime dependencies
+RUN dnf install -y openjpeg2
+RUN dnf install -y ImageMagick
 
 ADD bin /opt/rais
 

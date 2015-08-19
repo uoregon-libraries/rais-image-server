@@ -19,15 +19,10 @@ Setup
 See the [manual installation instructions](MANUAL-INSTALL.md) if you don't want to use
 Docker, or you want to see exactly what's going on behind the scenes.
 
-Note that the Docker files can be useful for reference to see how the system is
-built on Fedora:
-
-- [Dockerfile.libs](docker/Dockerfile.libs) is the base docker image used for
-  building and production
-- [Dockerfile.build](docker/Dockerfile.build) is the build system, which
-  installs go and git in order to create the RAIS binary.
-- [Dockerfile.prod](docker/Dockerfile.prod) is the production image, based on
-  the "libs" image and the compiled binary.
+Note that specific build and production environments can be found in the docker
+files and the Makefile's `docker` target, which may be useful for manual
+installation.  [docker/README.md](docker/README.md) describes this in a little
+more detail.
 
 ### Dockerhub
 
