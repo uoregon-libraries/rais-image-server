@@ -58,14 +58,19 @@ usual docker commands.
 
 ### Build locally
 
-You can clone the repository and build the docker image manually if you want to
-create an image from a fork or development:
+You can clone the repository if you want to create your own RAIS image:
 
 ```bash
 git clone https://github.com/uoregon-libraries/rais-image-server.git
 cd rais-image-server
 make docker
 ```
+
+*For contributors*: note that `make docker`, in addition to creating a
+production image, will produce an image called "rais-build" which can be used
+to compile and run tests.  See
+[docker/Dockerfile.build](docker/Dockerfile.build) for examples of how to make
+this happen.
 
 Using with chronam
 -----
