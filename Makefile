@@ -71,8 +71,6 @@ distclean: clean
 
 # (Re)build the separated docker containers
 docker:
-	docker build --rm -t build -f docker/Dockerfile.build $(MakefileDir)
-	mkdir -p $(MakefileDir)docker/bin
-	docker run --rm -it -v $(MakefileDir)docker/bin:/tmp/hostbin build cp /tmp/go/bin/rais-server /tmp/hostbin
+	docker build --rm -t rais-build -f docker/Dockerfile.build $(MakefileDir)
+	docker run --rm -v $(MakefileDir):/opt/rais-src rais-build
 	docker build --rm -t uolibraries/rais:prod -f docker/Dockerfile.prod $(MakefileDir)
-	rm -rf $(MakefileDir)docker/bin

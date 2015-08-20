@@ -1,6 +1,7 @@
 #!/bin/bash
 #
-# rundocker.sh: Provides an example of how to run the docker container with various settings
+# rundocker.sh: Provides an example of how to run the production docker
+# container with various settings
 #
 # After starting the container, test RAIS by browsing to
 # http://localhost:12415/iiif/test-world.jp2/full/full/0/default.jpg

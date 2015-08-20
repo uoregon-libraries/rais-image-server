@@ -1,3 +1,6 @@
+# This produces a reasonably small production image for RAIS.  You may find it
+# helpful to use the build image (Dockerfile.build) to produce the necessary
+# binary.
 FROM fedora:22
 MAINTAINER Jeremy Echols <jechols@uoregon.edu>
 
