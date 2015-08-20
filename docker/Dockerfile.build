@@ -1,0 +1,31 @@
+# This produces a build environment for RAIS.  It should be created via
+# something like this executed from the project root:
+#
+#     docker build --rm -t rais-build -f docker/Dockerfile.build .
+#
+# Once created, a binary can be built via a simple run command:
+#
+#     docker run --rm -v $(pwd):/opt/rais-src rais-build
+#
+# Don't forget to run tests if you're doing development!
+#
+#     docker run --rm -v $(pwd):/opt/rais-src rais-build make test
+#
+FROM fedora:22
+MAINTAINER Jeremy Echols <jechols@uoregon.edu>
+
+# Install all the build dependencies
+RUN dnf install -y openjpeg2-devel
+RUN dnf install -y ImageMagick-devel
+RUN dnf install -y golang
+RUN dnf install -y git
+RUN dnf install -y make
+ENV GOPATH /opt/go
+
+RUN mkdir -p /opt/rais-src
+WORKDIR /opt/rais-src
+
+# Pre-fetch go dependencies so builds are faster
+RUN /bin/go get github.com/nfnt/resize
+RUN /bin/go get golang.org/x/image/tiff
+CMD make

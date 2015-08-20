@@ -10,11 +10,14 @@ IMGRESIZE=$(GOPATH)/src/$(IMGRESIZEDEP)
 IMGTIFFDEP=golang.org/x/image/tiff
 IMGTIFF=$(GOPATH)/src/$(IMGTIFFDEP)
 
+# Makefile directory
+MakefileDir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
 # All library files contribute to the need to recompile (except tests!  How do
 # we skip those?)
 SRCS := openjpeg/*.go iiif/*.go magick/*.go openjpeg/*.[ch] magick/*.[ch]
 
-.PHONY: all generate binaries test format lint clean distclean
+.PHONY: all generate binaries test format lint clean distclean docker
 
 # Default target builds binaries
 all: binaries
@@ -44,7 +47,7 @@ $(SYMLINK_EXISTS):
 
 # Binary building rules
 binaries: bin/rais-server
-bin/rais-server: $(SYMLINK_EXISTS) $(IMGRESIZE) $(SRCS) cmd/rais-server/*.go transform/rotation.go
+bin/rais-server: $(SYMLINK_EXISTS) deps $(SRCS) cmd/rais-server/*.go transform/rotation.go
 	$(GOBIN) build -tags jp2 -o bin/rais-server ./cmd/rais-server
 
 # Testing
@@ -65,3 +68,9 @@ clean:
 distclean: clean
 	rm -f $(GO_PROJECT_SYMLINK)
 	rmdir --ignore-fail-on-non-empty $(GO_NAMESPACE_DIR)
+
+# (Re)build the separated docker containers
+docker:
+	docker build --rm -t rais-build -f docker/Dockerfile.build $(MakefileDir)
+	docker run --rm -v $(MakefileDir):/opt/rais-src rais-build
+	docker build --rm -t uolibraries/rais:prod -f docker/Dockerfile.prod $(MakefileDir)
