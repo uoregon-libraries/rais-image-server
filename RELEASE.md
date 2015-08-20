@@ -4,6 +4,12 @@ Release notes
 The top of this file contains the latest stable release and relevant notes
 about what has changed since the previous release.
 
+Release 2.5
+-----
+
+- Adds docker support for production and development
+- Removes the test which pulled huge JP2s from an external site
+
 Release 2.4
 -----
 
