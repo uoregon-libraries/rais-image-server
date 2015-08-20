@@ -8,7 +8,8 @@ MAINTAINER Jeremy Echols <jechols@uoregon.edu>
 RUN dnf install -y openjpeg2
 RUN dnf install -y ImageMagick
 
-ADD bin /opt/rais
+COPY bin/rais-server /opt/rais/rais-server
+COPY testfile/test-world.jp2 /var/local/images/test.jp2
 
 ENV PORT 12415
 ENV TILESIZES 512
