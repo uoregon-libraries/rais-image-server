@@ -1,9 +1,7 @@
-//+build jp2
-
 package main
 
 import (
-	"github.com/uoregon-libraries/rais-image-server/openjpeg"
+	"openjpeg"
 )
 
 func init() {

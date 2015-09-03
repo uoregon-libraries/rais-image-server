@@ -2,8 +2,7 @@ package main
 
 import (
 	"errors"
-	"github.com/uoregon-libraries/rais-image-server/iiif"
-	"github.com/uoregon-libraries/rais-image-server/transform"
+	"iiif"
 	"image"
 	"image/color"
 	"image/draw"
@@ -11,6 +10,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"transform"
 )
 
 var (

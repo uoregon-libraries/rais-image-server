@@ -103,8 +103,8 @@ type Page struct {
 }
 
 func main() {
-	t := template.Must(template.ParseFiles("transform/template.txt"))
-	f, err := os.Create("transform/rotation.go")
+	t := template.Must(template.ParseFiles("src/transform/template.txt"))
+	f, err := os.Create("src/transform/rotation.go")
 	if err != nil {
 		fmt.Println("ERROR creating file:", err)
 	}

@@ -21,11 +21,15 @@ RUN dnf install -y golang
 RUN dnf install -y git
 RUN dnf install -y make
 ENV GOPATH /opt/go
+ENV PATH /opt/go/bin:$PATH
 
-RUN mkdir -p /opt/rais-src
+RUN mkdir -p /opt/rais-src/vendor
+RUN mkdir -p /opt/rais-src/src
 WORKDIR /opt/rais-src
 
 # Pre-fetch go dependencies so builds are faster
-RUN /bin/go get github.com/nfnt/resize
-RUN /bin/go get golang.org/x/image/tiff
+RUN /bin/go get github.com/constabulary/gb/...
+COPY vendor/manifest ./vendor/manifest
+COPY Makefile ./Makefile
+RUN make deps
 CMD make

@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/uoregon-libraries/rais-image-server/iiif"
+	"iiif"
 	"log"
 	"mime"
 	"net/http"

@@ -21,6 +21,6 @@ func init() {
 	C.MagickCoreGenesis(cPath, C.MagickFalse)
 }
 
-func makeError(exception *C.ExceptionInfo) (error) {
+func makeError(exception *C.ExceptionInfo) error {
 	return fmt.Errorf("%s: %s - %s", exception.severity, exception.reason, exception.description)
 }

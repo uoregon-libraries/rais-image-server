@@ -1,8 +1,8 @@
 package iiif
 
 import (
+	"color-assert"
 	"fmt"
-	"github.com/uoregon-libraries/rais-image-server/color-assert"
 	"strings"
 	"testing"
 )
