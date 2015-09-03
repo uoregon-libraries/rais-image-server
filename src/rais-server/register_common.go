@@ -1,6 +1,6 @@
 package main
 
-import "github.com/uoregon-libraries/rais-image-server/magick"
+import "magick"
 
 func init() {
 	extList := []string{".tif", ".tiff", ".png", ".jpg", "jpeg", ".gif"}

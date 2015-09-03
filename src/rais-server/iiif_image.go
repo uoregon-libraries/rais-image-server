@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
-	"github.com/uoregon-libraries/rais-image-server/iiif"
-	"github.com/uoregon-libraries/rais-image-server/transform"
+	"iiif"
+	"transform"
 	"image"
 	"image/color"
 	"image/draw"

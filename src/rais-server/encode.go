@@ -2,7 +2,7 @@ package main
 
 import (
 	"errors"
-	"github.com/uoregon-libraries/rais-image-server/iiif"
+	"iiif"
 	"golang.org/x/image/tiff"
 	"image"
 	"image/gif"

@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/uoregon-libraries/rais-image-server/color-assert"
-	"github.com/uoregon-libraries/rais-image-server/fakehttp"
-	"github.com/uoregon-libraries/rais-image-server/iiif"
+	"color-assert"
+	"fakehttp"
+	"iiif"
 	"net/http"
 	"net/url"
 	"os"
