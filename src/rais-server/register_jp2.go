@@ -1,5 +1,3 @@
-//+build jp2
-
 package main
 
 import (
