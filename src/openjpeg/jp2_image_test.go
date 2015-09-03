@@ -9,7 +9,7 @@ import (
 
 func jp2i() *JP2Image {
 	dir, _ := os.Getwd()
-	jp2, err := NewJP2Image(dir + "/../testfile/test-world.jp2")
+	jp2, err := NewJP2Image(dir + "/../../testfile/test-world.jp2")
 	if err != nil {
 		panic("Error reading JP2 for testing!")
 	}
