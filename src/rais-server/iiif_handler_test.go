@@ -1,10 +1,10 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"color-assert"
+	"encoding/json"
 	"fakehttp"
+	"fmt"
 	"iiif"
 	"net/http"
 	"net/url"

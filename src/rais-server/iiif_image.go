@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"iiif"
-	"transform"
 	"image"
 	"image/color"
 	"image/draw"
@@ -11,6 +10,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"transform"
 )
 
 var (

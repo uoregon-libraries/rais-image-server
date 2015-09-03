@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
-	"iiif"
 	"golang.org/x/image/tiff"
+	"iiif"
 	"image"
 	"image/gif"
 	"image/jpeg"

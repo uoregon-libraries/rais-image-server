@@ -1,8 +1,8 @@
 package iiif
 
 import (
-	"fmt"
 	"color-assert"
+	"fmt"
 	"strings"
 	"testing"
 )
