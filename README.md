@@ -70,7 +70,8 @@ make docker
 production image, will produce an image called "rais-build" which can be used
 to compile and run tests.  See
 [docker/Dockerfile.build](docker/Dockerfile.build) for examples of how to make
-this happen.
+this happen.  Also consider using [buildrun.sh](buildrun.sh) to ease compiling
+and testing.
 
 Using with chronam
 -----
