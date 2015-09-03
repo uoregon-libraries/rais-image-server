@@ -25,6 +25,8 @@ src/transform/rotation.go: src/transform/generator.go src/transform/template.txt
 # Binary building rules
 binaries: deps bin/rais-server
 bin/rais-server: $(SRCS) src/rais-server/*.go src/transform/rotation.go
+	# This is necessary to avoid an error when building the server by itself...
+	gb build openjpeg
 	gb build rais-server
 
 # Testing
@@ -40,6 +42,7 @@ lint:
 # Cleanup
 clean:
 	rm -f bin/*
+	rm -rf pkg/
 	rm -f src/transform/rotation.go
 
 # (Re)build the separated docker containers
