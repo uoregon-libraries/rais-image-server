@@ -1,0 +1,18 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/nfnt/resize",
+			"repository": "https://github.com/nfnt/resize",
+			"revision": "dc93e1b98c579d90ee2fa15c1fd6dac34f6e7899",
+			"branch": "master"
+		},
+		{
+			"importpath": "golang.org/x/image/tiff",
+			"repository": "https://go.googlesource.com/image",
+			"revision": "b3d8467d91f6ab3c9240e1c1e98309baf9ba6343",
+			"branch": "master",
+			"path": "/tiff"
+		}
+	]
+}
