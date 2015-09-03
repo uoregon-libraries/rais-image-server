@@ -24,8 +24,10 @@ src/transform/rotation.go: src/transform/generator.go src/transform/template.txt
 
 # Binary building rules
 binaries: deps bin/rais-server
+
+# Build the server.  Note that the "gb build openjpeg" is necessary to avoid an
+# error when building the server before openjpeg has been compiled
 bin/rais-server: $(SRCS) src/rais-server/*.go src/transform/rotation.go
-	# This is necessary to avoid an error when building the server by itself...
 	gb build openjpeg
 	gb build rais-server
 
