@@ -1,10 +1,6 @@
 # Makefile directory
 MakefileDir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-# All library files contribute to the need to recompile (except tests!  How do
-# we skip those?)
-SRCS := src/openjpeg/*.go src/iiif/*.go src/magick/*.go src/openjpeg/*.[ch] src/magick/*.[ch]
-
 .PHONY: all generate binaries test format lint clean distclean docker
 
 # Default target builds binaries
@@ -27,7 +23,7 @@ binaries: deps bin/rais-server
 
 # Build the server.  Note that the "gb build openjpeg" is necessary to avoid an
 # error when building the server before openjpeg has been compiled
-bin/rais-server: $(SRCS) src/rais-server/*.go src/transform/rotation.go
+bin/rais-server: src/transform/rotation.go
 	gb build openjpeg
 	gb build rais-server
 
