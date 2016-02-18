@@ -17,5 +17,11 @@ sudo service rais stop
 sudo rm /opt/chronam-support/rais-server
 sudo mkdir -p /opt/chronam-support/
 sudo cp rh_config/init.sh /etc/init.d/rais
+
+if [ ! -f /etc/rais.conf ]; then
+  sudo cp rh_config/rais.conf /etc/rais.conf
+  echo "New install detected - modify /etc/rais.conf if necessary"
+fi
+
 sudo cp bin/rais-server /opt/chronam-support/rais-server
 sudo service rais start
