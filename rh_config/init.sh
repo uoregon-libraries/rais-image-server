@@ -66,7 +66,7 @@ loop_tileserver() {
     let timediff=$newdate-$laststart
 
     # Log the restart to stderr and stdout logs in an apache-like format
-    if [-f $restartfile ]; then
+    if [ -f $restartfile ]; then
       local logdate=`date +"[%a %b %d %H:%M:%S %Y]"`
       local message="Restarting server, ran for $timediff seconds before error"
       echo "$logdate [WARN] $message" >> $stdout_log
