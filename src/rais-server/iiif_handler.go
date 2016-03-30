@@ -74,7 +74,7 @@ func NewIIIFHandler(u *url.URL, widths []int, tp string) *IIIFHandler {
 
 	// Set up tile sizes - scale factors are hard-coded for now
 	fs.TileSizes = make([]iiif.TileSize, 0)
-	sf := []int{1, 2, 4, 8, 16, 32, 64}
+	sf := []int{1, 2, 4, 8, 16, 32}
 	for _, val := range widths {
 		fs.TileSizes = append(fs.TileSizes, iiif.TileSize{Width: val, ScaleFactors: sf})
 	}
