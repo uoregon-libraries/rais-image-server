@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"iiif"
+	"io/ioutil"
 	"log"
 	"mime"
 	"net/http"
@@ -135,9 +137,16 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 }
 
 func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, identifier iiif.ID, filepath string) {
-	json, err := ih.buildInfoJSON(w, identifier, filepath)
-	if err != nil {
-		return
+	// Check for an overridden info.json file first, and just spit that out
+	// directly if it exists
+	json := ih.loadInfoJSONOverride(identifier, filepath)
+
+	if json == nil {
+		var err error
+		json, err = ih.buildInfoJSON(w, identifier, filepath)
+		if err != nil {
+			return
+		}
 	}
 
 	// Set headers - content type is dependent on client
@@ -157,6 +166,18 @@ func newImageResError(w http.ResponseWriter, err error) {
 	default:
 		http.Error(w, err.Error(), 500)
 	}
+}
+
+func (ih *IIIFHandler) loadInfoJSONOverride(identifier iiif.ID, filepath string) []byte {
+	// If an override file isn't found or has an error, just skip it
+	json, err := ioutil.ReadFile(filepath + "-info.json")
+	if err != nil {
+		return nil
+	}
+
+	// If an override file *is* found, replace the id
+	id := ih.Base.String() + "/" + identifier.String()
+	return bytes.Replace(json, []byte("%ID%"), []byte(id), 1)
 }
 
 func (ih *IIIFHandler) buildInfoJSON(w http.ResponseWriter, identifier iiif.ID, filepath string) ([]byte, error) {
