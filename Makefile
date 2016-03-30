@@ -23,7 +23,7 @@ binaries: deps bin/rais-server
 
 # Build the server.  Note that the "gb build openjpeg" is necessary to avoid an
 # error when building the server before openjpeg has been compiled
-bin/rais-server: src/transform/rotation.go
+bin/rais-server: src/transform/rotation.go src/*
 	gb build openjpeg
 	gb build rais-server
 
