@@ -20,10 +20,10 @@ var (
 	ErrBadImageFile      = errors.New("Unable to read image")
 )
 
-// IIIFImage defines an interface for reading images in a generic way.  It's
+// IIIFImageDecoder defines an interface for reading images in a generic way.  It's
 // heavily biased toward the way we've had to do our JP2 images since they're
 // the more unusual use-case.
-type IIIFImage interface {
+type IIIFImageDecoder interface {
 	DecodeImage() (image.Image, error)
 	GetWidth() int
 	GetHeight() int
@@ -32,7 +32,7 @@ type IIIFImage interface {
 }
 
 type ImageResource struct {
-	Image    IIIFImage
+	Decoder  IIIFImageDecoder
 	ID       iiif.ID
 	FilePath string
 }
@@ -51,20 +51,20 @@ func NewImageResource(id iiif.ID, filepath string) (*ImageResource, error) {
 	}
 
 	// File exists - is its extension registered?
-	decoder, ok := ExtDecoders[strings.ToLower(path.Ext(filepath))]
+	newDecoder, ok := ExtDecoders[strings.ToLower(path.Ext(filepath))]
 	if !ok {
 		log.Printf("Image type unknown / invalid: %#v", filepath)
 		return nil, ErrInvalidFiletype
 	}
 
-	// We have a decoder for the file type - attempt to decode
-	i, err := decoder(filepath)
+	// We have a decoder for the file type - attempt to instantiate it
+	d, err := newDecoder(filepath)
 	if err != nil {
 		log.Printf("Unable to read image %#v: %s", filepath)
 		return nil, ErrBadImageFile
 	}
 
-	img := &ImageResource{ID: id, Image: i, FilePath: filepath}
+	img := &ImageResource{ID: id, Decoder: d, FilePath: filepath}
 	return img, nil
 }
 
@@ -74,7 +74,7 @@ func (res *ImageResource) Apply(u *iiif.URL) (image.Image, error) {
 	// Crop and resize have to be prepared before we can decode
 	res.prep(u.Region, u.Size)
 
-	img, err := res.Image.DecodeImage()
+	img, err := res.Decoder.DecodeImage()
 	if err != nil {
 		log.Println("Unable to decode image: ", err)
 		return nil, ErrDecodeImage
@@ -98,7 +98,7 @@ func (res *ImageResource) Apply(u *iiif.URL) (image.Image, error) {
 }
 
 func (res *ImageResource) prep(r iiif.Region, s iiif.Size) {
-	w, h := res.Image.GetWidth(), res.Image.GetHeight()
+	w, h := res.Decoder.GetWidth(), res.Decoder.GetHeight()
 	crop := image.Rect(0, 0, w, h)
 
 	switch r.Type {
@@ -112,7 +112,7 @@ func (res *ImageResource) prep(r iiif.Region, s iiif.Size) {
 			int((r.Y+r.H)*float64(h)/100.0),
 		)
 	}
-	res.Image.SetCrop(crop)
+	res.Decoder.SetCrop(crop)
 
 	w, h = crop.Dx(), crop.Dy()
 	switch s.Type {
@@ -128,7 +128,7 @@ func (res *ImageResource) prep(r iiif.Region, s iiif.Size) {
 		w = int(float64(crop.Dx()) * s.Percent / 100.0)
 		h = int(float64(crop.Dy()) * s.Percent / 100.0)
 	}
-	res.Image.SetResizeWH(w, h)
+	res.Decoder.SetResizeWH(w, h)
 }
 
 // Preserving the aspect ratio, determines the proper scaling factor to get

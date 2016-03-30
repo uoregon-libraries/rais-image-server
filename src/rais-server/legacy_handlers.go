@@ -47,7 +47,7 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 		log.Println("Unable to read source image: ", err)
 		return
 	}
-	i := res.Image
+	i := res.Decoder
 
 	// Pull raw tile data
 	i.SetResizeWH(width, height)
@@ -93,7 +93,7 @@ func ResizeHandler(w http.ResponseWriter, req *http.Request) {
 		log.Println("Unable to read source image: ", err)
 		return
 	}
-	i := res.Image
+	i := res.Decoder
 
 	// Pull raw tile data
 	i.SetResizeWH(width, height)

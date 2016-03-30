@@ -12,10 +12,10 @@ import (
 	"unsafe"
 )
 
-// Image implements IIIFImage for reading non-JP2 image types via image magick
+// Image implements IIIFImageDecoder for reading non-JP2 image types via image magick
 // bindings.  Requires ImageMagick dev files to be installed.
 //
-// NOTE: To keep with the IIIFImage interface, we're not really using
+// NOTE: To keep with the IIIFImageDecoder interface, we're not really using
 // ImageMagick efficiently.  We don't let it rotate, change color depth,
 // encode, etc.  We instead convert to a Go image, which is itself probably
 // slow, and then let even less efficient code take over for those operations.

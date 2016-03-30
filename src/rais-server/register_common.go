@@ -9,6 +9,6 @@ func init() {
 	}
 }
 
-func decodeCommonFile(path string) (IIIFImage, error) {
+func decodeCommonFile(path string) (IIIFImageDecoder, error) {
 	return magick.NewImage(path)
 }

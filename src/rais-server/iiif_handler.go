@@ -142,8 +142,8 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 
 func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, res *ImageResource) {
 	info := ih.FeatureSet.Info()
-	info.Width = res.Image.GetWidth()
-	info.Height = res.Image.GetHeight()
+	info.Width = res.Decoder.GetWidth()
+	info.Height = res.Decoder.GetHeight()
 
 	// The info id is actually the full URL to the resource, not just its ID
 	info.ID = ih.Base.String() + "/" + res.ID.String()
@@ -165,7 +165,7 @@ func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, res *Image
 	w.Write(json)
 }
 
-// Handles image processing operations.  Putting resize into the IIIFImage
+// Handles image processing operations.  Putting resize into the IIIFImageDecoder
 // interface is necessary due to the way openjpeg operates on images - we must
 // know which layer to decode to get the nearest valid image size when
 // doing any resize operations.
