@@ -107,14 +107,8 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 	filepath := ih.TilePath + "/" + identifier.Path()
 
 	res, err := NewImageResource(identifier, filepath)
-
 	if err != nil {
-		switch err {
-		case ErrImageDoesNotExist:
-			http.Error(w, "Image resource does not exist", 404)
-		default:
-			http.Error(w, err.Error(), 500)
-		}
+		newImageResError(w, err)
 		return
 	}
 
@@ -163,6 +157,15 @@ func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, res *Image
 	w.Header().Set("Content-Type", ct)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Write(json)
+}
+
+func newImageResError(w http.ResponseWriter, err error) {
+	switch err {
+	case ErrImageDoesNotExist:
+		http.Error(w, "Image resource does not exist", 404)
+	default:
+		http.Error(w, err.Error(), 500)
+	}
 }
 
 // Handles image processing operations.  Putting resize into the IIIFImageDecoder
