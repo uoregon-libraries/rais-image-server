@@ -17,18 +17,25 @@ MAINTAINER Jeremy Echols <jechols@uoregon.edu>
 # Install all the build dependencies
 RUN dnf install -y openjpeg2-devel
 RUN dnf install -y ImageMagick-devel
-RUN dnf install -y golang
 RUN dnf install -y git
+RUN dnf install -y gcc
 RUN dnf install -y make
-ENV GOPATH /opt/go
-ENV PATH /opt/go/bin:$PATH
+RUN dnf install -y tar
+
+RUN curl https://storage.googleapis.com/golang/go1.6.linux-amd64.tar.gz > /tmp/go.tgz
+RUN cd /opt && tar -xzf /tmp/go.tgz
+
+RUN mkdir -p /usr/local/go
+ENV GOPATH /usr/local/go
+ENV GOROOT /opt/go
+ENV PATH /opt/go/bin:/usr/local/go/bin:$PATH
 
 RUN mkdir -p /opt/rais-src/vendor
 RUN mkdir -p /opt/rais-src/src
 WORKDIR /opt/rais-src
 
 # Pre-fetch go dependencies so builds are faster
-RUN /bin/go get github.com/constabulary/gb/...
+RUN go get github.com/constabulary/gb/...
 COPY vendor/manifest ./vendor/manifest
 COPY Makefile ./Makefile
 RUN make deps
