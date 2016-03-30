@@ -10,7 +10,7 @@ RUN dnf install -y ImageMagick
 
 COPY bin/rais-server /opt/rais/rais-server
 COPY testfile/test-world.jp2 /var/local/images/test.jp2
-COPY testfile/test-world.jp2-info.json /var/local/images/test.jp2-info.json
+COPY testfile/info.json /var/local/images/test.jp2-info.json
 
 ENV PORT 12415
 ENV TILESIZES 512
