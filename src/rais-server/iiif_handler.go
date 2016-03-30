@@ -106,25 +106,25 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 	identifier := iiif.ID(parts[1])
 	filepath := ih.TilePath + "/" + identifier.Path()
 
-	res, err := NewImageResource(identifier, filepath)
-	if err != nil {
-		newImageResError(w, err)
-		return
-	}
-
 	// Check for base path and redirect if that's all we have
 	if ih.BaseOnlyRegex.MatchString(p) {
 		http.Redirect(w, req, p+"/info.json", 303)
 		return
 	}
 
-	// Check for info path, and dispatch if it matches
+	// Handle info.json prior to reading the image, in case of cached info
 	if ih.InfoPathRegex.MatchString(p) {
-		ih.Info(w, req, res)
+		ih.Info(w, req, identifier, filepath)
 		return
 	}
 
-	// No info path should mean a full command path
+	// No info path should mean a full command path - start reading the image
+	res, err := NewImageResource(identifier, filepath)
+	if err != nil {
+		newImageResError(w, err)
+		return
+	}
+
 	if u := iiif.NewURL(p); u.Valid() {
 		ih.Command(w, req, u, res)
 		return
@@ -134,8 +134,14 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 	http.Error(w, "Invalid IIIF request", 400)
 }
 
-func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, res *ImageResource) {
+func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, identifier iiif.ID, filepath string) {
 	info := ih.FeatureSet.Info()
+	res, err := NewImageResource(identifier, filepath)
+	if err != nil {
+		newImageResError(w, err)
+		return
+	}
+
 	info.Width = res.Decoder.GetWidth()
 	info.Height = res.Decoder.GetHeight()
 
