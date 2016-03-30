@@ -135,23 +135,8 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 }
 
 func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, identifier iiif.ID, filepath string) {
-	info := ih.FeatureSet.Info()
-	res, err := NewImageResource(identifier, filepath)
+	json, err := ih.buildInfoJSON(w, identifier, filepath)
 	if err != nil {
-		newImageResError(w, err)
-		return
-	}
-
-	info.Width = res.Decoder.GetWidth()
-	info.Height = res.Decoder.GetHeight()
-
-	// The info id is actually the full URL to the resource, not just its ID
-	info.ID = ih.Base.String() + "/" + res.ID.String()
-
-	json, err := json.Marshal(info)
-	if err != nil {
-		log.Printf("ERROR!  Unable to marshal IIIFInfo response: %s", err)
-		http.Error(w, "Server error", 500)
 		return
 	}
 
@@ -172,6 +157,29 @@ func newImageResError(w http.ResponseWriter, err error) {
 	default:
 		http.Error(w, err.Error(), 500)
 	}
+}
+
+func (ih *IIIFHandler) buildInfoJSON(w http.ResponseWriter, identifier iiif.ID, filepath string) ([]byte, error) {
+	info := ih.FeatureSet.Info()
+	res, err := NewImageResource(identifier, filepath)
+	if err != nil {
+		newImageResError(w, err)
+		return nil, err
+	}
+
+	info.Width = res.Decoder.GetWidth()
+	info.Height = res.Decoder.GetHeight()
+
+	// The info id is actually the full URL to the resource, not just its ID
+	info.ID = ih.Base.String() + "/" + res.ID.String()
+
+	json, err := json.Marshal(info)
+	if err != nil {
+		log.Printf("ERROR!  Unable to marshal IIIFInfo response: %s", err)
+		http.Error(w, "Server error", 500)
+	}
+
+	return json, err
 }
 
 // Handles image processing operations.  Putting resize into the IIIFImageDecoder
