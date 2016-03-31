@@ -116,7 +116,8 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 	// No info path should mean a full command path - start reading the image
 	res, err := NewImageResource(id, fp)
 	if err != nil {
-		newImageResError(w, err)
+		e := newImageResError(err)
+		http.Error(w, e.Message, e.Code)
 		return
 	}
 
@@ -135,9 +136,10 @@ func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, id iiif.ID
 	json := ih.loadInfoJSONOverride(id, fp)
 
 	if json == nil {
-		var err error
-		json, err = ih.loadInfoJSONFromImageResource(w, id, fp)
-		if err != nil {
+		var e *HandlerError
+		json, e = ih.loadInfoJSONFromImageResource(id, fp)
+		if e != nil {
+			http.Error(w, e.Message, e.Code)
 			return
 		}
 	}
@@ -152,12 +154,12 @@ func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, id iiif.ID
 	w.Write(json)
 }
 
-func newImageResError(w http.ResponseWriter, err error) {
+func newImageResError(err error) *HandlerError {
 	switch err {
 	case ErrImageDoesNotExist:
-		http.Error(w, "Image resource does not exist", 404)
+		return NewError("image resource does not exist", 404)
 	default:
-		http.Error(w, err.Error(), 500)
+		return NewError(err.Error(), 500)
 	}
 }
 
@@ -173,12 +175,11 @@ func (ih *IIIFHandler) loadInfoJSONOverride(id iiif.ID, fp string) []byte {
 	return bytes.Replace(json, []byte("%ID%"), []byte(fullid), 1)
 }
 
-func (ih *IIIFHandler) loadInfoJSONFromImageResource(w http.ResponseWriter, id iiif.ID, fp string) ([]byte, error) {
+func (ih *IIIFHandler) loadInfoJSONFromImageResource(id iiif.ID, fp string) ([]byte, *HandlerError) {
 	info := ih.FeatureSet.Info()
 	res, err := NewImageResource(id, fp)
 	if err != nil {
-		newImageResError(w, err)
-		return nil, err
+		return nil, newImageResError(err)
 	}
 
 	info.Width = res.Decoder.GetWidth()
@@ -203,10 +204,10 @@ func (ih *IIIFHandler) loadInfoJSONFromImageResource(w http.ResponseWriter, id i
 	json, err := json.Marshal(info)
 	if err != nil {
 		log.Printf("ERROR!  Unable to marshal IIIFInfo response: %s", err)
-		http.Error(w, "Server error", 500)
+		return nil, NewError("server error", 500)
 	}
 
-	return json, err
+	return json, nil
 }
 
 // Handles image processing operations.  Putting resize into the IIIFImageDecoder
