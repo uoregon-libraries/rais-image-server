@@ -59,7 +59,8 @@ you must specify extra information on the command-line:
 
 ```bash
 $GOPATH/bin/rais-server --address=":8888" --tile-path="/path/to/images" \
-  --iiif-url="http://iiif.example.com/images/iiif"
+  --iiif-url="http://iiif.example.com/images/iiif" \
+  --iiif-info-cache-size=10000
 ```
 
 This would enable IIIF services with a base URL of `http://iiif.example.com:8888/images/iiif`.

@@ -131,12 +131,20 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 }
 
 func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, id iiif.ID, fp string) {
-	// Check for an overridden info.json file first, and just spit that out
+	// Check for cached image data first, and use that to create JSON
+	json, e := ih.loadInfoJSONFromCache(id)
+	if e != nil {
+		http.Error(w, e.Message, e.Code)
+		return
+	}
+
+	// Next, check for an overridden info.json file, and just spit that out
 	// directly if it exists
-	json := ih.loadInfoJSONOverride(id, fp)
+	if json == nil {
+		json = ih.loadInfoJSONOverride(id, fp)
+	}
 
 	if json == nil {
-		var e *HandlerError
 		json, e = ih.loadInfoJSONFromImageResource(id, fp)
 		if e != nil {
 			http.Error(w, e.Message, e.Code)
@@ -163,6 +171,19 @@ func newImageResError(err error) *HandlerError {
 	}
 }
 
+func (ih *IIIFHandler) loadInfoJSONFromCache(id iiif.ID) ([]byte, *HandlerError) {
+	if infoCache == nil {
+		return nil, nil
+	}
+
+	data, ok := infoCache.Get(id)
+	if !ok {
+		return nil, nil
+	}
+
+	return ih.buildInfoJSON(id, data.(ImageInfo))
+}
+
 func (ih *IIIFHandler) loadInfoJSONOverride(id iiif.ID, fp string) []byte {
 	// If an override file isn't found or has an error, just skip it
 	json, err := ioutil.ReadFile(fp + "-info.json")
@@ -176,30 +197,41 @@ func (ih *IIIFHandler) loadInfoJSONOverride(id iiif.ID, fp string) []byte {
 }
 
 func (ih *IIIFHandler) loadInfoJSONFromImageResource(id iiif.ID, fp string) ([]byte, *HandlerError) {
+	log.Printf("Loading image data from image resource (id: %s)", id)
 	res, err := NewImageResource(id, fp)
 	if err != nil {
 		return nil, newImageResError(err)
 	}
 
 	d := res.Decoder
-	return ih.buildInfoJSON(id, d.GetWidth(), d.GetHeight(), d.GetTileWidth(), d.GetTileHeight())
+	imageInfo := ImageInfo{
+		Width:      d.GetWidth(),
+		Height:     d.GetHeight(),
+		TileWidth:  d.GetTileWidth(),
+		TileHeight: d.GetTileHeight(),
+	}
+
+	if infoCache != nil {
+		infoCache.Add(id, imageInfo)
+	}
+	return ih.buildInfoJSON(id, imageInfo)
 }
 
-func (ih *IIIFHandler) buildInfoJSON(id iiif.ID, w, h, tw, th int) ([]byte, *HandlerError) {
+func (ih *IIIFHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *HandlerError) {
 	info := ih.FeatureSet.Info()
-	info.Width = w
-	info.Height = h
+	info.Width = i.Width
+	info.Height = i.Height
 
 	// Set up tile sizes - scale factors are hard-coded for now
-	if tw > 0 {
+	if i.TileWidth > 0 {
 		sf := []int{1, 2, 4, 8, 16, 32}
 		info.Tiles = make([]iiif.TileSize, 1)
 		info.Tiles[0] = iiif.TileSize{
-			Width:        tw,
+			Width:        i.TileWidth,
 			ScaleFactors: sf,
 		}
-		if th > 0 {
-			info.Tiles[0].Height = th
+		if i.TileHeight > 0 {
+			info.Tiles[0].Height = i.TileHeight
 		}
 	}
 
