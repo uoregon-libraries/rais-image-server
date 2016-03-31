@@ -98,8 +98,8 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	identifier := iiif.ID(parts[1])
-	filepath := ih.TilePath + "/" + identifier.Path()
+	id := iiif.ID(parts[1])
+	fp := ih.TilePath + "/" + id.Path()
 
 	// Check for base path and redirect if that's all we have
 	if ih.BaseOnlyRegex.MatchString(p) {
@@ -109,12 +109,12 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 
 	// Handle info.json prior to reading the image, in case of cached info
 	if ih.InfoPathRegex.MatchString(p) {
-		ih.Info(w, req, identifier, filepath)
+		ih.Info(w, req, id, fp)
 		return
 	}
 
 	// No info path should mean a full command path - start reading the image
-	res, err := NewImageResource(identifier, filepath)
+	res, err := NewImageResource(id, fp)
 	if err != nil {
 		newImageResError(w, err)
 		return
@@ -129,14 +129,14 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 	http.Error(w, "Invalid IIIF request", 400)
 }
 
-func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, identifier iiif.ID, filepath string) {
+func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, id iiif.ID, fp string) {
 	// Check for an overridden info.json file first, and just spit that out
 	// directly if it exists
-	json := ih.loadInfoJSONOverride(identifier, filepath)
+	json := ih.loadInfoJSONOverride(id, fp)
 
 	if json == nil {
 		var err error
-		json, err = ih.buildInfoJSON(w, identifier, filepath)
+		json, err = ih.loadInfoJSONFromImageResource(w, id, fp)
 		if err != nil {
 			return
 		}
@@ -161,21 +161,21 @@ func newImageResError(w http.ResponseWriter, err error) {
 	}
 }
 
-func (ih *IIIFHandler) loadInfoJSONOverride(identifier iiif.ID, filepath string) []byte {
+func (ih *IIIFHandler) loadInfoJSONOverride(id iiif.ID, fp string) []byte {
 	// If an override file isn't found or has an error, just skip it
-	json, err := ioutil.ReadFile(filepath + "-info.json")
+	json, err := ioutil.ReadFile(fp + "-info.json")
 	if err != nil {
 		return nil
 	}
 
 	// If an override file *is* found, replace the id
-	id := ih.Base.String() + "/" + identifier.String()
-	return bytes.Replace(json, []byte("%ID%"), []byte(id), 1)
+	fullid := ih.Base.String() + "/" + id.String()
+	return bytes.Replace(json, []byte("%ID%"), []byte(fullid), 1)
 }
 
-func (ih *IIIFHandler) buildInfoJSON(w http.ResponseWriter, identifier iiif.ID, filepath string) ([]byte, error) {
+func (ih *IIIFHandler) loadInfoJSONFromImageResource(w http.ResponseWriter, id iiif.ID, fp string) ([]byte, error) {
 	info := ih.FeatureSet.Info()
-	res, err := NewImageResource(identifier, filepath)
+	res, err := NewImageResource(id, fp)
 	if err != nil {
 		newImageResError(w, err)
 		return nil, err
