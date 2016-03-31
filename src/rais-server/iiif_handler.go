@@ -176,30 +176,35 @@ func (ih *IIIFHandler) loadInfoJSONOverride(id iiif.ID, fp string) []byte {
 }
 
 func (ih *IIIFHandler) loadInfoJSONFromImageResource(id iiif.ID, fp string) ([]byte, *HandlerError) {
-	info := ih.FeatureSet.Info()
 	res, err := NewImageResource(id, fp)
 	if err != nil {
 		return nil, newImageResError(err)
 	}
 
-	info.Width = res.Decoder.GetWidth()
-	info.Height = res.Decoder.GetHeight()
+	d := res.Decoder
+	return ih.buildInfoJSON(id, d.GetWidth(), d.GetHeight(), d.GetTileWidth(), d.GetTileHeight())
+}
+
+func (ih *IIIFHandler) buildInfoJSON(id iiif.ID, w, h, tw, th int) ([]byte, *HandlerError) {
+	info := ih.FeatureSet.Info()
+	info.Width = w
+	info.Height = h
 
 	// Set up tile sizes - scale factors are hard-coded for now
-	if res.Decoder.GetTileWidth() > 0 {
+	if tw > 0 {
 		sf := []int{1, 2, 4, 8, 16, 32}
 		info.Tiles = make([]iiif.TileSize, 1)
 		info.Tiles[0] = iiif.TileSize{
-			Width:        res.Decoder.GetTileWidth(),
+			Width:        tw,
 			ScaleFactors: sf,
 		}
-		if res.Decoder.GetTileHeight() > 0 {
-			info.Tiles[0].Height = res.Decoder.GetTileHeight()
+		if th > 0 {
+			info.Tiles[0].Height = th
 		}
 	}
 
 	// The info id is actually the full URL to the resource, not just its ID
-	info.ID = ih.Base.String() + "/" + res.ID.String()
+	info.ID = ih.Base.String() + "/" + id.String()
 
 	json, err := json.Marshal(info)
 	if err != nil {
