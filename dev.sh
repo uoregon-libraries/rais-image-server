@@ -9,4 +9,6 @@ docker run -it --rm \
   -p 12415:12415 \
   -v /mnt/news2/outgoing/batch_oru_20160329203731_ver01/data/sn00063676/print/2015080701:/var/local/images/tmp \
   -v $(pwd):/opt/rais-src \
-  rais-build /opt/rais-src/bin/rais-server --address ":12415" --iiif-url "http://localhost:12415/iiif" --iiif-tile-sizes "512,1024" --tile-path "/var/local/images"
+  rais-build /opt/rais-src/bin/rais-server --address ":12415" \
+      --iiif-url "http://localhost:12415/iiif" \
+      --tile-path "/var/local/images"

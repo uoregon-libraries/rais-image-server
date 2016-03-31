@@ -75,6 +75,16 @@ func (i *Image) GetHeight() int {
 	return (int)(i.image.rows)
 }
 
+// GetTileWidth returns 0 since images using this library have no tiles
+func (i *Image) GetTileWidth() int {
+	return 0
+}
+
+// GetTileHeight returns 0 since images using this library have no tiles
+func (i *Image) GetTileHeight() int {
+	return 0
+}
+
 func (i *Image) doResize(w, h int) error {
 	exception := C.AcquireExceptionInfo()
 	defer C.DestroyExceptionInfo(exception)

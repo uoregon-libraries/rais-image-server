@@ -27,6 +27,8 @@ type JP2Image struct {
 	srcHeight    int
 	decodeArea   image.Rectangle
 	srcRect      image.Rectangle
+	tileWidth    int
+	tileHeight   int
 }
 
 func NewJP2Image(filename string) (*JP2Image, error) {
@@ -196,6 +198,11 @@ func (i *JP2Image) readDimensions() error {
 	i.srcRect = image.Rect(int(i.image.x0), int(i.image.y0), int(i.image.x1), int(i.image.y1))
 	i.srcWidth = i.srcRect.Dx()
 	i.srcHeight = i.srcRect.Dy()
+
+	cstrInfo := C.opj_get_cstr_info(i.codec)
+	i.tileWidth = int(cstrInfo.tdx)
+	i.tileHeight = int(cstrInfo.tdy)
+
 	return nil
 }
 
@@ -207,6 +214,16 @@ func (i *JP2Image) GetWidth() int {
 // GetHeight returns the image height
 func (i *JP2Image) GetHeight() int {
 	return i.srcHeight
+}
+
+// GetTileWidth returns the tile width
+func (i *JP2Image) GetTileWidth() int {
+	return i.tileWidth
+}
+
+// GetTileHeight returns the tile height
+func (i *JP2Image) GetTileHeight() int {
+	return i.tileHeight
 }
 
 // Attempts to set the progression level to the given value, then re-read the

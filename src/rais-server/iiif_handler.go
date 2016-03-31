@@ -35,7 +35,7 @@ type IIIFHandler struct {
 	TilePath      string
 }
 
-func NewIIIFHandler(u *url.URL, widths []int, tp string) *IIIFHandler {
+func NewIIIFHandler(u *url.URL, tp string) *IIIFHandler {
 	// Set up the features we support individually, and let the info magic figure
 	// out how best to report it
 	fs := &iiif.FeatureSet{
@@ -72,13 +72,6 @@ func NewIIIFHandler(u *url.URL, widths []int, tp string) *IIIFHandler {
 		JsonldMediaType:     true,
 		ProfileLinkHeader:   false,
 		CanonicalLinkHeader: false,
-	}
-
-	// Set up tile sizes - scale factors are hard-coded for now
-	fs.TileSizes = make([]iiif.TileSize, 0)
-	sf := []int{1, 2, 4, 8, 16, 32}
-	for _, val := range widths {
-		fs.TileSizes = append(fs.TileSizes, iiif.TileSize{Width: val, ScaleFactors: sf})
 	}
 
 	rprefix := fmt.Sprintf(`^%s`, u.Path)
@@ -190,6 +183,19 @@ func (ih *IIIFHandler) buildInfoJSON(w http.ResponseWriter, identifier iiif.ID, 
 
 	info.Width = res.Decoder.GetWidth()
 	info.Height = res.Decoder.GetHeight()
+
+	// Set up tile sizes - scale factors are hard-coded for now
+	if res.Decoder.GetTileWidth() > 0 {
+		sf := []int{1, 2, 4, 8, 16, 32}
+		info.Tiles = make([]iiif.TileSize, 1)
+		info.Tiles[0] = iiif.TileSize{
+			Width:        res.Decoder.GetTileWidth(),
+			ScaleFactors: sf,
+		}
+		if res.Decoder.GetTileHeight() > 0 {
+			info.Tiles[0].Height = res.Decoder.GetTileHeight()
+		}
+	}
 
 	// The info id is actually the full URL to the resource, not just its ID
 	info.ID = ih.Base.String() + "/" + res.ID.String()
