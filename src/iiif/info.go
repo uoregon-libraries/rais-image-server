@@ -37,7 +37,6 @@ func NewInfo() *Info {
 func (fs *FeatureSet) Info() *Info {
 	i := NewInfo()
 	i.Profile = fs.Profile()
-	i.Tiles = fs.TileSizes
 
 	return i
 }

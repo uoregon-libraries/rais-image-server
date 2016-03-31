@@ -59,13 +59,13 @@ you must specify extra information on the command-line:
 
 ```bash
 $GOPATH/bin/rais-server --address=":8888" --tile-path="/path/to/images" \
-  --iiif-url="http://iiif.example.com/images/iiif" --iiif-tile-sizes="512,1024"
+  --iiif-url="http://iiif.example.com/images/iiif"
 ```
 
 This would enable IIIF services with a base URL of `http://iiif.example.com:8888/images/iiif`.
 Image info requests would then be at, e.g., `http://iiif.example.com:8888/images/iiif/myimage.jp2/info.json`.
-It would report tile sizes of 512 and 1024, each with hard-coded scale factors
-from 1 to 64 in powers of 2.  Currently the scale factors are not configurable.
+It would report the JP2's tile sizes with hard-coded scale factors from 1 to 32
+in powers of 2.  Currently the scale factors are not configurable.
 
 Also note that the scheme and server (`http://my.iiifserver.example.com:8888`)
 are informative for the IIIF information response, but aren't actually used by
@@ -94,4 +94,3 @@ changes.  We are no longer suggesting the old config files as there are too
 many changes in the old brikker and RAIS.
 
 PRs for working configs would be greatly appreciated.
-

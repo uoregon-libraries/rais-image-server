@@ -35,7 +35,7 @@ func dorequest(path string, acceptLD bool, t *testing.T) *fakehttp.ResponseWrite
 	if err != nil {
 		t.Errorf("Unable to create fake request: %s", err)
 	}
-	h := NewIIIFHandler(u, []int{}, rootDir())
+	h := NewIIIFHandler(u, rootDir())
 	h.FeatureSet = iiif.FeatureSet1()
 	h.Route(w, req)
 
@@ -63,6 +63,8 @@ func TestInfoHandler(t *testing.T) {
 	assert.Equal("http://iiif.io/api/image/2/level1.json", data.Profile[0], "Proper profile string", t)
 	assert.Equal(800, data.Width, "JSON-decoded width", t)
 	assert.Equal(400, data.Height, "JSON-decoded height", t)
+	assert.Equal(800, data.Tiles[0].Width, "JSON-decoded tile width", t)
+	assert.Equal(400, data.Tiles[0].Height, "JSON-decoded tile height", t)
 	assert.Equal("http://example.com/foo/bar/testfile%2Ftest-world.jp2", data.ID, "JSON-decoded ID", t)
 	assert.Equal(1, len(w.Headers["Content-Type"]), "Proper content type length", t)
 	assert.Equal("application/json", w.Headers["Content-Type"][0], "Proper content type", t)

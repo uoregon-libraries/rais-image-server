@@ -39,4 +39,11 @@ RUN go get github.com/constabulary/gb/...
 COPY vendor/manifest ./vendor/manifest
 COPY Makefile ./Makefile
 RUN make deps
+
+# Enable dev more easily
+ENV PORT 12415
+EXPOSE $PORT
+COPY testfile/test-world.jp2 /var/local/images/test.jp2
+COPY testfile/info.json /var/local/images/test.jp2-info.json
+
 CMD make

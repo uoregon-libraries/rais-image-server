@@ -33,7 +33,6 @@ docker run -d \
   --name rais \
   --privileged=true \
   -e PORT=12415 \
-  -e TILESIZES=512,1024 \
   -e IIIFURL="http://localhost:12415/iiif" \
   -p 12415:12415 \
   -v $(pwd)/testfile:/var/local/images \
@@ -47,7 +46,6 @@ Note that the environmental variables are optional, though IIIFURL will almost
 certainly need to be changed in production:
 
 - PORT: the port RAIS listens on, defaults to 12415
-- TILESIZES: what RAIS reports as valid IIIF tile sizes, defaults to 512
 - IIIFURL: what RAIS reports as its server URL, defaults to localhost:$PORT/iiif
 
 Test by visiting `http://localhost:12415/iiif/test-world.jp2/full/full/0/default.jpg`,
@@ -71,7 +69,9 @@ production image, will produce an image called "rais-build" which can be used
 to compile and run tests.  See
 [docker/Dockerfile.build](docker/Dockerfile.build) for examples of how to make
 this happen.  Also consider using [buildrun.sh](buildrun.sh) to ease compiling
-and testing.
+and testing.  [dev.sh](dev.sh) is also available for easing the
+edit-compile-run loop on a system with no JP2 libraries, where compilation has
+to go through docker.
 
 Using with chronam
 -----
@@ -96,13 +96,29 @@ have done to the site, but you can see the branch merge commit where we
 centralized all dynamic image URLs [in this commit to the oregonnews
 project](https://github.com/uoregon-libraries/oregonnews/commit/c8aad3287bf80cc4ca6716b91abd8b714be956a1)
 
+Using with Open ONI
+-----
+
+RAIS works out of the box with [Open ONI](https://github.com/open-oni/open-oni),
+a fork of chronam.  No hacking required!
+
 IIIF Features
 -----
 
 When running as an IIIF server, you can browse to any valid Image's INFO page
-to see the features supported.  At the moment, there is no smart per-image
-feature support.  Other than possible bugs, we are ensuring we support level 2
-at a minimum, as well as a handful other features beyond level 2.
+to see the features supported.
+
+To use a custom info.json response, you can create a file with the same name as
+the JP2, with "-info.json" appended at the end.  e.g., `source.jp2-info.json`.
+This can be useful for limiting features or reporting proper scale factors
+(which are currently hard-coded), custom resize values, etc.  To keep the
+system working on any URL, you can set the `@id` value in the custom JSON to
+`%ID%`.  Since IIIF ids are a full URL, changing paths, URLs, or ports will
+break custom info.json files unless you allow the system to fill in the ID.
+See [testfile/info.json](testfile/info.json) for an example.
+
+Other than possible bugs, we are ensuring we support level 2 at a minimum, as
+well as a handful other features beyond level 2.
 
 An example INFO request would look like `http://example.com/iiif/source.jp2/info.json`,
 assuming your server is at `example.com`, the IIIF prefix is `iiif`, and the
@@ -175,7 +191,7 @@ context, there may be issues worth consideration.
 - JP2: resolution factors beyond 6 aren't supported
 
 Very large images (as in, hundreds of megapixels) will have performance issues
-as the server will have to manually resize anything smaller than 1/64th of the
+as the server will have to manually resize anything smaller than 1/32nd of the
 original image.
 
 - JP2: resolution factors below 6 are barely supported
@@ -202,17 +218,17 @@ of RAM.  Load testing is highly recommended.
 - IIIF Support isn't perfect
 
 The IIIF support adheres to level 2 of the spec (as well as some extra
-features), but it isn't as customizable as we would prefer.  You can't specify
-per-image info.json responses; there is no way to change the tile scale
-factors: 1, 2, 4, 8, 16, 32, and 64; and there's no way to specify optimal
-resize targets.
+features), but it isn't as customizable as we would prefer.
 
-IIIF viewers seem to pick moderately smart choices, but this server probably
-won't work out of the box for, say, a 200+ megapixel image.
+- The info.json response makes assumption in some cases that aren't optimal.
+  You can override the responses with a custom info.json, but it's not automated.
+- There is no way to change the tile scale factors: 1, 2, 4, 8, 16, 32.
+- There's no way to specify optimal resize targets.
+- The quality choices are hard-coded to include color, gray, and bitonal, even
+  for gray/bitonal images
 
-Since there are no per-image info.json responses, the quality choices are, to
-some degree, incorrect.  A grayscale image will report it has a color, gray,
-and bitonal qualities available, when in fact it only has gray and bitonal.
+IIIF viewers seem to pick moderately smart choices, but this server may not
+work out of the box for, say, a 200+ megapixel image.
 
 It should also be noted that GIF output is amazingly slow.  Given that GIF
 output isn't even an IIIF level 2 feature, we aren't planning to put much time
@@ -227,7 +243,14 @@ the JP2 to be read independently, and significantly reduces the memory needed
 to serve the data up to a viewer on the fly.
 
 JP2s that aren't encoded like this will not be nearly as memory- and
-CPU-efficient.  We'd recommend tiling JP2s at a size of around 1024x1024.
+CPU-efficient.  We'd recommend tiling JP2s at a size of around 1024x1024.  If
+using graphics magick, a command like this can help:
+
+    gm convert input.tiff -flatten -quality 70 \
+        -define jp2:prg=rlcp \
+        -define jp2:numrlvls=6 \
+        -define jp2:tilewidth=1024 \
+        -define jp2:tileheight=1024 output.jp2
 
 Additionally, grayscale images will require one-third the memory and processing
 power when compared to color images.  If your sources are grayscale, but you

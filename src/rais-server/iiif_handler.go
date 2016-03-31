@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"iiif"
+	"io/ioutil"
 	"log"
 	"mime"
 	"net/http"
@@ -33,7 +35,7 @@ type IIIFHandler struct {
 	TilePath      string
 }
 
-func NewIIIFHandler(u *url.URL, widths []int, tp string) *IIIFHandler {
+func NewIIIFHandler(u *url.URL, tp string) *IIIFHandler {
 	// Set up the features we support individually, and let the info magic figure
 	// out how best to report it
 	fs := &iiif.FeatureSet{
@@ -72,13 +74,6 @@ func NewIIIFHandler(u *url.URL, widths []int, tp string) *IIIFHandler {
 		CanonicalLinkHeader: false,
 	}
 
-	// Set up tile sizes - scale factors are hard-coded for now
-	fs.TileSizes = make([]iiif.TileSize, 0)
-	sf := []int{1, 2, 4, 8, 16, 32}
-	for _, val := range widths {
-		fs.TileSizes = append(fs.TileSizes, iiif.TileSize{Width: val, ScaleFactors: sf})
-	}
-
 	rprefix := fmt.Sprintf(`^%s`, u.Path)
 	return &IIIFHandler{
 		Base:          u,
@@ -106,31 +101,25 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 	identifier := iiif.ID(parts[1])
 	filepath := ih.TilePath + "/" + identifier.Path()
 
-	res, err := NewImageResource(identifier, filepath)
-
-	if err != nil {
-		switch err {
-		case ErrImageDoesNotExist:
-			http.Error(w, "Image resource does not exist", 404)
-		default:
-			http.Error(w, err.Error(), 500)
-		}
-		return
-	}
-
 	// Check for base path and redirect if that's all we have
 	if ih.BaseOnlyRegex.MatchString(p) {
 		http.Redirect(w, req, p+"/info.json", 303)
 		return
 	}
 
-	// Check for info path, and dispatch if it matches
+	// Handle info.json prior to reading the image, in case of cached info
 	if ih.InfoPathRegex.MatchString(p) {
-		ih.Info(w, req, res)
+		ih.Info(w, req, identifier, filepath)
 		return
 	}
 
-	// No info path should mean a full command path
+	// No info path should mean a full command path - start reading the image
+	res, err := NewImageResource(identifier, filepath)
+	if err != nil {
+		newImageResError(w, err)
+		return
+	}
+
 	if u := iiif.NewURL(p); u.Valid() {
 		ih.Command(w, req, u, res)
 		return
@@ -140,19 +129,17 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 	http.Error(w, "Invalid IIIF request", 400)
 }
 
-func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, res *ImageResource) {
-	info := ih.FeatureSet.Info()
-	info.Width = res.Decoder.GetWidth()
-	info.Height = res.Decoder.GetHeight()
+func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, identifier iiif.ID, filepath string) {
+	// Check for an overridden info.json file first, and just spit that out
+	// directly if it exists
+	json := ih.loadInfoJSONOverride(identifier, filepath)
 
-	// The info id is actually the full URL to the resource, not just its ID
-	info.ID = ih.Base.String() + "/" + res.ID.String()
-
-	json, err := json.Marshal(info)
-	if err != nil {
-		log.Printf("ERROR!  Unable to marshal IIIFInfo response: %s", err)
-		http.Error(w, "Server error", 500)
-		return
+	if json == nil {
+		var err error
+		json, err = ih.buildInfoJSON(w, identifier, filepath)
+		if err != nil {
+			return
+		}
 	}
 
 	// Set headers - content type is dependent on client
@@ -163,6 +150,63 @@ func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, res *Image
 	w.Header().Set("Content-Type", ct)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Write(json)
+}
+
+func newImageResError(w http.ResponseWriter, err error) {
+	switch err {
+	case ErrImageDoesNotExist:
+		http.Error(w, "Image resource does not exist", 404)
+	default:
+		http.Error(w, err.Error(), 500)
+	}
+}
+
+func (ih *IIIFHandler) loadInfoJSONOverride(identifier iiif.ID, filepath string) []byte {
+	// If an override file isn't found or has an error, just skip it
+	json, err := ioutil.ReadFile(filepath + "-info.json")
+	if err != nil {
+		return nil
+	}
+
+	// If an override file *is* found, replace the id
+	id := ih.Base.String() + "/" + identifier.String()
+	return bytes.Replace(json, []byte("%ID%"), []byte(id), 1)
+}
+
+func (ih *IIIFHandler) buildInfoJSON(w http.ResponseWriter, identifier iiif.ID, filepath string) ([]byte, error) {
+	info := ih.FeatureSet.Info()
+	res, err := NewImageResource(identifier, filepath)
+	if err != nil {
+		newImageResError(w, err)
+		return nil, err
+	}
+
+	info.Width = res.Decoder.GetWidth()
+	info.Height = res.Decoder.GetHeight()
+
+	// Set up tile sizes - scale factors are hard-coded for now
+	if res.Decoder.GetTileWidth() > 0 {
+		sf := []int{1, 2, 4, 8, 16, 32}
+		info.Tiles = make([]iiif.TileSize, 1)
+		info.Tiles[0] = iiif.TileSize{
+			Width:        res.Decoder.GetTileWidth(),
+			ScaleFactors: sf,
+		}
+		if res.Decoder.GetTileHeight() > 0 {
+			info.Tiles[0].Height = res.Decoder.GetTileHeight()
+		}
+	}
+
+	// The info id is actually the full URL to the resource, not just its ID
+	info.ID = ih.Base.String() + "/" + res.ID.String()
+
+	json, err := json.Marshal(info)
+	if err != nil {
+		log.Printf("ERROR!  Unable to marshal IIIFInfo response: %s", err)
+		http.Error(w, "Server error", 500)
+	}
+
+	return json, err
 }
 
 // Handles image processing operations.  Putting resize into the IIIFImageDecoder

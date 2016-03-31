@@ -38,15 +38,10 @@ prog="rais-server"
 exec="/opt/chronam-support/$prog"
 tilepath=${TILEPATH:-/opt/chronam/data/batches}
 iiifurl=${IIIFURL:-}
-iiiftilesizes=${IIIFTILESIZES:-}
 args="--tile-path=\"$tilepath\" --address=\"$ADDRESS\""
 
 if [ ! -z "$iiifurl" ]; then
   args="$args --iiif-url=\"$iiifurl\""
-fi
-
-if [ ! -z "$iiiftilesizes" ]; then
-  args="$args --iiif-tile-sizes=\"$iiiftilesizes\""
 fi
 
 restartfile=/tmp/$prog.restart
