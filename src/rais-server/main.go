@@ -7,8 +7,6 @@ import (
 	"net/url"
 	"os"
 	"runtime"
-	"strconv"
-	"strings"
 )
 
 var tilePath string
