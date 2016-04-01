@@ -2,6 +2,12 @@
 	"version": 0,
 	"dependencies": [
 		{
+			"importpath": "github.com/hashicorp/golang-lru",
+			"repository": "https://github.com/hashicorp/golang-lru",
+			"revision": "a0d98a5f288019575c6d1f4bb1573fef2d1fcdc4",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/nfnt/resize",
 			"repository": "https://github.com/nfnt/resize",
 			"revision": "dc93e1b98c579d90ee2fa15c1fd6dac34f6e7899",

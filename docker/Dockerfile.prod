@@ -14,6 +14,7 @@ COPY testfile/info.json /var/local/images/test.jp2-info.json
 
 ENV PORT 12415
 ENV IIIFURL http://localhost:$PORT/iiif
+ENV IIIFINFOCACHESIZE 10000
 
 EXPOSE $PORT
-ENTRYPOINT /opt/rais/rais-server --iiif-url $IIIFURL --address ":$PORT" --tile-path /var/local/images
+ENTRYPOINT /opt/rais/rais-server --iiif-url $IIIFURL --iiif-info-cache-size $IIIFINFOCACHESIZE --address ":$PORT" --tile-path /var/local/images

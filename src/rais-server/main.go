@@ -2,28 +2,33 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"runtime"
+
+	"github.com/hashicorp/golang-lru"
 )
 
 var tilePath string
+var infoCache *lru.Cache
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	var iiifURL string
 	var address string
+	var infoCacheLen int
 
 	flag.StringVar(&iiifURL, "iiif-url", "", `Base URL for serving IIIF requests, e.g., "http://example.com:8888/images/iiif"`)
 	flag.StringVar(&address, "address", ":8888", "http service address")
 	flag.StringVar(&tilePath, "tile-path", "", "Base path for JP2 images")
+	flag.IntVar(&infoCacheLen, "iiif-info-cache-size", 10000, "Maximum cached image info entries (IIIF only)")
 	flag.Parse()
 
 	if tilePath == "" {
-		fmt.Println("ERROR: --tile-path is required")
+		log.Println("ERROR: --tile-path is required")
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -33,18 +38,23 @@ func main() {
 
 	iiifBase, err := url.Parse(iiifURL)
 	if iiifURL != "" && err != nil {
-		fmt.Println("Invalid IIIF URL specified:", err)
-		os.Exit(1)
+		log.Fatalf("Invalid IIIF URL specified: %s", err)
 	}
 
 	if iiifBase.Scheme != "" && iiifBase.Host != "" && iiifBase.Path != "" {
-		fmt.Printf("IIIF enabled at %s\n", iiifBase.String())
+		if infoCacheLen > 0 {
+			infoCache, err = lru.New(infoCacheLen)
+			if err != nil {
+				log.Fatalf("Unable to start info cache: %s", err)
+			}
+		}
+
+		log.Printf("IIIF enabled at %s\n", iiifBase.String())
 		ih := NewIIIFHandler(iiifBase, tilePath)
 		http.HandleFunc(ih.Base.Path+"/", ih.Route)
 	}
 
 	if err := http.ListenAndServe(address, nil); err != nil {
-		fmt.Printf("Error starting listener: %s", err)
-		os.Exit(1)
+		log.Fatalf("Error starting listener: %s", err)
 	}
 }
