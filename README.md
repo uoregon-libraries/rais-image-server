@@ -40,7 +40,7 @@ docker run -d \
   uolibraries/rais
 ```
 
-On the first run, there will be a large download to get the container, but
+On the first run, there will be a large download to get the image, but
 after that it will be cached locally.
 
 Note that the environmental variables are optional, though IIIFURL will almost
@@ -223,7 +223,7 @@ of RAM.  Load testing is highly recommended.
 The IIIF support adheres to level 2 of the spec (as well as some extra
 features), but it isn't as customizable as we would prefer.
 
-- The info.json response makes assumption in some cases that aren't optimal.
+- The info.json response makes assumptions in some cases that aren't optimal.
   You can override the responses with a custom info.json, but it's not automated.
 - There is no way to change the tile scale factors: 1, 2, 4, 8, 16, 32.
 - There's no way to specify optimal resize targets.
