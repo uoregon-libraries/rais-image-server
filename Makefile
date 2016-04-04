@@ -10,6 +10,8 @@ all: binaries
 deps: vendor/src
 vendor/src:
 	gb vendor restore
+	# Remove patented code from vendored area just in case
+	rm vendor/src/github.com/hashicorp/golang-lru/arc*
 
 # Generated code
 generate: src/transform/rotation.go
