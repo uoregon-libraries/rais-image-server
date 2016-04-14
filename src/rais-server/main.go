@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"runtime"
 
 	"github.com/hashicorp/golang-lru"
 )
@@ -15,8 +14,6 @@ var tilePath string
 var infoCache *lru.Cache
 
 func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-
 	var iiifURL string
 	var address string
 	var infoCacheLen int
