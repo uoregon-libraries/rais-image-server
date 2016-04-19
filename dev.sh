@@ -8,6 +8,4 @@ docker run -it --rm \
   --privileged=true \
   -p 12415:12415 \
   -v $(pwd):/opt/rais-src \
-  rais-build /opt/rais-src/bin/rais-server --address ":12415" \
-      --iiif-url "http://localhost:12415/iiif" \
-      --tile-path "/var/local/images"
+  rais-build /opt/rais-src/bin/rais-server
