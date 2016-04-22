@@ -25,24 +25,14 @@ pid_file="/var/run/$name.pid"
 stdout_log="/var/log/$name.log"
 stderr_log="/var/log/$name.err"
 
-# Source the settings file - if we don't have a settings file, error out
-conffile="/etc/$name.conf"
+conffile="/etc/$name.toml"
 if [ ! -f $conffile ]; then
   echo "Cannot manage $name without conf file '$conffile'"
   exit
 fi
 
-. $conffile
-
 prog="rais-server"
 exec="/opt/chronam-support/$prog"
-tilepath=${TILEPATH:-/opt/chronam/data/batches}
-iiifurl=${IIIFURL:-}
-args="--tile-path=\"$tilepath\" --address=\"$ADDRESS\""
-
-if [ ! -z "$iiifurl" ]; then
-  args="$args --iiif-url=\"$iiifurl\""
-fi
 
 restartfile=/tmp/$prog.restart
 lockfile=/var/lock/subsys/$prog
@@ -54,8 +44,8 @@ loop_tileserver() {
 
   while [ -f $restartfile ] && [ $retry -gt 0 ]; do
     laststart=`date +%s`
-    echo "Starting service: $exec $args" >>$stdout_log
-    eval "$exec $args" >>$stdout_log 2>>$stderr_log
+    echo "Starting service: $exec" >>$stdout_log
+    eval "$exec" >>$stdout_log 2>>$stderr_log
 
     newdate=`date +%s`
     let timediff=$newdate-$laststart
