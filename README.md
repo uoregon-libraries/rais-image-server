@@ -255,19 +255,18 @@ Stats from about a month of monitoring:
 The IIIF support adheres to level 2 of the spec (as well as some extra
 features), but it isn't as customizable as we would prefer.
 
-- The info.json response makes assumptions in some cases that aren't optimal.
-  You can override the responses with a custom info.json, but it's not automated.
-- There is no way to change the tile scale factors: 1, 2, 4, 8, 16, 32.
-- There's no way to specify optimal resize targets.
-- The quality choices are hard-coded to include color, gray, and bitonal, even
-  for gray/bitonal images
+- When you don't provide your own info.json response (as described above), the
+  default response makes assumptions that may not be optimal:
+  - The tile scale factors are hard-coded to [1, 2, 4, 8, 16, 32].
+  - The quality choices are hard-coded to include color, gray, and bitonal, even
+    for gray/bitonal images
 
 IIIF viewers seem to pick moderately smart choices, but this server may not
-work out of the box for, say, a 200+ megapixel image.
+perform well for, say, a 200+ megapixel image.
 
 It should also be noted that GIF output is amazingly slow.  Given that GIF
 output isn't even an IIIF level 2 feature, we aren't planning to put much time
-into troubleshooting the issue.  GIFs are available, but not likely to be used
+into troubleshooting the issue.  GIFs are available, but should be avoided
 except as one-offs.
 
 ### Not all JP2 files are created equally
