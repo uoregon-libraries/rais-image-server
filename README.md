@@ -26,6 +26,12 @@ more detail.
 
 ### Dockerhub
 
+If you pull RAIS from [Dockerhub](https://hub.docker.com/r/uolibraries/rais/),
+please note that you'll be getting the latest *stable* version.  It may not
+have the same features as the development version.  You can look at the latest
+stable version in github by browsing
+[our master branch](https://github.com/uoregon-libraries/rais-image-server/tree/master).
+
 You can see an example in [rundocker.sh](rundocker.sh), but it looks like this:
 
 ```bash
