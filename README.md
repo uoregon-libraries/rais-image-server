@@ -232,8 +232,10 @@ smaller than 1 / (2 ^ x) times the width/height of the image.
 
 ### JP2: only supports RGB and Grayscale
 
-And I'm not even sure how well we support different variations of those two
-options... or even what variations might exist.  So... good luck?
+YCC isn't supported directly (unless openjpeg does magic conversions for us,
+which we haven't tested).  RGBa should work, but the alpha channel will be
+ignored.  Embedded color profiles probably don't work, but they haven't been
+tested.
 
 ### RAM usage should be monitored
 
