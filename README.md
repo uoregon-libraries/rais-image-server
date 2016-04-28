@@ -211,12 +211,18 @@ smaller than 1 / (2 ^ x) times the width/height of the image.
 And I'm not even sure how well we support different variations of those two
 options... or even what variations might exist.  So... good luck?
 
-- RAM usage could be ridiculous
+- RAM usage should be monitored
 
-We haven't even made a cursory attempt at curtailing RAM use.  Go's garbage
-collection works well enough for our use case, but really large images and/or
-lots of traffic could cause the system to easily chew up unreasonable amounts
-of RAM.  Load testing is highly recommended.
+Huge images and/or high traffic can cause the JP2 processor to chew up large
+amounts of RAM.  The good news is that since compiling RAIS under Go 1.6, our
+RAM is significantly lower and more predictable than with Go 1.4.
+
+Stats from about a month of monitoring:
+
+- Go 1.4 would slowly grow in RAM use until it was routinely above 1 gig of RAM
+  (even when under relatively low load), and would spike above 2 gigs
+- Go 1.6 is typically under 60 **megs** of RAM, with spikes being few and far
+  between, and never going above 400 megs
 
 - IIIF Support isn't perfect
 
