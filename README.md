@@ -288,7 +288,7 @@ using graphics magick, a command like this can help:
 
     gm convert input.tiff -flatten -quality 70 \
         -define jp2:prg=rlcp \
-        -define jp2:numrlvls=6 \
+        -define jp2:numrlvls=7 \
         -define jp2:tilewidth=1024 \
         -define jp2:tileheight=1024 output.jp2
 
