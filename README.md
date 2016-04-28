@@ -291,13 +291,12 @@ power when compared to color images.  If your sources are grayscale, but you
 encode to RGB for better preservation, consider building grayscale derivatives
 for web display.
 
-- Unknown performance metrics for non-JP2 files
+### Poor performance for non-JP2 files
 
 These aren't well-tested since our system is exclusively JP2.  Non-JP2 types
 that are supported (TIFF, JPG, PNG, and GIF) have to be read in fully and then
 cropped and resized in Go.  This will not be as fast as image formats built for
-deep zooming and run under a high-performance image server such as [IIP
-Image](http://iipimage.sourceforge.net/).
+deep zooming (tiled JP2s for RAIS).
 
 As an example: TIFF files are usually fast to process, but can potentially take
 up a great deal of memory.  Sometimes this is okay, but it's a bottleneck
