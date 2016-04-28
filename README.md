@@ -164,24 +164,48 @@ Full list of features supported:
 Caching
 -----
 
-The server doesn't inherently cache the generated JPGs, which means every hit
-will read the source JP2, extract tiles using openjpeg, and send them back to
-the browser.  Depending on the amount of data and server horsepower, it may be
-worth caching the tiles explicitly.
+### info.json responses
+
+We've implemented a simple LRU cache for info.json responses, which holds
+10,000 entries by default.  The info.json data is very small, making this a
+fairly efficient cache.  But the info.json data is very easy to generate, so
+the value of caching is minimal, and may be removed in the future.
+
+### Image responses
+
+The server doesn't inherently cache the generated images, which means every hit
+will read the source file, manipulate it per the request, and send an image
+back to the browser.  Depending on the amount of data and server horsepower, it
+may be worth adding explicit caching.
 
 The server returns a valid Last-Modified header based on the last time the JP2
 file changed, which Apache can use to create a simple disk-based cache:
 
 ```
 CacheRoot /var/cache/apache2/mod_disk_cache
-CacheEnable disk /images/tiles/
+CacheEnable disk /images/iiif/
 ```
 
 This won't be the smartest cache, but it will help in the case of a large
-influx of people accessing the same newspaper.  It is highly advisable that the
+influx of people accessing the same file.  It is highly advisable that the
 `htcacheclean` tool be used in tandem with Apache cache directives, and it's
-probably worth reading [the Apache caching
-guide](http://httpd.apache.org/docs/2.2/caching.html).
+probably worth reading [the Apache caching guide](http://httpd.apache.org/docs/2.2/caching.html).
+
+**Note**: systems with a lot of files may find that the vast majority of image
+requests are unique.  Over the course of a month, we found that we have as many
+as 4 million tile requests, and more than 75% of those were requested only
+once.  No single tile was requested more than 40 times.  For us, caching a
+month of tiles would require a significant amount of disk.  We're looking into
+a way to cache a small subset in the case we showcase a particular newspaper,
+but for the moment caching would be a huge loss for us.
+
+### Specific responses
+
+Note that for systems with a great deal of content, caching specific requests
+(for instance, resizing to a set width) can be significantly more valuable than
+trying to cache all image requests.  We've set up Apache to cache all thumbnail
+responses for a week.  This costs us about 3 gigs of disk, but holds around
+150k thumbnails, keeping our search results pages very fast.
 
 Known Limitations
 -----
