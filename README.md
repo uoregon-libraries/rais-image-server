@@ -191,13 +191,13 @@ six resolution factors ("zoom levels") and are tiled.  It has been *amazing* for
 within that context, but we don't know much about other uses, so outside of that
 context, there may be issues worth consideration.
 
-- JP2: resolution factors beyond 6 aren't supported
+### JP2: resolution factors beyond 6 aren't supported
 
 Very large images (as in, hundreds of megapixels) will have performance issues
 as the server will have to manually resize anything smaller than 1/32nd of the
 original image.
 
-- JP2: resolution factors below 6 are barely supported
+### JP2: resolution factors below 6 are barely supported
 
 We couldn't figure out how to properly determine the number of resolution
 factors a given image has.  When an image maxes out at res. factor 2, and a
@@ -206,12 +206,12 @@ fail, 3, fail, 2, success.  This has a bit of overhead for each try, so it's
 best to encode at a factor of 6 or else ensure you aren't requesting images
 smaller than 1 / (2 ^ x) times the width/height of the image.
 
-- JP2: only supports RGB and Grayscale
+### JP2: only supports RGB and Grayscale
 
 And I'm not even sure how well we support different variations of those two
 options... or even what variations might exist.  So... good luck?
 
-- RAM usage should be monitored
+### RAM usage should be monitored
 
 Huge images and/or high traffic can cause the JP2 processor to chew up large
 amounts of RAM.  The good news is that since compiling RAIS under Go 1.6, our
@@ -224,7 +224,7 @@ Stats from about a month of monitoring:
 - Go 1.6 is typically under 60 **megs** of RAM, with spikes being few and far
   between, and never going above 400 megs
 
-- IIIF Support isn't perfect
+### IIIF Support isn't perfect
 
 The IIIF support adheres to level 2 of the spec (as well as some extra
 features), but it isn't as customizable as we would prefer.
@@ -244,7 +244,7 @@ output isn't even an IIIF level 2 feature, we aren't planning to put much time
 into troubleshooting the issue.  GIFs are available, but not likely to be used
 except as one-offs.
 
-- Not all JP2 files are created equally
+### Not all JP2 files are created equally
 
 Our newspaper JP2s are encoded in a way that makes them *very* friendly to
 pan-and-zoom systems.  They are encoded with tiling, which allows pieces of
