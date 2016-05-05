@@ -27,7 +27,7 @@ binaries: deps bin/rais-server bin/jp2info
 # error when building the server before openjpeg has been compiled
 bin/rais-server: src/transform/rotation.go src/*
 	gb build openjpeg
-	gb build rais-server
+	gb build cmd/rais-server
 
 bin/jp2info: src/jp2info/* src/cmd/jp2info/*
 	gb build cmd/jp2info
