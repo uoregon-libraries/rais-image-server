@@ -16,7 +16,7 @@ import (
 
 func rootDir() string {
 	p, _ := os.Getwd()
-	root, _ := filepath.Abs(p + "/../../")
+	root, _ := filepath.Abs(p + "/../../../")
 	return root
 }
 
