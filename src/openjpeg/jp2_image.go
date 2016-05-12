@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"jp2info"
 	"reflect"
 	"runtime"
 	"unsafe"
@@ -21,21 +22,18 @@ type JP2Image struct {
 	stream       *C.opj_stream_t
 	codec        *C.opj_codec_t
 	image        *C.opj_image_t
+	info         *jp2info.Info
 	decodeWidth  int
 	decodeHeight int
-	srcWidth     int
-	srcHeight    int
 	decodeArea   image.Rectangle
 	srcRect      image.Rectangle
-	tileWidth    int
-	tileHeight   int
 }
 
 func NewJP2Image(filename string) (*JP2Image, error) {
 	i := &JP2Image{filename: filename}
 	runtime.SetFinalizer(i, finalizer)
 
-	if err := i.readDimensions(); err != nil {
+	if err := i.readInfo(); err != nil {
 		return nil, err
 	}
 
@@ -44,6 +42,12 @@ func NewJP2Image(filename string) (*JP2Image, error) {
 	}
 
 	return i, nil
+}
+
+func (i *JP2Image) readInfo() error {
+	var err error
+	i.info, err = jp2info.NewScanner().Scan(i.filename)
+	return err
 }
 
 // SetResizeWH sets the image to scale to the given width and height.  If one
@@ -72,7 +76,7 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 	}
 
 	if i.decodeArea == image.ZR {
-		i.decodeArea = image.Rect(0, 0, i.srcWidth, i.srcHeight)
+		i.decodeArea = image.Rect(0, 0, int(i.info.Width), int(i.info.Height))
 	}
 
 	if i.decodeWidth == 0 && i.decodeHeight == 0 {
@@ -185,45 +189,24 @@ func (i *JP2Image) ReadHeader() error {
 	return nil
 }
 
-// getDimensions reads the JP2 headers and pulls dimensions into srcWidth and
-// srcHeight.  The image resource is cleaned up afterward, as this operation
-// has to be usable independently of decoding.  This shouldn't be called after
-// width and height are stored.
-func (i *JP2Image) readDimensions() error {
-	defer i.CleanupResources()
-	if err := i.ReadHeader(); err != nil {
-		return err
-	}
-
-	i.srcRect = image.Rect(int(i.image.x0), int(i.image.y0), int(i.image.x1), int(i.image.y1))
-	i.srcWidth = i.srcRect.Dx()
-	i.srcHeight = i.srcRect.Dy()
-
-	cstrInfo := C.opj_get_cstr_info(i.codec)
-	i.tileWidth = int(cstrInfo.tdx)
-	i.tileHeight = int(cstrInfo.tdy)
-
-	return nil
-}
-
 // GetWidth returns the image width
 func (i *JP2Image) GetWidth() int {
-	return i.srcWidth
+	return int(i.info.Width)
 }
 
 // GetHeight returns the image height
 func (i *JP2Image) GetHeight() int {
-	return i.srcHeight
+	return int(i.info.Height)
 }
 
 // GetTileWidth returns the tile width
 func (i *JP2Image) GetTileWidth() int {
-	return i.tileWidth
+	return int(i.info.TileWidth())
 }
 
 // GetTileHeight returns the tile height
 func (i *JP2Image) GetTileHeight() int {
-	return i.tileHeight
+	return int(i.info.TileHeight())
 }
 
 // Attempts to set the progression level to the given value, then re-read the
