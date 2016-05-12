@@ -25,7 +25,7 @@ binaries: deps bin/rais-server bin/jp2info
 
 # Build the server.  Note that the "gb build openjpeg" is necessary to avoid an
 # error when building the server before openjpeg has been compiled
-bin/rais-server: src/transform/rotation.go src/*
+bin/rais-server: src/transform/rotation.go src/* src/cmd/rais-server/*
 	gb build openjpeg
 	gb build cmd/rais-server
 
