@@ -5,4 +5,5 @@ package main
 type ImageInfo struct {
 	Width, Height         int
 	TileWidth, TileHeight int
+	Levels                int
 }

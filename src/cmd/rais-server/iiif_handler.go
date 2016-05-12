@@ -209,6 +209,7 @@ func (ih *IIIFHandler) loadInfoJSONFromImageResource(id iiif.ID, fp string) ([]b
 		Height:     d.GetHeight(),
 		TileWidth:  d.GetTileWidth(),
 		TileHeight: d.GetTileHeight(),
+		Levels:     d.GetLevels(),
 	}
 
 	if infoCache != nil {
@@ -222,9 +223,22 @@ func (ih *IIIFHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *HandlerE
 	info.Width = i.Width
 	info.Height = i.Height
 
-	// Set up tile sizes - scale factors are hard-coded for now
+	// Set up tile sizes
 	if i.TileWidth > 0 {
-		sf := []int{1, 2, 4, 8, 16, 32}
+		var sf []int
+		scale := 1
+		for x := 0; x < i.Levels; x++ {
+			// For sanity's sake, let's not tell viewers they can get at absurdly
+			// small sizes
+			if info.Width / scale < 16 {
+				break
+			}
+			if info.Height / scale < 16 {
+				break
+			}
+			sf = append(sf, scale)
+			scale <<= 1
+		}
 		info.Tiles = make([]iiif.TileSize, 1)
 		info.Tiles[0] = iiif.TileSize{
 			Width:        i.TileWidth,
