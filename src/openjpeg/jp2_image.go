@@ -88,8 +88,8 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 	// if there isn't any scaling of the output)
 	if i.decodeWidth != i.decodeArea.Dx() || i.decodeHeight != i.decodeArea.Dy() {
 		level := desiredProgressionLevel(i.decodeArea, i.decodeWidth, i.decodeHeight)
-		if err := i.SetDynamicProgressionLevel(level); err != nil {
-			goLog(3, "Unable to set dynamic progression level - aborting")
+		if err := i.SetProgressionLevel(level); err != nil {
+			goLog(3, "Unable to set progression level - aborting")
 			return nil, err
 		}
 	}
@@ -209,33 +209,23 @@ func (i *JP2Image) GetTileHeight() int {
 	return int(i.info.TileHeight())
 }
 
-// Attempts to set the progression level to the given value, then re-read the
-// header.  If reading the header fails, attempts to set the level to one level
-// below the initial level.  If reading the header fails at level 0, an error
-// is returned.
-func (i *JP2Image) SetDynamicProgressionLevel(level int) error {
-	onErr := func(err error) error {
-		if level > 0 {
-			goLog(6, fmt.Sprintf("Unable to set progression level to %d; trying again (%s)", level, err))
-			i.CleanupResources()
-			return i.SetDynamicProgressionLevel(level - 1)
-		}
+// GetLevels returns the number of resolution levels
+func (i *JP2Image) GetLevels() int {
+	return int(i.info.Levels)
+}
 
-		return err
+// SetProgressionLevel sanitizes the level to ensure it's not above the
+// images's maximum, then sets it via the opj_set_decoded_resolution_factor
+// C function.  Returns an error if said call fails.
+func (i *JP2Image) SetProgressionLevel(level int) error {
+	if level > i.GetLevels() {
+		goLog(6, fmt.Sprintf("Progression level requested (%d) is too high", level))
+		level = i.GetLevels()
 	}
-
 	goLog(6, fmt.Sprintf("Setting progression level to %d", level))
 
-	if err := i.initializeCodec(); err != nil {
-		return onErr(err)
-	}
-
 	if C.opj_set_decoded_resolution_factor(i.codec, C.OPJ_UINT32(level)) == C.OPJ_FALSE {
-		return onErr(errors.New("Error trying to set decoded resolution factor"))
-	}
-
-	if err := i.ReadHeader(); err != nil {
-		return onErr(err)
+		return errors.New("Error trying to set decoded resolution factor")
 	}
 
 	return nil
