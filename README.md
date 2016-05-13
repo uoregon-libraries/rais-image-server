@@ -119,10 +119,9 @@ to see the features supported.
 
 To use a custom info.json response, you can create a file with the same name as
 the JP2, with "-info.json" appended at the end.  e.g., `source.jp2-info.json`.
-This can be useful for limiting features or reporting proper scale factors
-(which are currently hard-coded), custom resize values, etc.  To keep the
-system working on any URL, you can set the `@id` value in the custom JSON to
-`%ID%`.  Since IIIF ids are a full URL, changing paths, URLs, or ports will
+This can be useful for limiting features, custom resize values, etc.  To keep
+the system working on any URL, you can set the `@id` value in the custom JSON
+to `%ID%`.  Since IIIF ids are a full URL, changing paths, URLs, or ports will
 break custom info.json files unless you allow the system to fill in the ID.
 See [testfile/info.json](testfile/info.json) for an example.
 
@@ -221,20 +220,6 @@ six resolution factors ("zoom levels") and are tiled.  It has been *amazing* for
 within that context, but we don't know much about other uses, so outside of that
 context, there may be issues worth consideration.
 
-### JP2: resolution factors beyond 6 aren't supported
-
-Very large images (as in, hundreds of megapixels) will have performance issues
-as the server will have to manually resize anything smaller than 1/32nd of the
-original image.
-
-### JP2: resolution factors below 6 are barely supported
-
-We couldn't figure out how to properly determine the number of resolution
-factors a given image has.  When an image maxes out at res. factor 2, and a
-request is made for something at factor 6, we try 6 and fail, then 5, fail, 4,
-fail, 3, fail, 2, success.  This has a bit of overhead for each try, so it's
-best to encode at a factor of 6 or else ensure you aren't requesting images
-smaller than 1 / (2 ^ x) times the width/height of the image.
 
 ### JP2: only supports RGB and Grayscale
 
@@ -261,14 +246,9 @@ Stats from about a month of monitoring:
 The IIIF support adheres to level 2 of the spec (as well as some extra
 features), but it isn't as customizable as we would prefer.
 
-- When you don't provide your own info.json response (as described above), the
-  default response makes assumptions that may not be optimal:
-  - The tile scale factors are hard-coded to [1, 2, 4, 8, 16, 32].
-  - The quality choices are hard-coded to include color, gray, and bitonal, even
-    for gray/bitonal images
-
-IIIF viewers seem to pick moderately smart choices, but this server may not
-perform well for, say, a 200+ megapixel image.
+When you don't provide your own info.json response (as described above), the
+default response's quality choices are hard-coded to include color, gray, and
+bitonal, even for gray/bitonal images.
 
 It should also be noted that GIF output is amazingly slow.  Given that GIF
 output isn't even an IIIF level 2 feature, we aren't planning to put much time
