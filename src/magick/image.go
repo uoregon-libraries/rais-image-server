@@ -85,6 +85,13 @@ func (i *Image) GetTileHeight() int {
 	return 0
 }
 
+// GetLevels returns 1 since images here cannot be multi-resolution, and
+// therefore always have just a single resolution.  If we ever support
+// pyramidal TIFFs, those will need a separate implementation.
+func (i *Image) GetLevels() int {
+	return 1
+}
+
 func (i *Image) doResize(w, h int) error {
 	exception := C.AcquireExceptionInfo()
 	defer C.DestroyExceptionInfo(exception)

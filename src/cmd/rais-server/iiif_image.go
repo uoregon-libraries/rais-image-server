@@ -29,6 +29,7 @@ type IIIFImageDecoder interface {
 	GetHeight() int
 	GetTileWidth() int
 	GetTileHeight() int
+	GetLevels() int
 	SetCrop(image.Rectangle)
 	SetResizeWH(int, int)
 }

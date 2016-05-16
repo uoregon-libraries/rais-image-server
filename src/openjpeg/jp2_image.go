@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"jp2info"
 	"reflect"
 	"runtime"
 	"unsafe"
@@ -21,21 +22,18 @@ type JP2Image struct {
 	stream       *C.opj_stream_t
 	codec        *C.opj_codec_t
 	image        *C.opj_image_t
+	info         *jp2info.Info
 	decodeWidth  int
 	decodeHeight int
-	srcWidth     int
-	srcHeight    int
 	decodeArea   image.Rectangle
 	srcRect      image.Rectangle
-	tileWidth    int
-	tileHeight   int
 }
 
 func NewJP2Image(filename string) (*JP2Image, error) {
 	i := &JP2Image{filename: filename}
 	runtime.SetFinalizer(i, finalizer)
 
-	if err := i.readDimensions(); err != nil {
+	if err := i.readInfo(); err != nil {
 		return nil, err
 	}
 
@@ -44,6 +42,12 @@ func NewJP2Image(filename string) (*JP2Image, error) {
 	}
 
 	return i, nil
+}
+
+func (i *JP2Image) readInfo() error {
+	var err error
+	i.info, err = jp2info.NewScanner().Scan(i.filename)
+	return err
 }
 
 // SetResizeWH sets the image to scale to the given width and height.  If one
@@ -72,7 +76,7 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 	}
 
 	if i.decodeArea == image.ZR {
-		i.decodeArea = image.Rect(0, 0, i.srcWidth, i.srcHeight)
+		i.decodeArea = image.Rect(0, 0, int(i.info.Width), int(i.info.Height))
 	}
 
 	if i.decodeWidth == 0 && i.decodeHeight == 0 {
@@ -84,8 +88,8 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 	// if there isn't any scaling of the output)
 	if i.decodeWidth != i.decodeArea.Dx() || i.decodeHeight != i.decodeArea.Dy() {
 		level := desiredProgressionLevel(i.decodeArea, i.decodeWidth, i.decodeHeight)
-		if err := i.SetDynamicProgressionLevel(level); err != nil {
-			goLog(3, "Unable to set dynamic progression level - aborting")
+		if err := i.SetProgressionLevel(level); err != nil {
+			goLog(3, "Unable to set progression level - aborting")
 			return nil, err
 		}
 	}
@@ -185,74 +189,43 @@ func (i *JP2Image) ReadHeader() error {
 	return nil
 }
 
-// getDimensions reads the JP2 headers and pulls dimensions into srcWidth and
-// srcHeight.  The image resource is cleaned up afterward, as this operation
-// has to be usable independently of decoding.  This shouldn't be called after
-// width and height are stored.
-func (i *JP2Image) readDimensions() error {
-	defer i.CleanupResources()
-	if err := i.ReadHeader(); err != nil {
-		return err
-	}
-
-	i.srcRect = image.Rect(int(i.image.x0), int(i.image.y0), int(i.image.x1), int(i.image.y1))
-	i.srcWidth = i.srcRect.Dx()
-	i.srcHeight = i.srcRect.Dy()
-
-	cstrInfo := C.opj_get_cstr_info(i.codec)
-	i.tileWidth = int(cstrInfo.tdx)
-	i.tileHeight = int(cstrInfo.tdy)
-
-	return nil
-}
-
 // GetWidth returns the image width
 func (i *JP2Image) GetWidth() int {
-	return i.srcWidth
+	return int(i.info.Width)
 }
 
 // GetHeight returns the image height
 func (i *JP2Image) GetHeight() int {
-	return i.srcHeight
+	return int(i.info.Height)
 }
 
 // GetTileWidth returns the tile width
 func (i *JP2Image) GetTileWidth() int {
-	return i.tileWidth
+	return int(i.info.TileWidth())
 }
 
 // GetTileHeight returns the tile height
 func (i *JP2Image) GetTileHeight() int {
-	return i.tileHeight
+	return int(i.info.TileHeight())
 }
 
-// Attempts to set the progression level to the given value, then re-read the
-// header.  If reading the header fails, attempts to set the level to one level
-// below the initial level.  If reading the header fails at level 0, an error
-// is returned.
-func (i *JP2Image) SetDynamicProgressionLevel(level int) error {
-	onErr := func(err error) error {
-		if level > 0 {
-			goLog(6, fmt.Sprintf("Unable to set progression level to %d; trying again (%s)", level, err))
-			i.CleanupResources()
-			return i.SetDynamicProgressionLevel(level - 1)
-		}
+// GetLevels returns the number of resolution levels
+func (i *JP2Image) GetLevels() int {
+	return int(i.info.Levels)
+}
 
-		return err
+// SetProgressionLevel sanitizes the level to ensure it's not above the
+// images's maximum, then sets it via the opj_set_decoded_resolution_factor
+// C function.  Returns an error if said call fails.
+func (i *JP2Image) SetProgressionLevel(level int) error {
+	if level > i.GetLevels() {
+		goLog(6, fmt.Sprintf("Progression level requested (%d) is too high", level))
+		level = i.GetLevels()
 	}
-
 	goLog(6, fmt.Sprintf("Setting progression level to %d", level))
 
-	if err := i.initializeCodec(); err != nil {
-		return onErr(err)
-	}
-
 	if C.opj_set_decoded_resolution_factor(i.codec, C.OPJ_UINT32(level)) == C.OPJ_FALSE {
-		return onErr(errors.New("Error trying to set decoded resolution factor"))
-	}
-
-	if err := i.ReadHeader(); err != nil {
-		return onErr(err)
+		return errors.New("Error trying to set decoded resolution factor")
 	}
 
 	return nil

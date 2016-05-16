@@ -21,13 +21,16 @@ src/transform/rotation.go: src/transform/generator.go src/transform/template.txt
 	gofmt -l -w -s src/transform/rotation.go
 
 # Binary building rules
-binaries: deps bin/rais-server
+binaries: deps bin/rais-server bin/jp2info
 
 # Build the server.  Note that the "gb build openjpeg" is necessary to avoid an
 # error when building the server before openjpeg has been compiled
-bin/rais-server: src/transform/rotation.go src/*
+bin/rais-server: src/transform/rotation.go src/* src/cmd/rais-server/*
 	gb build openjpeg
-	gb build rais-server
+	gb build cmd/rais-server
+
+bin/jp2info: src/jp2info/* src/cmd/jp2info/*
+	gb build cmd/jp2info
 
 # Testing
 test: deps

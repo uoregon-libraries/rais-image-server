@@ -16,7 +16,7 @@ import (
 
 func rootDir() string {
 	p, _ := os.Getwd()
-	root, _ := filepath.Abs(p + "/../../")
+	root, _ := filepath.Abs(p + "/../../../")
 	return root
 }
 
@@ -65,6 +65,8 @@ func TestInfoHandler(t *testing.T) {
 	assert.Equal(400, data.Height, "JSON-decoded height", t)
 	assert.Equal(800, data.Tiles[0].Width, "JSON-decoded tile width", t)
 	assert.Equal(400, data.Tiles[0].Height, "JSON-decoded tile height", t)
+	assert.Equal(1, len(data.Tiles[0].ScaleFactors), "1 scale factor exists", t)
+	assert.Equal(1, data.Tiles[0].ScaleFactors[0], "Scale factor is 1", t)
 	assert.Equal("http://example.com/foo/bar/testfile%2Ftest-world.jp2", data.ID, "JSON-decoded ID", t)
 	assert.Equal(1, len(w.Headers["Content-Type"]), "Proper content type length", t)
 	assert.Equal("application/json", w.Headers["Content-Type"][0], "Proper content type", t)
