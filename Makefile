@@ -51,5 +51,6 @@ clean:
 # (Re)build the separated docker containers
 docker:
 	docker build --rm -t rais-build -f docker/Dockerfile.build $(MakefileDir)
-	docker run --rm -v $(MakefileDir):/opt/rais-src rais-build
+	docker run --rm -v $(MakefileDir):/opt/rais-src rais-build make clean
+	docker run --rm -v $(MakefileDir):/opt/rais-src rais-build make
 	docker build --rm -t uolibraries/rais:prod -f docker/Dockerfile.prod $(MakefileDir)
