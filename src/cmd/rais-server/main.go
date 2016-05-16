@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"version"
 
 	"github.com/hashicorp/golang-lru"
 	"github.com/spf13/pflag"
@@ -73,7 +74,12 @@ func main() {
 
 	http.HandleFunc("/images/tiles/", TileHandler)
 	http.HandleFunc("/images/resize/", ResizeHandler)
+	http.HandleFunc("/version", VersionHandler)
 	if err := http.ListenAndServe(address, nil); err != nil {
 		log.Fatalf("Error starting listener: %s", err)
 	}
+}
+
+func VersionHandler(w http.ResponseWriter, req *http.Request) {
+	w.Write([]byte(version.Version))
 }
