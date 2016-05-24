@@ -23,6 +23,10 @@ func main() {
 	viper.SetDefault("Address", DefaultAddress)
 	viper.SetDefault("InfoCacheLen", DefaultInfoCacheLen)
 
+	// Allow all configuration to be in environment variables
+	viper.SetEnvPrefix("RAIS")
+	viper.AutomaticEnv()
+
 	// Config file options
 	viper.SetConfigName("rais")
 	viper.AddConfigPath("/etc")
