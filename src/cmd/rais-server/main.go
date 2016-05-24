@@ -15,7 +15,7 @@ import (
 var tilePath string
 var infoCache *lru.Cache
 
-const DefaultAddress = ":8888"
+const DefaultAddress = ":12415"
 const DefaultInfoCacheLen = 10000
 
 func main() {
