@@ -32,6 +32,10 @@ have the same features as the development version.  You can look at the latest
 stable version in github by browsing
 [our master branch](https://github.com/uoregon-libraries/rais-image-server/tree/master).
 
+You can also grab a recent development version by looking at the
+[Dockerhub RAIS tags](https://hub.docker.com/r/uolibraries/rais/tags/).
+All "indev" images should be considered beta versions of RAIS.
+
 For an example of running a docker image as a RAIS server, look at
 [rundocker.sh](rundocker.sh).
 
