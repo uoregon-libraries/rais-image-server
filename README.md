@@ -38,14 +38,6 @@ For an example of running a docker image as a RAIS server, look at
 On the first run, there will be a large download to get the image, but
 after that it will be cached locally.
 
-Note that the environmental variables are optional, though IIIFURL will almost
-certainly need to be changed in production:
-
-- PORT: the port RAIS listens on, defaults to 12415
-- IIIFURL: what RAIS reports as its server URL, defaults to localhost:$PORT/iiif
-- IIIFINFOCACHESIZE is the number of items in the info cache.  Each item is
-  very small, and 10,000 should use fewer than 5 megs of RAM.
-
 Test by visiting `http://localhost:12415/iiif/test-world.jp2/full/full/0/default.jpg`,
 then just configure the port/url/volume mount as needed.
 
@@ -70,6 +62,19 @@ this happen.  Also consider using [buildrun.sh](buildrun.sh) to ease compiling
 and testing.  [dev.sh](dev.sh) is also available for easing the
 edit-compile-run loop on a system with no JP2 libraries, where compilation has
 to go through docker.
+
+Configuration
+-----
+
+RAIS uses a configuration system that allows environment variables, a config
+file, and/or command-line flags.  See [rais-example.toml](rais-example.toml)
+for an example of a configuration file.  RAIS will use a configuration
+file if one exists at `/etc/rais.toml`.
+
+The configuration file's values can be overridden by environment variables,
+while command-line flags will override both configuration files and
+environtmental variables.  Configuration is best explained and understood by
+reading the example file above, which describes all the values in detail.
 
 Using with chronam
 -----
