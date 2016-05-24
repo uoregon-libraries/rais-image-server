@@ -32,19 +32,8 @@ have the same features as the development version.  You can look at the latest
 stable version in github by browsing
 [our master branch](https://github.com/uoregon-libraries/rais-image-server/tree/master).
 
-You can see an example in [rundocker.sh](rundocker.sh), but it looks like this:
-
-```bash
-docker run -d \
-  --name rais \
-  --privileged=true \
-  -e PORT=12415 \
-  -e IIIFURL="http://localhost:12415/iiif" \
-  -e IIIFINFOCACHESIZE=10000
-  -p 12415:12415 \
-  -v $(pwd)/testfile:/var/local/images \
-  uolibraries/rais
-```
+For an example of running a docker image as a RAIS server, look at
+[rundocker.sh](rundocker.sh).
 
 On the first run, there will be a large download to get the image, but
 after that it will be cached locally.
