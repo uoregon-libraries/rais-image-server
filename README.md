@@ -218,6 +218,12 @@ six resolution factors ("zoom levels") and are tiled.  It has been *amazing* for
 within that context, but we don't know much about other uses, so outside of that
 context, there may be issues worth consideration.
 
+### JP2: Slow on huge files
+
+Very large images (as in, hundreds of megapixels) can take a while to decode
+tiles.  In some cases, 2-3 seconds per tile.  Unfortunately, this seems to be a
+limitation of openjpeg.  If serving up files of this size, external tile
+caching is probably a good idea.
 
 ### JP2: only supports RGB and Grayscale
 
