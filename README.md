@@ -238,12 +238,14 @@ Huge images and/or high traffic can cause the JP2 processor to chew up large
 amounts of RAM.  The good news is that since compiling RAIS under Go 1.6, our
 RAM is significantly lower and more predictable than with Go 1.4.
 
-Stats from about a month of monitoring:
+Stats from about two months of monitoring:
 
-- Go 1.4 would slowly grow in RAM use until it was routinely above 1 gig of RAM
-  (even when under relatively low load), and would spike above 2 gigs
-- Go 1.6 is typically under 60 **megs** of RAM, with spikes being few and far
-  between, and never going above 400 megs
+- Under Go 1.4, RAIS would slowly grow in RAM use until it was routinely above
+  1 gig of RAM (even when under relatively low load), with spikes above 2 gigs
+- Under Go 1.6, RAIS is typically under 80 megs of RAM, with spikes being few
+  and far between, with the worst spike just over 400 megs
+
+(For reference, RAIS serves about 800,000 tiles a week)
 
 ### IIIF Support isn't perfect
 
