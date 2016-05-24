@@ -1,18 +1,36 @@
 # Copy this to /etc/rais.toml and customize as needed to avoid specifying
 # config on the command line in your init.d / upstart / etc. scripts
 
-# At a minimum, address must be specified
+# Address: Optional, defaults to ":12415".  This is where RAIS listens for
+# traffic.  The default value causes RAIS to accept anything that talks to port
+# 12415 on the server.
+#
+# Env: RAIS_ADDRESS
+# CLI: --address
 Address = ":12415"
 
-# Set this to the path to the JP2 files if you need to override the default
+# TilePath: Required.  Set this to the path where images can be found.  Note
+# that docker uses an environment setting to force this to "/var/local/images",
+# and environment settings override config file settings.
+#
+# Env: RAIS_TILEPATH
+# CLI: --tile-path
 TilePath = "/var/local/images"
 
-# If you want to enable IIIF support, set this to the desired URL - it *must*
-# resolve to the tile server
-IIIFURL = "http://localhost:12415/iiif"
+# IIIFURL: Optional.  If you want to enable IIIF support, set this to the
+# desired URL - it *must* resolve to the tile server.  If this isn't set, only
+# the legacy handlers will work.
+#
+# Env: RAIS_IIIFURL
+# CLI: --iiif-url
+IIIFURL = "http://192.168.56.99:12415/iiif"
 
-# Set this to 0 to avoid caching IIIF Info requests, or set it higher to cache
-# more requests.  The overhead for caching is very small; probably under 500
-# bytes of RAM per cached item.  But the CPU / IO overhead for generating info
-# requests dynamically is pretty small as well.
+# InfoCacheLen: Optional, defaults to 10000.  Set this to 0 to avoid caching
+# IIIF Info requests, or set it higher to cache more requests.  The overhead
+# for caching is very small; probably under 500 bytes of RAM per cached item.
+# But the CPU / IO overhead for generating info requests dynamically is pretty
+# small as well.
+#
+# Env: RAIS_INFOCACHELEN
+# CLI: --iiif-info-cache-size
 InfoCacheLen = 10000
