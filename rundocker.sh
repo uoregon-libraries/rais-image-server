@@ -23,3 +23,13 @@ docker run -d \
   -p 12415:12415 \
   -v $(pwd)/testfile:/var/local/images \
   uolibraries/rais
+
+# If you want to use a config file rather than the environment variables, you
+# might use this instead:
+docker run -d \
+  --name rais \
+  --privileged=true \
+  -p 12415:12415 \
+  -v $(pwd)/testfile:/var/local/images \
+  -v $(pwd)/rais-example.toml:/etc/rais.toml \
+  uolibraries/rais
