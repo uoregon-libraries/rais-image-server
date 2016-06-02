@@ -1,3 +1,5 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/uoregon-libraries/rais-image-server)](https://goreportcard.com/report/github.com/uoregon-libraries/rais-image-server)
+
 RAIS Image Server
 =======
 
