@@ -63,7 +63,7 @@ func NewImageResource(id iiif.ID, filepath string) (*ImageResource, error) {
 	// We have a decoder for the file type - attempt to instantiate it
 	d, err := newDecoder(filepath)
 	if err != nil {
-		log.Printf("Unable to read image %#v: %s", filepath)
+		log.Printf("Unable to read image %#v: %s", filepath, err)
 		return nil, ErrBadImageFile
 	}
 
