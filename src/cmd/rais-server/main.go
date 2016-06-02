@@ -15,13 +15,13 @@ import (
 var tilePath string
 var infoCache *lru.Cache
 
-const DefaultAddress = ":12415"
-const DefaultInfoCacheLen = 10000
+const defaultAddress = ":12415"
+const defaultInfoCacheLen = 10000
 
 func main() {
 	// Defaults
-	viper.SetDefault("Address", DefaultAddress)
-	viper.SetDefault("InfoCacheLen", DefaultInfoCacheLen)
+	viper.SetDefault("Address", defaultAddress)
+	viper.SetDefault("InfoCacheLen", defaultInfoCacheLen)
 
 	// Allow all configuration to be in environment variables
 	viper.SetEnvPrefix("RAIS")
@@ -36,11 +36,11 @@ func main() {
 	// CLI flags
 	pflag.String("iiif-url", "", `Base URL for serving IIIF requests, e.g., "http://example.com:8888/images/iiif"`)
 	viper.BindPFlag("IIIFURL", pflag.CommandLine.Lookup("iiif-url"))
-	pflag.String("address", DefaultAddress, "http service address")
+	pflag.String("address", defaultAddress, "http service address")
 	viper.BindPFlag("Address", pflag.CommandLine.Lookup("address"))
 	pflag.String("tile-path", "", "Base path for images")
 	viper.BindPFlag("TilePath", pflag.CommandLine.Lookup("tile-path"))
-	pflag.Int("iiif-info-cache-size", DefaultInfoCacheLen, "Maximum cached image info entries (IIIF only)")
+	pflag.Int("iiif-info-cache-size", defaultInfoCacheLen, "Maximum cached image info entries (IIIF only)")
 	viper.BindPFlag("InfoCacheLen", pflag.CommandLine.Lookup("iiif-info-cache-size"))
 	pflag.Parse()
 
@@ -84,6 +84,7 @@ func main() {
 	}
 }
 
+// VersionHandler spits out the raw version string to the browser
 func VersionHandler(w http.ResponseWriter, req *http.Request) {
 	w.Write([]byte(version.Version))
 }

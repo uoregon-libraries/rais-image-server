@@ -26,6 +26,8 @@ func acceptsLD(req *http.Request) bool {
 	return false
 }
 
+// IIIFHandler responds to an IIIF URL request and parses the requested
+// transformation within the limits of the handler's capabilities
 type IIIFHandler struct {
 	Base          *url.URL
 	BaseRegex     *regexp.Regexp
@@ -35,6 +37,8 @@ type IIIFHandler struct {
 	TilePath      string
 }
 
+// NewIIIFHandler sets up an IIIFHandler with all features RAIS can support,
+// listening based on the given base URL
 func NewIIIFHandler(u *url.URL, tp string) *IIIFHandler {
 	// Set up the features we support individually, and let the info magic figure
 	// out how best to report it
@@ -67,7 +71,7 @@ func NewIIIFHandler(u *url.URL, tp string) *IIIFHandler {
 		Pdf:  false,
 		Webp: false,
 
-		BaseUriRedirect:     true,
+		BaseURIRedirect:     true,
 		Cors:                true,
 		JsonldMediaType:     true,
 		ProfileLinkHeader:   false,
@@ -85,6 +89,8 @@ func NewIIIFHandler(u *url.URL, tp string) *IIIFHandler {
 	}
 }
 
+// Route takes an HTTP request and parses it to see what (if any) IIIF
+// translation is requested
 func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 	// Pull identifier from base so we know if we're even dealing with a valid
 	// file in the first place
@@ -130,6 +136,8 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 	http.Error(w, "Invalid IIIF request", 400)
 }
 
+// Info responds to a IIIF info request with appropriate JSON based on the
+// image's data and the handler's capabilities
 func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, id iiif.ID, fp string) {
 	// Check for cached image data first, and use that to create JSON
 	json, e := ih.loadInfoJSONFromCache(id)
@@ -261,10 +269,7 @@ func (ih *IIIFHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *HandlerE
 	return json, nil
 }
 
-// Handles image processing operations.  Putting resize into the IIIFImageDecoder
-// interface is necessary due to the way openjpeg operates on images - we must
-// know which layer to decode to get the nearest valid image size when
-// doing any resize operations.
+// Command handles image processing operations
 func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL, res *ImageResource) {
 	// Send last modified time
 	if err := sendHeaders(w, req, res.FilePath); err != nil {

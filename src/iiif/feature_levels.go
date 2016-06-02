@@ -21,7 +21,7 @@ func FeatureSet1() *FeatureSet {
 		SizeByPct:       true,
 		Default:         true,
 		Jpg:             true,
-		BaseUriRedirect: true,
+		BaseURIRedirect: true,
 		Cors:            true,
 		JsonldMediaType: true,
 	}
@@ -46,7 +46,7 @@ func FeatureSet2() *FeatureSet {
 		Bitonal:         true,
 		Jpg:             true,
 		Png:             true,
-		BaseUriRedirect: true,
+		BaseURIRedirect: true,
 		Cors:            true,
 		JsonldMediaType: true,
 	}

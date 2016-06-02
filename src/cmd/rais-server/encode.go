@@ -11,8 +11,11 @@ import (
 	"io"
 )
 
+// ErrInvalidEncodeFormat is the error returned when encoding fails due to a
+// file format RAIS doesn't support
 var ErrInvalidEncodeFormat = errors.New("Unable to encode: unsupported format")
 
+// EncodeImage uses the built-in image libs to write an image to the browser
 func EncodeImage(w io.Writer, img image.Image, format iiif.Format) error {
 	switch format {
 	case iiif.FmtJPG:

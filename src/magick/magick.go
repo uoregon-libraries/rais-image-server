@@ -1,4 +1,4 @@
-// The magick package is a hacked up port of the minimal functionality we need
+// Package magick is a hacked up port of the minimal functionality we need
 // to satisfy the IIIFImageDecoder interface.  Code is based in part on
 // github.com/quirkey/magick
 package magick

@@ -41,7 +41,7 @@ func (r rotation) GetDstX(i int) string {
 	return valTimesInt(r.getDstXBase, i)
 }
 
-var rotate90 rotation = rotation{
+var rotate90 = rotation{
 	Method:         "Rotate90",
 	Comment:        "does a simple 90-degree clockwise rotation",
 	getDstXBase:    "(maxY - 1 - y)",
@@ -49,7 +49,7 @@ var rotate90 rotation = rotation{
 	DimensionOrder: "srcHeight, srcWidth",
 }
 
-var rotate180 rotation = rotation{
+var rotate180 = rotation{
 	Method:         "Rotate180",
 	Comment:        "does a simple 180-degree clockwise rotation",
 	getDstXBase:    "(maxX - 1 - x)",
@@ -57,7 +57,7 @@ var rotate180 rotation = rotation{
 	DimensionOrder: "srcWidth, srcHeight",
 }
 
-var rotate270 rotation = rotation{
+var rotate270 = rotation{
 	Method:         "Rotate270",
 	Comment:        "does a simple 270-degree clockwise rotation",
 	getDstXBase:    "y",
@@ -65,7 +65,7 @@ var rotate270 rotation = rotation{
 	DimensionOrder: "srcHeight, srcWidth",
 }
 
-var rotateMirror rotation = rotation{
+var rotateMirror = rotation{
 	Method:         "Mirror",
 	Comment:        "flips the image around its vertical axis",
 	getDstXBase:    "(maxX - 1 - x)",
@@ -97,7 +97,7 @@ var typeRGBA = imageType{
 	ByteSize:          4,
 }
 
-type Page struct {
+type page struct {
 	Rotations []rotation
 	Types     []imageType
 }
@@ -109,7 +109,7 @@ func main() {
 		fmt.Println("ERROR creating file:", err)
 	}
 
-	p := Page{
+	p := page{
 		Rotations: []rotation{rotate90, rotate180, rotate270, rotateMirror},
 		Types:     []imageType{typeGray, typeRGBA},
 	}

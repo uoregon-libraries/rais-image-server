@@ -35,10 +35,13 @@ func (i *Image) SetResizeWH(width, height int) {
 	i.decodeHeight = height
 }
 
+// SetCrop sets the image to crop to the given rectangle
 func (i *Image) SetCrop(r image.Rectangle) {
 	i.decodeArea = r
 }
 
+// NewImage reads the header data from the given file and sets up various
+// ImageMagick data structures, returning a valid Image instance.
 func NewImage(filename string) (*Image, error) {
 	exception := C.AcquireExceptionInfo()
 	defer C.DestroyExceptionInfo(exception)
@@ -61,16 +64,16 @@ func NewImage(filename string) (*Image, error) {
 }
 
 func (i *Image) replace(newImg *C.Image) {
-	i.CleanupImage()
+	i.cleanupImage()
 	i.image = newImg
 }
 
-// Width returns the Width of the loaded image in pixels as an int
+// GetWidth returns the Width of the loaded image in pixels as an int
 func (i *Image) GetWidth() int {
 	return (int)(i.image.columns)
 }
 
-// Height returns the Height of the loaded image in pixels as an int
+// GetHeight returns the Height of the loaded image in pixels as an int
 func (i *Image) GetHeight() int {
 	return (int)(i.image.rows)
 }

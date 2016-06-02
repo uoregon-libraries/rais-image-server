@@ -13,6 +13,7 @@ var tilePathRegex = regexp.MustCompile(`^/images/tiles/(?P<path>.+)/image_(?P<wi
 var resizePathRegex = regexp.MustCompile(`^/images/resize/(.+)/(\d+)x(\d+)`)
 var infoPathRegex = regexp.MustCompile(`^/images/info/(.+)$`)
 
+// TileHandler is responsible for all chronam-like tile requests
 func TileHandler(w http.ResponseWriter, req *http.Request) {
 	// Extract request path's regex parts into local variables
 	parts := tilePathRegex.FindStringSubmatch(req.URL.Path)
@@ -68,6 +69,7 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// ResizeHandler is responsible for all chronam-like resize requests
 func ResizeHandler(w http.ResponseWriter, req *http.Request) {
 	// Extract request path's regex parts into local variables
 	parts := resizePathRegex.FindStringSubmatch(req.URL.Path)

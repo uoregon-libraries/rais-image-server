@@ -26,7 +26,7 @@ func (i *JP2Image) initializeStream() error {
 
 	i.stream = C.opj_stream_create_default_file_stream(cFilename, 1)
 	if i.stream == nil {
-		return errors.New(fmt.Sprintf("Failed to create stream in %#v", i.filename))
+		return fmt.Errorf("Failed to create stream in %#v", i.filename)
 	}
 	return nil
 }
@@ -69,6 +69,7 @@ func (i *JP2Image) cleanupImage() {
 	}
 }
 
+// CleanupResources frees all the C structures allocated by open jpeg libraries
 func (i *JP2Image) CleanupResources() {
 	i.cleanupStream()
 	i.cleanupCodec()

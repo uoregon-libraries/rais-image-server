@@ -9,10 +9,14 @@ import (
 	"strings"
 )
 
-// WARN by default
+// LogLevel is the hard-coded log level.  It's forcibly set to WARN.  This
+// whole thing needs a rewrite.
 var LogLevel = 4
+
+// LogLevels contains all possible levels for GoLog and goLog
 var LogLevels = []string{"EMERG", "ALERT", "CRIT", "ERROR", "WARN", "NOTICE", "INFO", "DEBUG"}
 
+// GoLog bridges the openjpeg logging with our internal logger
 //export GoLog
 func GoLog(clevel C.int, cmessage *C.char) {
 	level := int(clevel)

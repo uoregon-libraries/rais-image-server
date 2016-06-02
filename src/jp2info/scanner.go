@@ -9,7 +9,8 @@ import (
 	"os"
 )
 
-// The only JP2 header we currently respect
+// JP2HEADER contains the raw bytes for the only JP2 header we currently
+// respect
 var JP2HEADER = []byte{
 	0x00, 0x00, 0x00, 0x0c,
 	0x6a, 0x50, 0x20, 0x20,
@@ -24,16 +25,14 @@ var (
 	COD    = []byte{0xFF, 0x52}
 )
 
+// Scanner reads a Jpeg2000 header and parsing its data into an Info structure
 type Scanner struct {
 	r *bufio.Reader
 	e error
 	i *Info
 }
 
-func NewScanner() *Scanner {
-	return &Scanner{}
-}
-
+// Scan reads the file and populates an Info pointer
 func (s *Scanner) Scan(filename string) (*Info, error) {
 	var f, err = os.Open(filename)
 	if err != nil {

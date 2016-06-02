@@ -1,14 +1,18 @@
 package jp2info
 
+// ColorMethod tells us how to determine the colorspace
 type ColorMethod uint8
 
+// Known color methods
 const (
 	CMEnumerated    ColorMethod = 1
 	CMRestrictedICC             = 2
 )
 
+// ColorSpace tells us how to parse color data coming from openjpeg
 type ColorSpace uint8
 
+// Known color spaces
 const (
 	CSUnknown ColorSpace = iota
 	CSRGB
@@ -16,6 +20,7 @@ const (
 	CSYCC
 )
 
+// Info stores a variety of data we can easily scan from a jpeg2000 header
 type Info struct {
 	// Main header info
 	Width, Height uint32
@@ -43,14 +48,17 @@ type Info struct {
 	Levels uint8
 }
 
+// TileWidth computes width of tiles
 func (i *Info) TileWidth() uint32 {
 	return i.XTSiz - i.XTOSiz
 }
 
+// TileHeight computes height of tiles
 func (i *Info) TileHeight() uint32 {
 	return i.YTSiz - i.YTOSiz
 }
 
+// String reports the ColorSpace in a human-readable way
 func (cs ColorSpace) String() string {
 	switch cs {
 	case CSRGB:

@@ -16,7 +16,7 @@ import (
 	"github.com/nfnt/resize"
 )
 
-// Container for our simple JP2 operations
+// JP2Image is a container for our simple JP2 operations
 type JP2Image struct {
 	filename     string
 	stream       *C.opj_stream_t
@@ -29,6 +29,8 @@ type JP2Image struct {
 	srcRect      image.Rectangle
 }
 
+// NewJP2Image reads basic information about a file and returns a decode-ready
+// JP2Image instance
 func NewJP2Image(filename string) (*JP2Image, error) {
 	i := &JP2Image{filename: filename}
 	runtime.SetFinalizer(i, finalizer)
@@ -46,7 +48,7 @@ func NewJP2Image(filename string) (*JP2Image, error) {
 
 func (i *JP2Image) readInfo() error {
 	var err error
-	i.info, err = jp2info.NewScanner().Scan(i.filename)
+	i.info, err = new(jp2info.Scanner).Scan(i.filename)
 	return err
 }
 
@@ -58,6 +60,7 @@ func (i *JP2Image) SetResizeWH(width, height int) {
 	i.decodeHeight = height
 }
 
+// SetCrop sets the image crop area for decoding an image
 func (i *JP2Image) SetCrop(r image.Rectangle) {
 	i.decodeArea = r
 }
@@ -169,6 +172,9 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 	return img, nil
 }
 
+// ReadHeader calls the various C functions necessary to instantiate the
+// stream, codec, and image C structures.  All initialization here is required
+// before decoding.
 func (i *JP2Image) ReadHeader() error {
 	if i.image != nil {
 		return nil

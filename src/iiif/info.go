@@ -4,7 +4,9 @@ import (
 	"sort"
 )
 
-type profile interface{}
+// InfoProfile is an empty interface strictly for serializing JSON since we
+// need an array that has strings as well as sub-structures
+type InfoProfile interface{}
 type extraProfile struct {
 	Formats   []string `json:"formats,omitempty"`
 	Qualities []string `json:"qualities,omitempty"`
@@ -14,13 +16,13 @@ type extraProfile struct {
 // Info represents the simplest possible data to provide a valid IIIF
 // information JSON response
 type Info struct {
-	Context  string     `json:"@context"`
-	ID       string     `json:"@id"`
-	Protocol string     `json:"protocol"`
-	Width    int        `json:"width"`
-	Height   int        `json:"height"`
-	Tiles    []TileSize `json:"tiles,omitempty"`
-	Profile  []profile  `json:"profile"`
+	Context  string        `json:"@context"`
+	ID       string        `json:"@id"`
+	Protocol string        `json:"protocol"`
+	Width    int           `json:"width"`
+	Height   int           `json:"height"`
+	Tiles    []TileSize    `json:"tiles,omitempty"`
+	Profile  []InfoProfile `json:"profile"`
 }
 
 // NewInfo returns the static *Info data that's the same for any info response
@@ -59,9 +61,9 @@ func (fs *FeatureSet) baseFeatureSet() (*FeatureSet, string) {
 
 // Profile examines the features in the FeatureSet to determine first which
 // level the FeatureSet supports, then adds any variances.
-func (fs *FeatureSet) Profile() []profile {
+func (fs *FeatureSet) Profile() []InfoProfile {
 	var baseFS *FeatureSet
-	p := make([]profile, 1)
+	p := make([]InfoProfile, 1)
 	baseFS, p[0] = fs.baseFeatureSet()
 
 	_, extraFeatures, _ := FeatureCompare(fs, baseFS)

@@ -55,7 +55,7 @@ type FeatureSet struct {
 	Webp bool
 
 	// HTTP features
-	BaseUriRedirect     bool
+	BaseURIRedirect     bool
 	Cors                bool
 	JsonldMediaType     bool
 	ProfileLinkHeader   bool
@@ -94,7 +94,7 @@ func (fs *FeatureSet) toMap() FeaturesMap {
 		"jp2":                 fs.Jp2,
 		"pdf":                 fs.Pdf,
 		"webp":                fs.Webp,
-		"baseUriRedirect":     fs.BaseUriRedirect,
+		"baseUriRedirect":     fs.BaseURIRedirect,
 		"cors":                fs.Cors,
 		"jsonldMediaType":     fs.JsonldMediaType,
 		"profileLinkHeader":   fs.ProfileLinkHeader,

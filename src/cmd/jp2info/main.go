@@ -26,7 +26,7 @@ func main() {
 	}
 
 	var arg string
-	var s = jp2info.NewScanner()
+	var s = new(jp2info.Scanner)
 	for _, arg = range args {
 		fmt.Printf("%s: ", arg)
 		printScanResults(s.Scan(arg))
