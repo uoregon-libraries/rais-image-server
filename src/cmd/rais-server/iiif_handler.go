@@ -230,10 +230,10 @@ func (ih *IIIFHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *HandlerE
 		for x := 0; x < i.Levels; x++ {
 			// For sanity's sake, let's not tell viewers they can get at absurdly
 			// small sizes
-			if info.Width / scale < 16 {
+			if info.Width/scale < 16 {
 				break
 			}
-			if info.Height / scale < 16 {
+			if info.Height/scale < 16 {
 				break
 			}
 			sf = append(sf, scale)

@@ -37,10 +37,10 @@ type Info struct {
 	CSiz           uint16
 
 	// From COD box
-	LCod           uint16
-	SCod           uint8
-	SGCod          uint32
-	Levels         uint8
+	LCod   uint16
+	SCod   uint8
+	SGCod  uint32
+	Levels uint8
 }
 
 func (i *Info) TileWidth() uint32 {
