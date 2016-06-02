@@ -78,23 +78,11 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 		return nil, err
 	}
 
-	if i.decodeArea == image.ZR {
-		i.decodeArea = image.Rect(0, 0, int(i.info.Width), int(i.info.Height))
-	}
+	i.computeDecodeParameters()
 
-	if i.decodeWidth == 0 && i.decodeHeight == 0 {
-		i.decodeWidth = i.decodeArea.Dx()
-		i.decodeHeight = i.decodeArea.Dy()
-	}
-
-	// Get progression level if we're resizing to specific dimensions (it's zero
-	// if there isn't any scaling of the output)
-	if i.decodeWidth != i.decodeArea.Dx() || i.decodeHeight != i.decodeArea.Dy() {
-		level := desiredProgressionLevel(i.decodeArea, i.decodeWidth, i.decodeHeight)
-		if err := i.SetProgressionLevel(level); err != nil {
-			goLog(3, "Unable to set progression level - aborting")
-			return nil, err
-		}
+	if err := i.computeProgressionLevel(); err != nil {
+		goLog(3, "Unable to set progression level - aborting")
+		return nil, err
 	}
 
 	if err := i.ReadHeader(); err != nil {
@@ -105,20 +93,8 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 	goLog(6, fmt.Sprintf("num comps: %d", i.image.numcomps))
 	goLog(6, fmt.Sprintf("x0: %d, x1: %d, y0: %d, y1: %d", i.image.x0, i.image.x1, i.image.y0, i.image.y1))
 
-	// Setting decode area has to happen *after* reading the header / image data
-	if i.decodeArea != i.srcRect {
-		r := i.decodeArea
-		if C.opj_set_decode_area(i.codec, i.image, C.OPJ_INT32(r.Min.X), C.OPJ_INT32(r.Min.Y), C.OPJ_INT32(r.Max.X), C.OPJ_INT32(r.Max.Y)) == C.OPJ_FALSE {
-			return nil, errors.New("failed to set the decoded area")
-		}
-	}
-
-	// Decode the JP2 into the image stream
-	if C.opj_decode(i.codec, i.stream, i.image) == C.OPJ_FALSE {
-		return nil, errors.New("failed to decode image")
-	}
-	if C.opj_end_decompress(i.codec, i.stream) == C.OPJ_FALSE {
-		return nil, errors.New("failed to close decompression")
+	if err := i.rawDecode(); err != nil {
+		return nil, err
 	}
 
 	var comps []C.opj_image_comp_t
@@ -220,6 +196,29 @@ func (i *JP2Image) GetLevels() int {
 	return int(i.info.Levels)
 }
 
+// computeDecodeParameters sets up decode area, decode width, and decode height
+// based on the image's info
+func (i *JP2Image) computeDecodeParameters() {
+	if i.decodeArea == image.ZR {
+		i.decodeArea = image.Rect(0, 0, int(i.info.Width), int(i.info.Height))
+	}
+
+	if i.decodeWidth == 0 && i.decodeHeight == 0 {
+		i.decodeWidth = i.decodeArea.Dx()
+		i.decodeHeight = i.decodeArea.Dy()
+	}
+}
+
+// computeProgressionLevel gets progression level if we're resizing to specific
+// dimensions (it's zero if there isn't any scaling of the output)
+func (i *JP2Image) computeProgressionLevel() error {
+	if i.decodeWidth == i.decodeArea.Dx() && i.decodeHeight == i.decodeArea.Dy() {
+		return nil
+	}
+
+	return i.SetProgressionLevel(desiredProgressionLevel(i.decodeArea, i.decodeWidth, i.decodeHeight))
+}
+
 // SetProgressionLevel sanitizes the level to ensure it's not above the
 // images's maximum, then sets it via the opj_set_decoded_resolution_factor
 // C function.  Returns an error if said call fails.
@@ -232,6 +231,28 @@ func (i *JP2Image) SetProgressionLevel(level int) error {
 
 	if C.opj_set_decoded_resolution_factor(i.codec, C.OPJ_UINT32(level)) == C.OPJ_FALSE {
 		return errors.New("Error trying to set decoded resolution factor")
+	}
+
+	return nil
+}
+
+// rawDecode reads the raw data from the JP2 so that i.image can be used to
+// construct the response
+func (i *JP2Image) rawDecode() error {
+	// Setting decode area has to happen *after* reading the header / image data
+	if i.decodeArea != i.srcRect {
+		r := i.decodeArea
+		if C.opj_set_decode_area(i.codec, i.image, C.OPJ_INT32(r.Min.X), C.OPJ_INT32(r.Min.Y), C.OPJ_INT32(r.Max.X), C.OPJ_INT32(r.Max.Y)) == C.OPJ_FALSE {
+			return errors.New("failed to set the decoded area")
+		}
+	}
+
+	// Decode the JP2 into the image stream
+	if C.opj_decode(i.codec, i.stream, i.image) == C.OPJ_FALSE {
+		return errors.New("failed to decode image")
+	}
+	if C.opj_end_decompress(i.codec, i.stream) == C.OPJ_FALSE {
+		return errors.New("failed to close decompression")
 	}
 
 	return nil
