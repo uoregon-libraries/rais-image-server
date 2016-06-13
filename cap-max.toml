@@ -1,0 +1,35 @@
+# This is an example capabilities file.  Please note that RAIS will not check
+# custom capabilities for validity; as such, if you claim something is enabled
+# which RAIS doesn't support, such as WEBP output, IIIF image clients may make
+# invalid requests RAIS won't handle.
+#
+# All values below reflect the state of RAIS's capabilities as of 2016-06-14.
+# Turning off slow features, such as GIF output, can potentially reduce
+# denial-of-service attack vectors.
+RegionByPx = true
+RegionByPct = true
+
+SizeByWhListed = true
+SizeByW = true
+SizeByH = true
+SizeByPct = true
+SizeByWh = true
+SizeByForcedWh = true
+SizeAboveFull = true
+
+RotationBy90s = true
+Mirroring = true
+
+Default = true
+Color = true
+Gray = true
+Bitonal = true
+
+Jpg = true
+Png = true
+Gif = true
+Tif = true
+
+BaseURIRedirect = true
+Cors = true
+JsonldMediaType = true
