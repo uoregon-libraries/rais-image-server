@@ -34,3 +34,7 @@ IIIFURL = "http://192.168.56.99:12415/iiif"
 # Env: RAIS_INFOCACHELEN
 # CLI: --iiif-info-cache-size
 InfoCacheLen = 10000
+
+# CapabilitiesFile: Optional, allows removal of undesired capabilities, such as
+# CORS support or GIF output.  See cap-max.toml for an example.
+# CapabilitiesFile=/etc/rais-capabilities.toml
