@@ -85,7 +85,7 @@ func main() {
 			if err != nil {
 				log.Fatalf("Invalid file or formatting in capabilities file '%s'", filename)
 			}
-			log.Printf("Setting IIIF capabilities from file '%s': %#v", filename, ih.FeatureSet)
+			log.Printf("Setting IIIF capabilities from file '%s'", filename)
 		}
 
 		http.HandleFunc(ih.Base.Path+"/", ih.Route)
