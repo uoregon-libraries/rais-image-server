@@ -125,6 +125,15 @@ to `%ID%`.  Since IIIF ids are a full URL, changing paths, URLs, or ports will
 break custom info.json files unless you allow the system to fill in the ID.
 See [testfile/info.json](testfile/info.json) for an example.
 
+To customize the capabilities for all images, a custom capabilities TOML file
+can be specified on the command-line via `--capabilities-file [filename]`, the
+config value `CapabilitiesFile`, or using the environment variable
+`RAIS_CAPABILITIESFILE`.  You can remove undesired capabilities from the list
+of what RAIS supports, which will prevent them from working if a client
+requests them.  This can be helpful to avoid denial-of-service vectors, such as
+the extremely slow GIF output.  See [cap-max.toml](cap-max.toml) for an example
+that shows all currently supported features.
+
 Other than possible bugs, we are ensuring we support level 2 at a minimum, as
 well as a handful other features beyond level 2.
 

@@ -14,6 +14,43 @@ import (
 	"strings"
 )
 
+// AllFeatures is the complete list of everything supported by RAIS at this time
+var AllFeatures = &iiif.FeatureSet{
+	RegionByPx:  true,
+	RegionByPct: true,
+
+	SizeByWhListed: true,
+	SizeByW:        true,
+	SizeByH:        true,
+	SizeByPct:      true,
+	SizeByWh:       true,
+	SizeByForcedWh: true,
+	SizeAboveFull:  true,
+
+	RotationBy90s:     true,
+	RotationArbitrary: false,
+	Mirroring:         true,
+
+	Default: true,
+	Color:   true,
+	Gray:    true,
+	Bitonal: true,
+
+	Jpg:  true,
+	Png:  true,
+	Gif:  true,
+	Tif:  true,
+	Jp2:  false,
+	Pdf:  false,
+	Webp: false,
+
+	BaseURIRedirect:     true,
+	Cors:                true,
+	JsonldMediaType:     true,
+	ProfileLinkHeader:   false,
+	CanonicalLinkHeader: false,
+}
+
 func acceptsLD(req *http.Request) bool {
 	for _, h := range req.Header["Accept"] {
 		for _, accept := range strings.Split(h, ",") {
@@ -40,44 +77,6 @@ type IIIFHandler struct {
 // NewIIIFHandler sets up an IIIFHandler with all features RAIS can support,
 // listening based on the given base URL
 func NewIIIFHandler(u *url.URL, tp string) *IIIFHandler {
-	// Set up the features we support individually, and let the info magic figure
-	// out how best to report it
-	fs := &iiif.FeatureSet{
-		RegionByPx:  true,
-		RegionByPct: true,
-
-		SizeByWhListed: true,
-		SizeByW:        true,
-		SizeByH:        true,
-		SizeByPct:      true,
-		SizeByWh:       true,
-		SizeByForcedWh: true,
-		SizeAboveFull:  true,
-
-		RotationBy90s:     true,
-		RotationArbitrary: false,
-		Mirroring:         true,
-
-		Default: true,
-		Color:   true,
-		Gray:    true,
-		Bitonal: true,
-
-		Jpg:  true,
-		Png:  true,
-		Gif:  true,
-		Tif:  true,
-		Jp2:  false,
-		Pdf:  false,
-		Webp: false,
-
-		BaseURIRedirect:     true,
-		Cors:                true,
-		JsonldMediaType:     true,
-		ProfileLinkHeader:   false,
-		CanonicalLinkHeader: false,
-	}
-
 	rprefix := fmt.Sprintf(`^%s`, u.Path)
 	return &IIIFHandler{
 		Base:          u,
@@ -85,7 +84,7 @@ func NewIIIFHandler(u *url.URL, tp string) *IIIFHandler {
 		BaseOnlyRegex: regexp.MustCompile(rprefix + `/[^/]+$`),
 		InfoPathRegex: regexp.MustCompile(rprefix + `/([^/]+)/info.json$`),
 		TilePath:      tp,
-		FeatureSet:    fs,
+		FeatureSet:    AllFeatures,
 	}
 }
 

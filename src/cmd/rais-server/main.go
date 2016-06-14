@@ -1,12 +1,14 @@
 package main
 
 import (
+	"iiif"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"version"
 
+	"github.com/BurntSushi/toml"
 	"github.com/hashicorp/golang-lru"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -42,6 +44,8 @@ func main() {
 	viper.BindPFlag("TilePath", pflag.CommandLine.Lookup("tile-path"))
 	pflag.Int("iiif-info-cache-size", defaultInfoCacheLen, "Maximum cached image info entries (IIIF only)")
 	viper.BindPFlag("InfoCacheLen", pflag.CommandLine.Lookup("iiif-info-cache-size"))
+	pflag.String("capabilities-file", "", "TOML file describing capabilities, rather than everything RAIS supports")
+	viper.BindPFlag("CapabilitiesFile", pflag.CommandLine.Lookup("capabilities-file"))
 	pflag.Parse()
 
 	// Make sure required values exist
@@ -73,6 +77,17 @@ func main() {
 
 		log.Printf("IIIF enabled at %s\n", iiifBase.String())
 		ih := NewIIIFHandler(iiifBase, tilePath)
+
+		if viper.IsSet("CapabilitiesFile") {
+			filename := viper.GetString("CapabilitiesFile")
+			ih.FeatureSet = &iiif.FeatureSet{}
+			_, err := toml.DecodeFile(filename, &ih.FeatureSet)
+			if err != nil {
+				log.Fatalf("Invalid file or formatting in capabilities file '%s'", filename)
+			}
+			log.Printf("Setting IIIF capabilities from file '%s': %#v", filename, ih.FeatureSet)
+		}
+
 		http.HandleFunc(ih.Base.Path+"/", ih.Route)
 	}
 
