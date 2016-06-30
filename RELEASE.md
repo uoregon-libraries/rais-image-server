@@ -4,6 +4,26 @@ Release notes
 The top of this file contains the latest stable release and relevant notes
 about what has changed since the previous release.
 
+Release 2.6
+-----
+
+Major changes:
+
+- Properly detects resolution levels in JP2 files, and reports scale factors accordingly
+- Properly detects tile width and height, eliminating the need for manually specifying tiles on the command line
+- Optionally caches data for info.json responses
+- Adds the ability to override the IIIF info.json response per image
+- Allows specifying configuration via /etc/rais.toml (see [rais-example.toml](rais-example.toml))
+- Allows limiting RAIS features via an IIIF capabilities file (see [cap-max.toml](cap-max.toml)
+  and [cap-level0.toml](cap-level0.toml) for examples)
+
+Back-end improvements:
+
+- Fixes init scripts for RHEL 6 users
+- Uses Go 1.6 for the Docker build
+- The build system now uses [gb](https://getgb.io/)
+- Visiting the server URL + "/version" will report the current version of RAIS
+
 Release 2.5
 -----
 

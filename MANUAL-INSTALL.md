@@ -6,26 +6,32 @@ are pretty RHEL-centric.
 
 ## Setup
 
-- *Optional*: Install openjpeg 2.1 (see below)
+**NOTE**: Please see [docker/Dockerfile.build](docker/Dockerfile.build) for the
+latest setup.  The supported build process is Docker, and so the steps listed
+here aren't easily kept in sync.  Since it's easy to adapt the Docker setup for
+other OSes, these steps will eventually be removed.
+
+- Install openjpeg 2.1 (see below)
 - Install imagemagick development files (`yum install ImageMagick-devel` on RHEL)
 - [Install go](http://golang.org/doc/install)
 - Set up the [`GOPATH` environment variable](http://golang.org/doc/code.html#GOPATH)
   - This tells go where to put the project
-- Install the project without JP2 support:
-  - `go get -u github.com/uoregon-libraries/rais-image-server/cmd/rais-server`
-- *OR* install with JP2 support:
-  - `go get -u -tags jp2 github.com/uoregon-libraries/rais-image-server/cmd/rais-server`
-
-Please note that if you clone the repository from github, the makefile assumes
-JP2 support in order to make development easier for me.
+- Install [gb](https://github.com/constabulary/gb), Dave Cheney's excellent
+  alternative to the default go toolchain
+  - `go get github.com/constabulary/gb/...`
+- Clone the RAIS repository
+  - `git@github.com:uoregon-libraries/rais-image-server.git`
+- Get dependencies
+  - `make deps`
+- Build the binary (in `bin/rais-server`)
+  - `make`
 
 ### Openjpeg installation
 
-Openjpeg 2.1 must be installed to handle JP2 source images.  This is
-**optional**, but if you have (or can build) tiled JP2 images, they will be
-extremely space- and RAM-efficient, as well as being fairly fast.  In our
-tests, TIFFs are slower with only a moderate load (a single user deliberately
-panning and zooming quickly).
+Openjpeg 2.1 must be installed to handle JP2 source images.  If you have (or
+can build) tiled JP2 images, they will be extremely space- and RAM-efficient,
+as well as being fairly fast.  In our tests, TIFFs are slower with only a
+moderate load (a single user deliberately panning and zooming quickly).
 
 Installation depends on operating system, but we were able to rebuild the
 Fedora SRPM for RedHat 6 and CentOS 7.
@@ -53,13 +59,12 @@ you must specify extra information on the command-line:
 
 ```bash
 $GOPATH/bin/rais-server --address=":8888" --tile-path="/path/to/images" \
-  --iiif-url="http://iiif.example.com/images/iiif" --iiif-tile-sizes="512,1024"
+  --iiif-url="http://iiif.example.com/images/iiif" \
+  --iiif-info-cache-size=10000
 ```
 
 This would enable IIIF services with a base URL of `http://iiif.example.com:8888/images/iiif`.
 Image info requests would then be at, e.g., `http://iiif.example.com:8888/images/iiif/myimage.jp2/info.json`.
-It would report tile sizes of 512 and 1024, each with hard-coded scale factors
-from 1 to 64 in powers of 2.  Currently the scale factors are not configurable.
 
 Also note that the scheme and server (`http://my.iiifserver.example.com:8888`)
 are informative for the IIIF information response, but aren't actually used by
@@ -88,4 +93,3 @@ changes.  We are no longer suggesting the old config files as there are too
 many changes in the old brikker and RAIS.
 
 PRs for working configs would be greatly appreciated.
-

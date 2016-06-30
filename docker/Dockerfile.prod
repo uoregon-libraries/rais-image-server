@@ -8,12 +8,11 @@ MAINTAINER Jeremy Echols <jechols@uoregon.edu>
 RUN dnf install -y openjpeg2
 RUN dnf install -y ImageMagick
 
-COPY bin/rais-server /opt/rais/rais-server
+ENV RAIS_TILEPATH /var/local/images
+EXPOSE 12415
+
 COPY testfile/test-world.jp2 /var/local/images/test.jp2
+COPY testfile/info.json /var/local/images/test.jp2-info.json
 
-ENV PORT 12415
-ENV TILESIZES 512
-ENV IIIFURL http://localhost:$PORT/iiif
-
-EXPOSE $PORT
-ENTRYPOINT /opt/rais/rais-server --iiif-url $IIIFURL --address ":$PORT" --iiif-tile-sizes "$TILESIZES" --tile-path /var/local/images
+COPY bin/rais-server /opt/rais/rais-server
+ENTRYPOINT /opt/rais/rais-server

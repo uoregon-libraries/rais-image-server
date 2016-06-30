@@ -11,8 +11,8 @@ probably isn't set by default for root):
 
     mkdir /opt/chronam-support/
     cp init.sh /etc/init.d/rais
-    cp rais.conf /etc
-    # edit rais.conf
+    cp ../rais-example.toml /etc/rais.toml
+    # edit rais.toml
     cp $GOPATH/bin/rais-server /opt/chronam-support/rais-server
     chkconfig --add rais
     chkconfig rais on
