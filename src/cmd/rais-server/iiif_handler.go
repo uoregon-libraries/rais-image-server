@@ -126,13 +126,15 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if u := iiif.NewURL(p); u.Valid() {
-		ih.Command(w, req, u, res)
+	u := iiif.NewURL(p)
+	if !u.Valid() {
+		// This means the URI was probably a command, but had an invalid syntax
+		http.Error(w, "Invalid IIIF request", 400)
 		return
 	}
 
-	// This means the URI was probably a command, but had an invalid syntax
-	http.Error(w, "Invalid IIIF request", 400)
+	// Attempt to run the command
+	ih.Command(w, req, u, res)
 }
 
 // Info responds to a IIIF info request with appropriate JSON based on the
