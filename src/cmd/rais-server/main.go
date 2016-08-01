@@ -16,6 +16,7 @@ import (
 
 var tilePath string
 var infoCache *lru.Cache
+var tileCache *lru.TwoQueueCache
 
 const defaultAddress = ":12415"
 const defaultInfoCacheLen = 10000
@@ -46,6 +47,7 @@ func main() {
 	viper.BindPFlag("InfoCacheLen", pflag.CommandLine.Lookup("iiif-info-cache-size"))
 	pflag.String("capabilities-file", "", "TOML file describing capabilities, rather than everything RAIS supports")
 	viper.BindPFlag("CapabilitiesFile", pflag.CommandLine.Lookup("capabilities-file"))
+
 	pflag.Parse()
 
 	// Make sure required values exist
@@ -70,6 +72,15 @@ func main() {
 		icl := viper.GetInt("InfoCacheLen")
 		if icl > 0 {
 			infoCache, err = lru.New(icl)
+			if err != nil {
+				log.Fatalf("Unable to start info cache: %s", err)
+			}
+		}
+
+		tcl := viper.GetInt("TileCacheLen")
+		if tcl > 0 {
+			log.Printf("Creating a tile cache to hold up to %d tiles", tcl)
+			tileCache, err = lru.New2Q(tcl)
 			if err != nil {
 				log.Fatalf("Unable to start info cache: %s", err)
 			}

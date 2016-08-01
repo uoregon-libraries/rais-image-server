@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"iiif"
+	"io"
 	"io/ioutil"
 	"log"
 	"mime"
@@ -272,6 +273,11 @@ func (ih *IIIFHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *HandlerE
 
 // Command handles image processing operations
 func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL, res *ImageResource) {
+	// For now the cache is very limited to ensure only relatively small requests
+	// are actually cached
+	willCache := tileCache != nil && u.Format == iiif.FmtJPG && u.Size.W > 0 && u.Size.W <= 1024 && u.Size.H == 0
+	cacheKey := u.Path
+
 	// Send last modified time
 	if err := sendHeaders(w, req, res.FilePath); err != nil {
 		return
@@ -283,6 +289,16 @@ func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif
 		return
 	}
 
+	// Check the cache now that we're sure everything is valid and supported.
+	if willCache {
+		data, ok := tileCache.Get(cacheKey)
+		if ok {
+			w.Header().Set("Content-Type", mime.TypeByExtension("."+string(u.Format)))
+			w.Write(data.([]byte))
+			return
+		}
+	}
+
 	img, err := res.Apply(u)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -290,9 +306,22 @@ func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif
 	}
 
 	w.Header().Set("Content-Type", mime.TypeByExtension("."+string(u.Format)))
-	if err = EncodeImage(w, img, u.Format); err != nil {
+
+	var cacheBuf *bytes.Buffer
+	var out io.Writer = w
+
+	if willCache {
+		cacheBuf = bytes.NewBuffer(nil)
+		out = io.MultiWriter(w, cacheBuf)
+	}
+
+	if err := EncodeImage(out, img, u.Format); err != nil {
 		http.Error(w, "Unable to encode", 500)
 		log.Printf("Unable to encode to %s: %s", u.Format, err)
 		return
+	}
+
+	if willCache {
+		tileCache.Add(cacheKey, cacheBuf.Bytes())
 	}
 }
