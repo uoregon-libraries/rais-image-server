@@ -8,6 +8,6 @@ tagprod() {
 
 make docker
 
-ver=$(grep Version ./src/version/version.go | sed 's/^.*"\(.*\)".*$/\1/')
+ver=$(grep "Version =" ./src/version/version.go | sed 's/^.*"\(.*\)".*$/\1/')
 tagprod "uolibraries/rais:$ver-$(date +"%Y-%m-%d")"
 tagprod "uolibraries/rais:latest-indev"
