@@ -38,3 +38,14 @@ InfoCacheLen = 10000
 # CapabilitiesFile: Optional, allows removal of undesired capabilities, such as
 # CORS support or GIF output.  See cap-max.toml for an example.
 # CapabilitiesFile = "/etc/rais-capabilities.toml"
+
+# TileCacheLen: Optional, defaults to 0.  Set this to the *number* of tiles
+# you'd like to cache.  Currently the cache is set to only store specific types
+# of requests in order to only cache JPG tiles.  The amount of RAM which may be
+# used will vary greatly depending on what ends up being cached.  For
+# newspapers, it's not unreasonable for a tile to be as large as 100k, and for
+# a single page to have up to 200 unique 1024x1024 tiles.  Therefore a
+# 10,000-item cache could use as much as a gig of RAM, and still only hold 50
+# pages.  In practice, this is likely to only be useful for caching small
+# exhibits or else sites that have one or a few "featured" images.
+TileCacheLen = 0
