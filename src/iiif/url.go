@@ -34,6 +34,7 @@ var pathRegex = regexp.MustCompile(fmt.Sprintf(
 
 // URL represents the different options composed into an IIIF URL request
 type URL struct {
+	Path     string
 	ID       ID
 	Region   Region
 	Size     Size
@@ -60,6 +61,7 @@ func NewURL(path string) *URL {
 	}
 
 	return &URL{
+		Path:     path,
 		ID:       ID(parts[1]),
 		Region:   StringToRegion(parts[2]),
 		Size:     StringToSize(parts[3]),
