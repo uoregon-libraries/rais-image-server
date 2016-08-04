@@ -22,7 +22,7 @@ RUN dnf install -y gcc
 RUN dnf install -y make
 RUN dnf install -y tar
 
-RUN curl https://storage.googleapis.com/golang/go1.6.linux-amd64.tar.gz > /tmp/go.tgz
+RUN curl https://storage.googleapis.com/golang/go1.6.3.linux-amd64.tar.gz > /tmp/go.tgz
 RUN cd /opt && tar -xzf /tmp/go.tgz
 
 RUN mkdir -p /usr/local/go
