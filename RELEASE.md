@@ -4,6 +4,12 @@ Release notes
 The top of this file contains the latest stable release and relevant notes
 about what has changed since the previous release.
 
+Release 2.7
+-----
+
+- Adds a new option to /etc/rais.toml for caching tiles in memory
+- Uses Go 1.6.3 for Docker build
+
 Release 2.6
 -----
 
