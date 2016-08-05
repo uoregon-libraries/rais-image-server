@@ -48,4 +48,6 @@ InfoCacheLen = 10000
 # 10,000-item cache could use as much as a gig of RAM, and still only hold 50
 # pages.  In practice, this is likely to only be useful for caching small
 # exhibits or else sites that have one or a few "featured" images.
+#
+# Env: RAIS_TILECACHELEN
 TileCacheLen = 0
