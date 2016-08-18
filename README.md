@@ -187,39 +187,51 @@ the value of caching is minimal, and may be removed in the future.
 
 ### Image responses
 
-The server doesn't inherently cache the generated images, which means every hit
-will read the source file, manipulate it per the request, and send an image
-back to the browser.  Depending on the amount of data and server horsepower, it
-may be worth adding explicit caching.
+The server can optionally cache generated tiles under specific circumstances,
+but doesn't inherently cache the other images such as thumbnails.  Tiles which
+are requested at a width of 1024 or less, in JPG format, can be cached by
+setting TileCacheLen in /etc/rais.toml, or the RAIS_TILECACHELEN environment
+variable.  This defaults to not be enabled due to the cost of caching tiles
+compared to the benefits, particularly on large collections of images.
+
+Setting the tile cache length to anything greater than zero will enable the
+cache.  This is only recommended for systems with a small number of images or
+systems that expect a lot of traffic to hit a small subset of the collection,
+such as might be the case if there's a few featured images.
+
+For resize requests such as thumbnails, caching can prove very beneficial, but
+for now RAIS doesn't have resize-only caching, as Apache handles this for us
+very effectively.
 
 The server returns a valid Last-Modified header based on the last time the JP2
 file changed, which Apache can use to create a simple disk-based cache:
 
 ```
-CacheRoot /var/cache/apache2/mod_disk_cache
-CacheEnable disk /images/iiif/
+# Cache thumbnails (and only thumbnails)
+CacheRoot /var/cache/httpd/mod_disk_cache
+CacheEnable disk /images/resize
+
+# Allow a total of 4096 content directories at two levels so we never have
+# more than 64 directories in any other directory.  If we cache a million
+# thumbnails, we'll still only end up with about 250 files per content
+# directory.
+CacheDirLength 1
+CacheDirLevels 2
+
+# Change !RAIS_HOST! below to serve tiles and thumbnails from RAIS
+AllowEncodedSlashes NoDecode
+ProxyPassMatch ^/images/resize/([^/]*)/full/([0-6][0-9][0-9],.*jpg)$ http://!RAIS_HOST!:12415/images/iiif/$1/full/$2 nocanon
+ProxyPassMatch ^/images/iiif/(.*(jpg|info\.json))$ http://!RAIS_HOST!:12415/images/iiif/$1 nocanon
 ```
 
-This won't be the smartest cache, but it will help in the case of a large
-influx of people accessing the same file.  It is highly advisable that the
-`htcacheclean` tool be used in tandem with Apache cache directives, and it's
-probably worth reading [the Apache caching guide](http://httpd.apache.org/docs/2.2/caching.html).
+This kind of configuration allows us to split the resize requests from other
+requests in order to have a reasonably intelligent disk cache, which is kept
+separate from the in-memory tile cache.
 
-**Note**: systems with a lot of files may find that the vast majority of image
-requests are unique.  Over the course of a month, we found that we have as many
-as 4 million tile requests, and more than 75% of those were requested only
-once.  No single tile was requested more than 40 times.  For us, caching a
-month of tiles would require a significant amount of disk.  We're looking into
-a way to cache a small subset in the case we showcase a particular newspaper,
-but for the moment caching would be a huge loss for us.
-
-### Specific responses
-
-Note that for systems with a great deal of content, caching specific requests
-(for instance, resizing to a set width) can be significantly more valuable than
-trying to cache all image requests.  We've set up Apache to cache all thumbnail
-responses for a week.  This costs us about 3 gigs of disk, but holds around
-150k thumbnails, keeping our search results pages very fast.
+This won't be the smartest cache, but it will help when search results pages
+are used on large collections.  It is highly advisable that the `htcacheclean`
+tool be used in tandem with Apache cache directives, and it's probably worth
+reading [the Apache caching guide](http://httpd.apache.org/docs/2.2/caching.html).
 
 Known Limitations
 -----
@@ -233,8 +245,8 @@ context, there may be issues worth consideration.
 
 Very large images (as in, hundreds of megapixels) can take a while to decode
 tiles.  In some cases, 2-3 seconds per tile.  Unfortunately, this seems to be a
-limitation of openjpeg.  If serving up files of this size, external tile
-caching is probably a good idea.
+limitation of openjpeg.  If serving up files of this size, external caching may
+be a good idea.
 
 ### JP2: only supports RGB and Grayscale
 
