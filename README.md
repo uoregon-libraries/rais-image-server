@@ -189,7 +189,7 @@ the value of caching is minimal, and may be removed in the future.
 
 The server can optionally cache generated tiles under specific circumstances,
 but doesn't inherently cache the other images such as thumbnails.  Tiles which
-are requested at a width of 1024 or less, in JPG format, can be cached by
+are requested at a width of 1024, 512, or 256, in JPG format, can be cached by
 setting TileCacheLen in /etc/rais.toml, or the RAIS_TILECACHELEN environment
 variable.  This defaults to not be enabled due to the cost of caching tiles
 compared to the benefits, particularly on large collections of images.
@@ -269,6 +269,9 @@ Stats from about two months of monitoring:
   and far between, with the worst spike just over 400 megs
 
 (For reference, RAIS serves about 800,000 tiles a week)
+
+**Please note**: if you enable tile caching, RAM usage will increase, possibly
+by a very significant amount.
 
 ### IIIF Support isn't perfect
 
