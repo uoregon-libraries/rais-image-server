@@ -4,6 +4,11 @@ Release notes
 The top of this file contains the latest stable release and relevant notes
 about what has changed since the previous release.
 
+Release 2.7.1
+-----
+
+- Fixes tile caching to be significantly more selective about what is considered a tile
+
 Release 2.7
 -----
 
