@@ -78,3 +78,22 @@ func TestResizeWHAndCrop(t *testing.T) {
 	assert.Equal(125, i.Bounds().Max.X, "Max.X should be 125", t)
 	assert.Equal(125, i.Bounds().Max.Y, "Max.Y should be 125", t)
 }
+
+// BenchmarkReadAndDecodeImage does a benchmark against every step of the
+// process to simulate the parts of a tile request controlled by the openjpeg
+// package: loading the JP2, setting the crop and resize, and decoding to a raw
+// image resource.  The test image has no tiling, so this is benchmarking the
+// most expensive operation we currently have.
+func BenchmarkReadAndDecodeImage(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		startx := n % 512
+		endx := startx + 256
+		jp2 := jp2i()
+		jp2.SetCrop(image.Rect(startx, 0, endx, 256))
+		jp2.SetResizeWH(128, 128)
+		_, err := jp2.DecodeImage()
+		if err != nil {
+			panic(err)
+		}
+	}
+}

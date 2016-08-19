@@ -36,6 +36,9 @@ bin/jp2info: src/jp2info/* src/cmd/jp2info/*
 test: deps
 	gb test
 
+bench: deps
+	gb test -bench=. -run=XXX -v -test.benchtime=5s -test.count=2
+
 format:
 	find src/ -name "*.go" | xargs gofmt -l -w -s
 
