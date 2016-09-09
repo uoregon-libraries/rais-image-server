@@ -274,9 +274,8 @@ func (ih *IIIFHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *HandlerE
 // Command handles image processing operations
 func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL, res *ImageResource) {
 	// For now the cache is very limited to ensure only relatively small requests
-	// are actually cached, and only requests that are likely to be tile requests
-	willCache := tileCache != nil && u.Format == iiif.FmtJPG && u.Size.H == 0 &&
-		(u.Size.W == 256 || u.Size.W == 512 || u.Size.W == 1024)
+	// are actually cached
+	willCache := tileCache != nil && u.Format == iiif.FmtJPG && u.Size.W > 0 && u.Size.W <= 1024 && u.Size.H == 0
 	cacheKey := u.Path
 
 	// Send last modified time
