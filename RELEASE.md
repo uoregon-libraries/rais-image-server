@@ -4,6 +4,16 @@ Release notes
 The top of this file contains the latest stable release and relevant notes
 about what has changed since the previous release.
 
+Release 2.7.2
+-----
+
+- Un-fixes tile caching to avoid huge delays when Open Seadragon pulls the initial thumbnails
+
+This un-fix unfortunately adds a fair amount of potentially cached images which
+may not be desired.  It's a necessary evil, however, as huge JP2s can take 30
+seconds or more when Open Seadragon insists on pulling 5-10 lower-resolution
+thumbnails before it will start working.
+
 Release 2.7.1
 -----
 
