@@ -11,8 +11,5 @@ RUN dnf install -y ImageMagick
 ENV RAIS_TILEPATH /var/local/images
 EXPOSE 12415
 
-COPY testfile/test-world.jp2 /var/local/images/test.jp2
-COPY testfile/info.json /var/local/images/test.jp2-info.json
-
 COPY bin/rais-server /opt/rais/rais-server
 ENTRYPOINT /opt/rais/rais-server
