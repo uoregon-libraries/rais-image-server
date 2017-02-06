@@ -87,7 +87,7 @@ func main() {
 		}
 
 		log.Printf("IIIF enabled at %s\n", iiifBase.String())
-		ih := NewIIIFHandler(iiifBase, tilePath)
+		ih := NewImageHandler(iiifBase, tilePath)
 
 		if viper.IsSet("CapabilitiesFile") {
 			filename := viper.GetString("CapabilitiesFile")

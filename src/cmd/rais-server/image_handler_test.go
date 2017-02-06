@@ -35,7 +35,7 @@ func dorequest(path string, acceptLD bool, t *testing.T) *fakehttp.ResponseWrite
 	if err != nil {
 		t.Errorf("Unable to create fake request: %s", err)
 	}
-	h := NewIIIFHandler(u, rootDir())
+	h := NewImageHandler(u, rootDir())
 	h.FeatureSet = iiif.FeatureSet1()
 	h.Route(w, req)
 

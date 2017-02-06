@@ -64,9 +64,9 @@ func acceptsLD(req *http.Request) bool {
 	return false
 }
 
-// IIIFHandler responds to an IIIF URL request and parses the requested
+// ImageHandler responds to an IIIF URL request and parses the requested
 // transformation within the limits of the handler's capabilities
-type IIIFHandler struct {
+type ImageHandler struct {
 	Base          *url.URL
 	BaseRegex     *regexp.Regexp
 	BaseOnlyRegex *regexp.Regexp
@@ -75,11 +75,11 @@ type IIIFHandler struct {
 	TilePath      string
 }
 
-// NewIIIFHandler sets up an IIIFHandler with all features RAIS can support,
+// NewImageHandler sets up an ImageHandler with all features RAIS can support,
 // listening based on the given base URL
-func NewIIIFHandler(u *url.URL, tp string) *IIIFHandler {
+func NewImageHandler(u *url.URL, tp string) *ImageHandler {
 	rprefix := fmt.Sprintf(`^%s`, u.Path)
-	return &IIIFHandler{
+	return &ImageHandler{
 		Base:          u,
 		BaseRegex:     regexp.MustCompile(rprefix + `/([^/]+)`),
 		BaseOnlyRegex: regexp.MustCompile(rprefix + `/[^/]+$`),
@@ -91,7 +91,7 @@ func NewIIIFHandler(u *url.URL, tp string) *IIIFHandler {
 
 // Route takes an HTTP request and parses it to see what (if any) IIIF
 // translation is requested
-func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
+func (ih *ImageHandler) Route(w http.ResponseWriter, req *http.Request) {
 	// Pull identifier from base so we know if we're even dealing with a valid
 	// file in the first place
 	p := req.RequestURI
@@ -140,7 +140,7 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 
 // Info responds to a IIIF info request with appropriate JSON based on the
 // image's data and the handler's capabilities
-func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, id iiif.ID, fp string) {
+func (ih *ImageHandler) Info(w http.ResponseWriter, req *http.Request, id iiif.ID, fp string) {
 	// Check for cached image data first, and use that to create JSON
 	json, e := ih.loadInfoJSONFromCache(id)
 	if e != nil {
@@ -181,7 +181,7 @@ func newImageResError(err error) *HandlerError {
 	}
 }
 
-func (ih *IIIFHandler) loadInfoJSONFromCache(id iiif.ID) ([]byte, *HandlerError) {
+func (ih *ImageHandler) loadInfoJSONFromCache(id iiif.ID) ([]byte, *HandlerError) {
 	if infoCache == nil {
 		return nil, nil
 	}
@@ -194,7 +194,7 @@ func (ih *IIIFHandler) loadInfoJSONFromCache(id iiif.ID) ([]byte, *HandlerError)
 	return ih.buildInfoJSON(id, data.(ImageInfo))
 }
 
-func (ih *IIIFHandler) loadInfoJSONOverride(id iiif.ID, fp string) []byte {
+func (ih *ImageHandler) loadInfoJSONOverride(id iiif.ID, fp string) []byte {
 	// If an override file isn't found or has an error, just skip it
 	json, err := ioutil.ReadFile(fp + "-info.json")
 	if err != nil {
@@ -206,7 +206,7 @@ func (ih *IIIFHandler) loadInfoJSONOverride(id iiif.ID, fp string) []byte {
 	return bytes.Replace(json, []byte("%ID%"), []byte(fullid), 1)
 }
 
-func (ih *IIIFHandler) loadInfoJSONFromImageResource(id iiif.ID, fp string) ([]byte, *HandlerError) {
+func (ih *ImageHandler) loadInfoJSONFromImageResource(id iiif.ID, fp string) ([]byte, *HandlerError) {
 	log.Printf("Loading image data from image resource (id: %s)", id)
 	res, err := NewImageResource(id, fp)
 	if err != nil {
@@ -228,7 +228,7 @@ func (ih *IIIFHandler) loadInfoJSONFromImageResource(id iiif.ID, fp string) ([]b
 	return ih.buildInfoJSON(id, imageInfo)
 }
 
-func (ih *IIIFHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *HandlerError) {
+func (ih *ImageHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *HandlerError) {
 	info := ih.FeatureSet.Info()
 	info.Width = i.Width
 	info.Height = i.Height
@@ -272,7 +272,7 @@ func (ih *IIIFHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *HandlerE
 }
 
 // Command handles image processing operations
-func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL, res *ImageResource) {
+func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL, res *ImageResource) {
 	// For now the cache is very limited to ensure only relatively small requests
 	// are actually cached
 	willCache := tileCache != nil && u.Format == iiif.FmtJPG && u.Size.W > 0 && u.Size.W <= 1024 && u.Size.H == 0
