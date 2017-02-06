@@ -2,6 +2,7 @@ package main
 
 import (
 	"iiif"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -66,7 +67,16 @@ func main() {
 	if viper.IsSet("IIIFURL") {
 		iiifURL := viper.GetString("IIIFURL")
 		iiifBase, err := url.Parse(iiifURL)
-		if err != nil || iiifBase.Scheme == "" || iiifBase.Host == "" || iiifBase.Path == "" {
+		if err == nil && iiifBase.Scheme == "" {
+			err = fmt.Errorf("empty scheme")
+		}
+		if err == nil && iiifBase.Host == "" {
+			err = fmt.Errorf("empty host")
+		}
+		if err == nil && iiifBase.Path == "" {
+			err = fmt.Errorf("empty path")
+		}
+		if err != nil {
 			log.Fatalf("Invalid IIIF URL (%s) specified: %s", iiifURL, err)
 		}
 
