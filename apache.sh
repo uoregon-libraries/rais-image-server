@@ -13,7 +13,7 @@ fi
 
 # Insert a tile source for every file found under docker/images
 sources=""
-for file in $(find docker/images -name "*.jp2"); do
+for file in $(find docker/images -name "*.jp2" -o -name "*.tiff"); do
   relpath=${file##docker/images/}
   relpath=${relpath//\//%2F}
   if [[ $sources != "" ]]; then
