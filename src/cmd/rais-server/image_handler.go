@@ -67,12 +67,12 @@ func acceptsLD(req *http.Request) bool {
 // ImageHandler responds to an IIIF URL request and parses the requested
 // transformation within the limits of the handler's capabilities
 type ImageHandler struct {
-	Base          *url.URL
-	BaseRegex     *regexp.Regexp
-	BaseOnlyRegex *regexp.Regexp
-	FeatureSet    *iiif.FeatureSet
-	InfoPathRegex *regexp.Regexp
-	TilePath      string
+	Base              *url.URL
+	IIIFBaseRegex     *regexp.Regexp
+	IIIFBaseOnlyRegex *regexp.Regexp
+	IIIFInfoPathRegex *regexp.Regexp
+	FeatureSet        *iiif.FeatureSet
+	TilePath          string
 }
 
 // NewImageHandler sets up an ImageHandler with all features RAIS can support,
@@ -80,12 +80,12 @@ type ImageHandler struct {
 func NewImageHandler(u *url.URL, tp string) *ImageHandler {
 	rprefix := fmt.Sprintf(`^%s`, u.Path)
 	return &ImageHandler{
-		Base:          u,
-		BaseRegex:     regexp.MustCompile(rprefix + `/([^/]+)`),
-		BaseOnlyRegex: regexp.MustCompile(rprefix + `/[^/]+$`),
-		InfoPathRegex: regexp.MustCompile(rprefix + `/([^/]+)/info.json$`),
-		TilePath:      tp,
-		FeatureSet:    AllFeatures,
+		Base:              u,
+		IIIFBaseRegex:     regexp.MustCompile(rprefix + `/([^/]+)`),
+		IIIFBaseOnlyRegex: regexp.MustCompile(rprefix + `/[^/]+$`),
+		IIIFInfoPathRegex: regexp.MustCompile(rprefix + `/([^/]+)/info.json$`),
+		FeatureSet:        AllFeatures,
+		TilePath:          tp,
 	}
 }
 
@@ -95,7 +95,7 @@ func (ih *ImageHandler) Route(w http.ResponseWriter, req *http.Request) {
 	// Pull identifier from base so we know if we're even dealing with a valid
 	// file in the first place
 	p := req.RequestURI
-	parts := ih.BaseRegex.FindStringSubmatch(p)
+	parts := ih.IIIFBaseRegex.FindStringSubmatch(p)
 
 	// If it didn't even match the base, something weird happened, so we just
 	// spit out a generic 404
@@ -108,13 +108,13 @@ func (ih *ImageHandler) Route(w http.ResponseWriter, req *http.Request) {
 	fp := ih.TilePath + "/" + id.Path()
 
 	// Check for base path and redirect if that's all we have
-	if ih.BaseOnlyRegex.MatchString(p) {
+	if ih.IIIFBaseOnlyRegex.MatchString(p) {
 		http.Redirect(w, req, p+"/info.json", 303)
 		return
 	}
 
 	// Handle info.json prior to reading the image, in case of cached info
-	if ih.InfoPathRegex.MatchString(p) {
+	if ih.IIIFInfoPathRegex.MatchString(p) {
 		ih.Info(w, req, id, fp)
 		return
 	}
