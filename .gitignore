@@ -1,3 +1,4 @@
 /bin
 /pkg
 /vendor/src
+/docker/apache/index.html

@@ -44,15 +44,20 @@ For an example of running a docker image as a RAIS server, look at
 On the first run, there will be a large download to get the image, but
 after that it will be cached locally.
 
-Test by visiting `http://localhost:12415/iiif/test-world.jp2/full/full/0/default.jpg`,
-then just configure the port/url/volume mount as needed.
-
 Once the container has been created, it can then be started and stopped via the
 usual docker commands.
 
+You can run a quick test on a Linux system by pulling the "httpd:2.4" docker
+image, running `./apache.sh` and then visiting `http://localhost`.  This will
+let you see the test JP2 in two different forms using Open Seadragon: it will
+look the same, but its INFO response will be slightly different from one to the
+other.  Additionally, if you put other files into `docker/images`, the
+`apache.sh` script will automatically add them to the OSD tile source list,
+allowing you to quickly test a variety of files.
+
 ### Build locally
 
-You can clone the repository if you want to create your own RAIS image:
+You can clone the repository if you want to create your own RAIS Docker image:
 
 ```bash
 git clone https://github.com/uoregon-libraries/rais-image-server.git
