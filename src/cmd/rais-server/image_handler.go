@@ -67,7 +67,7 @@ func acceptsLD(req *http.Request) bool {
 // ImageHandler responds to an IIIF URL request and parses the requested
 // transformation within the limits of the handler's capabilities
 type ImageHandler struct {
-	Base              *url.URL
+	IIIFBase          *url.URL
 	IIIFBaseRegex     *regexp.Regexp
 	IIIFBaseOnlyRegex *regexp.Regexp
 	IIIFInfoPathRegex *regexp.Regexp
@@ -75,23 +75,24 @@ type ImageHandler struct {
 	TilePath          string
 }
 
-// NewImageHandler sets up an ImageHandler with all features RAIS can support,
-// listening based on the given base URL
-func NewImageHandler(u *url.URL, tp string) *ImageHandler {
-	rprefix := fmt.Sprintf(`^%s`, u.Path)
-	return &ImageHandler{
-		Base:              u,
-		IIIFBaseRegex:     regexp.MustCompile(rprefix + `/([^/]+)`),
-		IIIFBaseOnlyRegex: regexp.MustCompile(rprefix + `/[^/]+$`),
-		IIIFInfoPathRegex: regexp.MustCompile(rprefix + `/([^/]+)/info.json$`),
-		FeatureSet:        AllFeatures,
-		TilePath:          tp,
-	}
+// NewImageHandler sets up a base ImageHandler with no features
+func NewImageHandler(tp string) *ImageHandler {
+	return &ImageHandler{TilePath: tp}
 }
 
-// Route takes an HTTP request and parses it to see what (if any) IIIF
+// EnableIIIF sets up regexes for IIIF responses
+func (ih *ImageHandler) EnableIIIF(u *url.URL) {
+	rprefix := fmt.Sprintf(`^%s`, u.Path)
+	ih.IIIFBase = u
+	ih.IIIFBaseRegex = regexp.MustCompile(rprefix + `/([^/]+)`)
+	ih.IIIFBaseOnlyRegex = regexp.MustCompile(rprefix + `/[^/]+$`)
+	ih.IIIFInfoPathRegex = regexp.MustCompile(rprefix + `/([^/]+)/info.json$`)
+	ih.FeatureSet = AllFeatures
+}
+
+// IIIFRoute takes an HTTP request and parses it to see what (if any) IIIF
 // translation is requested
-func (ih *ImageHandler) Route(w http.ResponseWriter, req *http.Request) {
+func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 	// Pull identifier from base so we know if we're even dealing with a valid
 	// file in the first place
 	p := req.RequestURI
@@ -202,7 +203,7 @@ func (ih *ImageHandler) loadInfoJSONOverride(id iiif.ID, fp string) []byte {
 	}
 
 	// If an override file *is* found, replace the id
-	fullid := ih.Base.String() + "/" + id.String()
+	fullid := ih.IIIFBase.String() + "/" + id.String()
 	return bytes.Replace(json, []byte("%ID%"), []byte(fullid), 1)
 }
 
@@ -260,7 +261,7 @@ func (ih *ImageHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *Handler
 	}
 
 	// The info id is actually the full URL to the resource, not just its ID
-	info.ID = ih.Base.String() + "/" + id.String()
+	info.ID = ih.IIIFBase.String() + "/" + id.String()
 
 	json, err := json.Marshal(info)
 	if err != nil {

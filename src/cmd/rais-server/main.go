@@ -62,6 +62,7 @@ func main() {
 	address := viper.GetString("Address")
 
 	// Handle IIIF data only if we have a IIIF URL
+	ih := NewImageHandler(tilePath)
 	if viper.IsSet("IIIFURL") {
 		iiifURL := viper.GetString("IIIFURL")
 		iiifBase, err := url.Parse(iiifURL)
@@ -87,7 +88,7 @@ func main() {
 		}
 
 		log.Printf("IIIF enabled at %s\n", iiifBase.String())
-		ih := NewImageHandler(iiifBase, tilePath)
+		ih.EnableIIIF(iiifBase)
 
 		if viper.IsSet("CapabilitiesFile") {
 			filename := viper.GetString("CapabilitiesFile")
@@ -99,7 +100,7 @@ func main() {
 			log.Printf("Setting IIIF capabilities from file '%s'", filename)
 		}
 
-		http.HandleFunc(ih.Base.Path+"/", ih.Route)
+		http.HandleFunc(ih.IIIFBase.Path+"/", ih.IIIFRoute)
 	}
 
 	http.HandleFunc("/images/tiles/", TileHandler)
