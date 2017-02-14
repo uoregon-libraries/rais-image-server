@@ -138,8 +138,8 @@ func (i *Image) DecodeImage() (image.Image, error) {
 	}
 
 	if i.decodeWidth == 0 || i.decodeHeight == 0 {
-		srcW64 := float64(i.GetWidth())
-		srcH64 := float64(i.GetHeight())
+		srcW64 := float64(i.decodeArea.Dx())
+		srcH64 := float64(i.decodeArea.Dy())
 		h64 := float64(i.decodeHeight)
 		w64 := float64(i.decodeWidth)
 

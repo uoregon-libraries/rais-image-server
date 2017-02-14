@@ -8,10 +8,12 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math"
 	"mime"
 	"net/http"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -64,38 +66,47 @@ func acceptsLD(req *http.Request) bool {
 	return false
 }
 
-// IIIFHandler responds to an IIIF URL request and parses the requested
+// DZITileSize defines deep zoom tile size
+const DZITileSize = 1024
+
+// DZI "constants" - these can be declared once because we aren't allowing a
+// custom DZI handler path
+var DZIInfoRegex = regexp.MustCompile(`^/images/dzi/(.+).dzi$`)
+var DZITilePathRegex = regexp.MustCompile(`^/images/dzi/(.+)_files/(\d+)/(\d+)_(\d+).jpg$`)
+
+// ImageHandler responds to an IIIF URL request and parses the requested
 // transformation within the limits of the handler's capabilities
-type IIIFHandler struct {
-	Base          *url.URL
-	BaseRegex     *regexp.Regexp
-	BaseOnlyRegex *regexp.Regexp
-	FeatureSet    *iiif.FeatureSet
-	InfoPathRegex *regexp.Regexp
-	TilePath      string
+type ImageHandler struct {
+	IIIFBase          *url.URL
+	IIIFBaseRegex     *regexp.Regexp
+	IIIFBaseOnlyRegex *regexp.Regexp
+	IIIFInfoPathRegex *regexp.Regexp
+	FeatureSet        *iiif.FeatureSet
+	TilePath          string
 }
 
-// NewIIIFHandler sets up an IIIFHandler with all features RAIS can support,
-// listening based on the given base URL
-func NewIIIFHandler(u *url.URL, tp string) *IIIFHandler {
+// NewImageHandler sets up a base ImageHandler with no features
+func NewImageHandler(tp string) *ImageHandler {
+	return &ImageHandler{TilePath: tp}
+}
+
+// EnableIIIF sets up regexes for IIIF responses
+func (ih *ImageHandler) EnableIIIF(u *url.URL) {
 	rprefix := fmt.Sprintf(`^%s`, u.Path)
-	return &IIIFHandler{
-		Base:          u,
-		BaseRegex:     regexp.MustCompile(rprefix + `/([^/]+)`),
-		BaseOnlyRegex: regexp.MustCompile(rprefix + `/[^/]+$`),
-		InfoPathRegex: regexp.MustCompile(rprefix + `/([^/]+)/info.json$`),
-		TilePath:      tp,
-		FeatureSet:    AllFeatures,
-	}
+	ih.IIIFBase = u
+	ih.IIIFBaseRegex = regexp.MustCompile(rprefix + `/([^/]+)`)
+	ih.IIIFBaseOnlyRegex = regexp.MustCompile(rprefix + `/[^/]+$`)
+	ih.IIIFInfoPathRegex = regexp.MustCompile(rprefix + `/([^/]+)/info.json$`)
+	ih.FeatureSet = AllFeatures
 }
 
-// Route takes an HTTP request and parses it to see what (if any) IIIF
+// IIIFRoute takes an HTTP request and parses it to see what (if any) IIIF
 // translation is requested
-func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
+func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 	// Pull identifier from base so we know if we're even dealing with a valid
 	// file in the first place
 	p := req.RequestURI
-	parts := ih.BaseRegex.FindStringSubmatch(p)
+	parts := ih.IIIFBaseRegex.FindStringSubmatch(p)
 
 	// If it didn't even match the base, something weird happened, so we just
 	// spit out a generic 404
@@ -108,13 +119,13 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 	fp := ih.TilePath + "/" + id.Path()
 
 	// Check for base path and redirect if that's all we have
-	if ih.BaseOnlyRegex.MatchString(p) {
+	if ih.IIIFBaseOnlyRegex.MatchString(p) {
 		http.Redirect(w, req, p+"/info.json", 303)
 		return
 	}
 
 	// Handle info.json prior to reading the image, in case of cached info
-	if ih.InfoPathRegex.MatchString(p) {
+	if ih.IIIFInfoPathRegex.MatchString(p) {
 		ih.Info(w, req, id, fp)
 		return
 	}
@@ -138,9 +149,136 @@ func (ih *IIIFHandler) Route(w http.ResponseWriter, req *http.Request) {
 	ih.Command(w, req, u, res)
 }
 
+func convertStrings(s1, s2, s3 string) (i1, i2, i3 int, err error) {
+	i1, err = strconv.Atoi(s1)
+	if err != nil {
+		return
+	}
+	i2, err = strconv.Atoi(s2)
+	if err != nil {
+		return
+	}
+	i3, err = strconv.Atoi(s3)
+	return
+}
+
+// DZIRoute takes an HTTP request and parses for responding to DZI info and
+// tile requests
+func (ih *ImageHandler) DZIRoute(w http.ResponseWriter, req *http.Request) {
+	p := req.RequestURI
+
+	var id iiif.ID
+	var filePath string
+	var handler func(*ImageResource)
+
+	parts := DZIInfoRegex.FindStringSubmatch(p)
+	if parts != nil {
+		id = iiif.ID(parts[1])
+		filePath = ih.TilePath + "/" + id.Path()
+		handler = func(r *ImageResource) { ih.DZIInfo(w, r) }
+	}
+
+	parts = DZITilePathRegex.FindStringSubmatch(p)
+	if parts != nil {
+		id = iiif.ID(parts[1])
+		filePath = ih.TilePath + "/" + id.Path()
+
+		level, tileX, tileY, err := convertStrings(parts[2], parts[3], parts[4])
+		if err != nil {
+			http.Error(w, "Invalid DZI request", 400)
+			return
+		}
+
+		handler = func(r *ImageResource) { ih.DZITile(w, req, r, level, tileX, tileY) }
+	}
+
+	if handler == nil {
+		// Some kind of invalid request - just spit out a generic 404
+		http.NotFound(w, req)
+		return
+	}
+
+	res, err := NewImageResource(id, filePath)
+	if err != nil {
+		e := newImageResError(err)
+		http.Error(w, e.Message, e.Code)
+		return
+	}
+
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	handler(res)
+}
+
+func (ih *ImageHandler) DZIInfo(w http.ResponseWriter, res *ImageResource) {
+	format := `<?xml version="1.0" encoding="UTF-8"?>
+		<Image xmlns="http://schemas.microsoft.com/deepzoom/2008" TileSize="%d" Overlap="0" Format="jpg">
+			<Size Width="%d" Height="%d"/>
+		</Image>`
+	d := res.Decoder
+	xml := fmt.Sprintf(format, DZITileSize, d.GetWidth(), d.GetHeight())
+	w.Write([]byte(xml))
+}
+
+func (ih *ImageHandler) DZITile(w http.ResponseWriter, req *http.Request, res *ImageResource, l, tX, tY int) {
+	// We always return 256x256 or bigger
+	if l < 8 {
+		l = 8
+	}
+
+	// Figure out max level
+	d := res.Decoder
+	srcWidth := uint64(d.GetWidth())
+	srcHeight := uint64(d.GetHeight())
+
+	var maxDimension uint64
+	if srcWidth > srcHeight {
+		maxDimension = srcWidth
+	} else {
+		maxDimension = srcHeight
+	}
+	maxLevel := uint64(math.Ceil(math.Log2(float64(maxDimension))))
+
+	// Ignore absurd levels - even above 20 is pretty unlikely, but this is
+	// called "future-proofing".  Or something.
+	if uint64(l) > maxLevel {
+		http.Error(w, fmt.Sprintf("Image doesn't support zoom level %d", l), 400)
+		return
+	}
+
+	// Construct an IIIF URL so we can just reuse the IIIF-centric Command function
+	var reduction uint64 = 1 << (maxLevel - uint64(l))
+
+	width := reduction * DZITileSize
+	height := reduction * DZITileSize
+	left := uint64(tX) * width
+	top := uint64(tY) * height
+
+	// Fail early if the tile requested isn't legit
+	if tX < 0 || tY < 0 || left > srcWidth || top > srcHeight {
+		http.Error(w, "Invalid tile request", 400)
+		return
+	}
+
+	// If any dimension is outside the image area, we have to adjust the requested image and tilesize
+	finalWidth := width
+	finalHeight := height
+	if left + width > srcWidth {
+		finalWidth = srcWidth - left
+	}
+	if top + height > srcHeight {
+		finalHeight = srcHeight - top
+	}
+
+	requestedWidth := DZITileSize * finalWidth / width
+
+	u := iiif.NewURL(fmt.Sprintf("%s/%d,%d,%d,%d/%d,/0/default.jpg",
+		res.FilePath, left, top, finalWidth, finalHeight, requestedWidth))
+	ih.Command(w, req, u, res)
+}
+
 // Info responds to a IIIF info request with appropriate JSON based on the
 // image's data and the handler's capabilities
-func (ih *IIIFHandler) Info(w http.ResponseWriter, req *http.Request, id iiif.ID, fp string) {
+func (ih *ImageHandler) Info(w http.ResponseWriter, req *http.Request, id iiif.ID, fp string) {
 	// Check for cached image data first, and use that to create JSON
 	json, e := ih.loadInfoJSONFromCache(id)
 	if e != nil {
@@ -181,7 +319,7 @@ func newImageResError(err error) *HandlerError {
 	}
 }
 
-func (ih *IIIFHandler) loadInfoJSONFromCache(id iiif.ID) ([]byte, *HandlerError) {
+func (ih *ImageHandler) loadInfoJSONFromCache(id iiif.ID) ([]byte, *HandlerError) {
 	if infoCache == nil {
 		return nil, nil
 	}
@@ -194,7 +332,7 @@ func (ih *IIIFHandler) loadInfoJSONFromCache(id iiif.ID) ([]byte, *HandlerError)
 	return ih.buildInfoJSON(id, data.(ImageInfo))
 }
 
-func (ih *IIIFHandler) loadInfoJSONOverride(id iiif.ID, fp string) []byte {
+func (ih *ImageHandler) loadInfoJSONOverride(id iiif.ID, fp string) []byte {
 	// If an override file isn't found or has an error, just skip it
 	json, err := ioutil.ReadFile(fp + "-info.json")
 	if err != nil {
@@ -202,11 +340,11 @@ func (ih *IIIFHandler) loadInfoJSONOverride(id iiif.ID, fp string) []byte {
 	}
 
 	// If an override file *is* found, replace the id
-	fullid := ih.Base.String() + "/" + id.String()
+	fullid := ih.IIIFBase.String() + "/" + id.String()
 	return bytes.Replace(json, []byte("%ID%"), []byte(fullid), 1)
 }
 
-func (ih *IIIFHandler) loadInfoJSONFromImageResource(id iiif.ID, fp string) ([]byte, *HandlerError) {
+func (ih *ImageHandler) loadInfoJSONFromImageResource(id iiif.ID, fp string) ([]byte, *HandlerError) {
 	log.Printf("Loading image data from image resource (id: %s)", id)
 	res, err := NewImageResource(id, fp)
 	if err != nil {
@@ -228,7 +366,7 @@ func (ih *IIIFHandler) loadInfoJSONFromImageResource(id iiif.ID, fp string) ([]b
 	return ih.buildInfoJSON(id, imageInfo)
 }
 
-func (ih *IIIFHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *HandlerError) {
+func (ih *ImageHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *HandlerError) {
 	info := ih.FeatureSet.Info()
 	info.Width = i.Width
 	info.Height = i.Height
@@ -260,7 +398,7 @@ func (ih *IIIFHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *HandlerE
 	}
 
 	// The info id is actually the full URL to the resource, not just its ID
-	info.ID = ih.Base.String() + "/" + id.String()
+	info.ID = ih.IIIFBase.String() + "/" + id.String()
 
 	json, err := json.Marshal(info)
 	if err != nil {
@@ -272,7 +410,7 @@ func (ih *IIIFHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *HandlerE
 }
 
 // Command handles image processing operations
-func (ih *IIIFHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL, res *ImageResource) {
+func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL, res *ImageResource) {
 	// For now the cache is very limited to ensure only relatively small requests
 	// are actually cached
 	willCache := tileCache != nil && u.Format == iiif.FmtJPG && u.Size.W > 0 && u.Size.W <= 1024 && u.Size.H == 0

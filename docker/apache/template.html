@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <title>OpenSeadragon Demo - RAIS Image Server</title>
+</head>
+<body>
+  <div id="openseadragon1" style="width: 1800px; height: 900px;"></div>
+
+  <script src="/osd/openseadragon.min.js"></script>
+  <script type="text/javascript">
+    var viewer = OpenSeadragon({
+      id: "openseadragon1",
+      prefixUrl: "/osd/images/",
+      tileSources: [
+        %SRCS%
+      ],
+      sequenceMode: true,
+    });
+  </script>
+</body>
+</html>
