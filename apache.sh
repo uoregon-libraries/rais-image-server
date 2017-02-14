@@ -1,4 +1,10 @@
 #!/bin/bash
+#
+# apache.sh finds all files in the docker/images directory and builds an
+# Apache-enabled container running Open Seadragon and pointing to a container
+# running the RAIS build image.  Each JP2 or TIFF found in docker/images will
+# be exposed via IIIF and DeepZoom endpoints as a way to verify both protocols
+# semi-side-by-side.
 set -eu
 
 # Gotta have a URL or else default to localhost
@@ -22,8 +28,19 @@ for file in $(find docker/images -name "*.jp2" -o -name "*.tiff"); do
 
   sources="$sources\"$url:12415/images/iiif/$relpath/info.json\""
 done
+sed "s|%SRCS%|$sources|g" docker/apache/template.html > docker/apache/iiif.html
 
-sed "s|%SRCS%|$sources|g" docker/apache/index.template > docker/apache/index.html
+sources=""
+for file in $(find docker/images -name "*.jp2" -o -name "*.tiff"); do
+  relpath=${file##docker/images/}
+  relpath=${relpath//\//%2F}
+  if [[ $sources != "" ]]; then
+    sources="$sources,"
+  fi
+
+  sources="$sources\"$url:12415/images/dzi/${relpath}.dzi\""
+done
+sed "s|%SRCS%|$sources|g" docker/apache/template.html > docker/apache/dzi.html
 
 docker rm -f "rais-osd-example" || true
 docker rm -f "rais-test" || true

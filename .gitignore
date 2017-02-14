@@ -1,4 +1,7 @@
 /bin
 /pkg
 /vendor/src
-/docker/apache/index.html
+/docker/apache/iiif.html
+/docker/apache/dzi.html
+/docker/images
+!/docker/images/testfile/test-world*
