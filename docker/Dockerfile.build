@@ -44,7 +44,5 @@ RUN make deps
 ENV PORT 12415
 EXPOSE $PORT
 COPY rais-example.toml /etc/rais.toml
-COPY testfile/test-world.jp2 /var/local/images/test.jp2
-COPY testfile/info.json /var/local/images/test.jp2-info.json
 
 CMD make

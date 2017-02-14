@@ -8,7 +8,8 @@ source, no-commercial-products-required, proof-of-concept tile server for JP2
 images within [chronam](https://github.com/LibraryOfCongress/chronam).
 
 It has been updated to allow more command-line options, more source file
-formats, more features, and conformance to the [IIIF](http://iiif.io/) spec.
+formats, more features, conformance to the [IIIF](http://iiif.io/) spec, and
+experimental DeepZoom support.
 
 The University of Oregon's primary use case is the [Historic Oregon
 Newspapers](http://oregonnews.uoregon.edu/) project.
@@ -44,15 +45,28 @@ For an example of running a docker image as a RAIS server, look at
 On the first run, there will be a large download to get the image, but
 after that it will be cached locally.
 
-Test by visiting `http://localhost:12415/iiif/test-world.jp2/full/full/0/default.jpg`,
-then just configure the port/url/volume mount as needed.
-
 Once the container has been created, it can then be started and stopped via the
 usual docker commands.
 
+### Docker Demo
+
+You can run a quick demo on a Linux system by pulling the "httpd:2.4" docker
+image, running `./apache.sh` and then visiting `http://localhost`.  Click the
+IIIF link, and you'll be able to see the test JP2 in two different forms using
+Open Seadragon: it will look the same, but its INFO response will be slightly
+different from one to the other due to one of the two images having an
+explicitly overridden info response.
+
+Additionally, if you put other files into `docker/images`, the `apache.sh`
+script will automatically add them to the OSD tile source list, allowing you to
+quickly test a variety of files.
+
+Finally, you can test out the experimental DeepZoom support by choosing the
+second link.
+
 ### Build locally
 
-You can clone the repository if you want to create your own RAIS image:
+You can clone the repository if you want to create your own RAIS Docker image:
 
 ```bash
 git clone https://github.com/uoregon-libraries/rais-image-server.git
