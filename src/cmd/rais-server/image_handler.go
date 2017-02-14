@@ -270,10 +270,9 @@ func (ih *ImageHandler) DZITile(w http.ResponseWriter, req *http.Request, res *I
 	}
 
 	requestedWidth := DZITileSize * finalWidth / width
-	requestedHeight := DZITileSize * finalHeight / height
 
-	u := iiif.NewURL(fmt.Sprintf("%s/%d,%d,%d,%d/%d,%d/0/default.jpg",
-		res.FilePath, left, top, finalWidth, finalHeight, requestedWidth, requestedHeight))
+	u := iiif.NewURL(fmt.Sprintf("%s/%d,%d,%d,%d/%d,/0/default.jpg",
+		res.FilePath, left, top, finalWidth, finalHeight, requestedWidth))
 	ih.Command(w, req, u, res)
 }
 
