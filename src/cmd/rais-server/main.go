@@ -115,6 +115,7 @@ func main() {
 
 	http.HandleFunc("/images/tiles/", TileHandler)
 	http.HandleFunc("/images/resize/", ResizeHandler)
+	http.HandleFunc("/images/dzi/", ih.DZIRoute)
 	http.HandleFunc("/version", VersionHandler)
 	if err := http.ListenAndServe(address, nil); err != nil {
 		log.Fatalf("Error starting listener: %s", err)
