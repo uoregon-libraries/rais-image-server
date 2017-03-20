@@ -1,8 +1,8 @@
 package main
 
 import (
-	"iiif"
 	"fmt"
+	"iiif"
 	"log"
 	"net/http"
 	"net/url"
