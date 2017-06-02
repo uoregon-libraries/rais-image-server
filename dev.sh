@@ -7,5 +7,6 @@ docker run -it --rm \
   --name rais \
   --privileged=true \
   -p 12415:12415 \
+  -v $(pwd)/docker/images:/var/local/images \
   -v $(pwd):/opt/rais-src \
   rais-build /opt/rais-src/bin/rais-server
