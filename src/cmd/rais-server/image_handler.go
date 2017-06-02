@@ -107,7 +107,9 @@ func (ih *ImageHandler) EnableIIIF(u *url.URL) {
 func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 	// Pull identifier from base so we know if we're even dealing with a valid
 	// file in the first place
-	p := req.RequestURI
+	var url = *req.URL
+	url.RawQuery = ""
+	p := url.String()
 	parts := ih.IIIFBaseRegex.FindStringSubmatch(p)
 
 	// If it didn't even match the base, something weird happened, so we just
