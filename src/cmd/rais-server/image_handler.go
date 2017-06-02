@@ -69,10 +69,12 @@ func acceptsLD(req *http.Request) bool {
 // DZITileSize defines deep zoom tile size
 const DZITileSize = 1024
 
-// DZI "constants" - these can be declared once because we aren't allowing a
-// custom DZI handler path
-var DZIInfoRegex = regexp.MustCompile(`^/images/dzi/(.+).dzi$`)
-var DZITilePathRegex = regexp.MustCompile(`^/images/dzi/(.+)_files/(\d+)/(\d+)_(\d+).jpg$`)
+// DZI "constants" - these can be declared once (unlike IIIF regexes) because
+// we aren't allowing a custom DZI handler path
+var (
+	DZIInfoRegex = regexp.MustCompile(`^/images/dzi/(.+).dzi$`)
+	DZITilePathRegex = regexp.MustCompile(`^/images/dzi/(.+)_files/(\d+)/(\d+)_(\d+).jpg$`)
+)
 
 // ImageHandler responds to an IIIF URL request and parses the requested
 // transformation within the limits of the handler's capabilities
@@ -105,7 +107,9 @@ func (ih *ImageHandler) EnableIIIF(u *url.URL) {
 func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 	// Pull identifier from base so we know if we're even dealing with a valid
 	// file in the first place
-	p := req.RequestURI
+	var url = *req.URL
+	url.RawQuery = ""
+	p := url.String()
 	parts := ih.IIIFBaseRegex.FindStringSubmatch(p)
 
 	// If it didn't even match the base, something weird happened, so we just
@@ -209,6 +213,9 @@ func (ih *ImageHandler) DZIRoute(w http.ResponseWriter, req *http.Request) {
 	handler(res)
 }
 
+// DZIInfo returns the info response for a deep-zoom request.  This is very
+// hard-coded because the XML is simple, and deep-zoom is really a minor
+// addition to RAIS.
 func (ih *ImageHandler) DZIInfo(w http.ResponseWriter, res *ImageResource) {
 	format := `<?xml version="1.0" encoding="UTF-8"?>
 		<Image xmlns="http://schemas.microsoft.com/deepzoom/2008" TileSize="%d" Overlap="0" Format="jpg">
@@ -219,6 +226,8 @@ func (ih *ImageHandler) DZIInfo(w http.ResponseWriter, res *ImageResource) {
 	w.Write([]byte(xml))
 }
 
+// DZITile returns a tile by setting up the appropriate IIIF data structure
+// based on the deep-zoom request
 func (ih *ImageHandler) DZITile(w http.ResponseWriter, req *http.Request, res *ImageResource, l, tX, tY int) {
 	// We always return 256x256 or bigger
 	if l < 8 {
@@ -262,10 +271,10 @@ func (ih *ImageHandler) DZITile(w http.ResponseWriter, req *http.Request, res *I
 	// If any dimension is outside the image area, we have to adjust the requested image and tilesize
 	finalWidth := width
 	finalHeight := height
-	if left + width > srcWidth {
+	if left+width > srcWidth {
 		finalWidth = srcWidth - left
 	}
-	if top + height > srcHeight {
+	if top+height > srcHeight {
 		finalHeight = srcHeight - top
 	}
 
