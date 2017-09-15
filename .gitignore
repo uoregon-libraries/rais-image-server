@@ -5,3 +5,4 @@
 /docker/apache/dzi.html
 /docker/images
 !/docker/images/testfile/test-world*
+/temprais.toml
