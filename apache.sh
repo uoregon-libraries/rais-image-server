@@ -46,10 +46,14 @@ docker rm -f "rais-osd-example" || true
 docker rm -f "rais-test" || true
 docker run --rm -v $(pwd):/opt/rais-src rais-build make
 
+cp ./rais-example.toml ./temprais.toml
+sed -i 's|^\s*IIIFURL.*$|IIIFURL = "'$url:12415'/images/iiif"|' temprais.toml
+
 docker run -d -it --name "rais-osd-example" -p 80:80 \
   -v $(pwd)/docker/apache:/usr/local/apache2/htdocs/ \
   httpd:2.4
 docker run -it --rm --name "rais-test" --privileged=true -p 12415:12415 \
   -v $(pwd):/opt/rais-src \
   -v $(pwd)/docker/images:/var/local/images \
-  rais-build /opt/rais-src/bin/rais-server --tile-path /var/local/images --iiif-url $url:12415/images/iiif
+  -v $(pwd)/temprais.toml:/etc/rais.toml \
+  uolibraries/rais:prod
