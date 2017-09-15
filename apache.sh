@@ -44,7 +44,6 @@ sed "s|%SRCS%|$sources|g" docker/apache/template.html > docker/apache/dzi.html
 
 docker rm -f "rais-osd-example" || true
 docker rm -f "rais-test" || true
-docker run --rm -v $(pwd):/opt/rais-src rais-build make
 
 cp ./rais-example.toml ./temprais.toml
 sed -i 's|^\s*IIIFURL.*$|IIIFURL = "'$url:12415'/images/iiif"|' temprais.toml
