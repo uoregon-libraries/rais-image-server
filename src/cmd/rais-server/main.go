@@ -65,6 +65,7 @@ func main() {
 	// Handle IIIF data only if we have a IIIF URL
 	ih := NewImageHandler(tilePath)
 	if viper.IsSet("IIIFURL") {
+		log.Printf("Attempting to start up IIIF at %s\n", viper.GetString("IIIFURL"))
 		iiifURL := viper.GetString("IIIFURL")
 		iiifBase, err := url.Parse(iiifURL)
 		if err == nil && iiifBase.Scheme == "" {
@@ -117,6 +118,8 @@ func main() {
 	http.HandleFunc("/images/tiles/", TileHandler)
 	http.HandleFunc("/images/resize/", ResizeHandler)
 	http.HandleFunc("/version", VersionHandler)
+
+	log.Printf("RAIS v%s starting...", version.Version)
 	if err := http.ListenAndServe(address, nil); err != nil {
 		log.Fatalf("Error starting listener: %s", err)
 	}
