@@ -55,4 +55,4 @@ docker run -it --rm --name "rais-test" --privileged=true -p 12415:12415 \
   -v $(pwd):/opt/rais-src \
   -v $(pwd)/docker/images:/var/local/images \
   -v $(pwd)/temprais.toml:/etc/rais.toml \
-  uolibraries/rais:prod
+  uolibraries/rais
