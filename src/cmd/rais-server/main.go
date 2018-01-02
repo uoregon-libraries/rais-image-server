@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 	"version"
 
 	"github.com/BurntSushi/toml"
@@ -120,7 +121,12 @@ func main() {
 	http.HandleFunc("/version", VersionHandler)
 
 	log.Printf("RAIS v%s starting...", version.Version)
-	if err := http.ListenAndServe(address, nil); err != nil {
+	var srv = &http.Server{
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		Addr:         address,
+	}
+	if err := srv.ListenAndServe(); err != nil {
 		log.Fatalf("Error starting listener: %s", err)
 	}
 }
