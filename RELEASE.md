@@ -4,6 +4,11 @@ Release notes
 The top of this file contains the latest stable release and relevant notes
 about what has changed since the previous release.
 
+Release 2.9.1
+-----
+
+- Adds ability to filter logging by severity
+
 Release 2.9.0
 -----
 
