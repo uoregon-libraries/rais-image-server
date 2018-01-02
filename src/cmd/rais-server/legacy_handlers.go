@@ -3,7 +3,6 @@ package main
 import (
 	"image"
 	"image/jpeg"
-	"log"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -45,7 +44,7 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	res, err := NewImageResource("", filepath)
 	if err != nil {
 		http.Error(w, "Unable to read source image", 500)
-		log.Println("Unable to read source image: ", err)
+		Logger.Errorf("Unable to read source image: %s", err)
 		return
 	}
 	i := res.Decoder
@@ -56,7 +55,7 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	img, err := i.DecodeImage()
 	if err != nil {
 		http.Error(w, "Unable to decode image", 500)
-		log.Println("Unable to decode image: ", err)
+		Logger.Errorf("Unable to decode image: %s", err)
 		return
 	}
 
@@ -64,7 +63,7 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "image/jpeg")
 	if err = jpeg.Encode(w, img, &jpeg.Options{Quality: 80}); err != nil {
 		http.Error(w, "Unable to encode tile", 500)
-		log.Println("Unable to encode tile into JPEG:", err)
+		Logger.Errorf("Unable to encode tile into JPEG: %s", err)
 		return
 	}
 }
@@ -92,7 +91,7 @@ func ResizeHandler(w http.ResponseWriter, req *http.Request) {
 	res, err := NewImageResource("", filepath)
 	if err != nil {
 		http.Error(w, "Unable to read source image", 500)
-		log.Println("Unable to read source image: ", err)
+		Logger.Errorf("Unable to read source image: %s", err)
 		return
 	}
 	i := res.Decoder
@@ -102,7 +101,7 @@ func ResizeHandler(w http.ResponseWriter, req *http.Request) {
 	img, err := i.DecodeImage()
 	if err != nil {
 		http.Error(w, "Unable to decode image", 500)
-		log.Println("Unable to decode image: ", err)
+		Logger.Errorf("Unable to decode image: %s", err)
 		return
 	}
 
@@ -110,7 +109,7 @@ func ResizeHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "image/jpeg")
 	if err = jpeg.Encode(w, img, &jpeg.Options{Quality: 80}); err != nil {
 		http.Error(w, "Unable to encode tile", 500)
-		log.Println("Unable to encode tile into JPEG:", err)
+		Logger.Errorf("Unable to encode tile into JPEG: %s", err)
 		return
 	}
 }
