@@ -1,0 +1,10 @@
+[Unit]
+	Description=RAIS image server
+	After=sysinit.target
+
+[Service]
+	Type=simple
+	ExecStart=/usr/local/rais/rais-server
+
+[Install]
+	WantedBy=multi-user.target

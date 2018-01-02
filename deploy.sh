@@ -5,23 +5,23 @@
 # This is meant as an example for going from development to production.  MANY
 # assumptions are made:
 #
-# - You've already installed the service once and done `chkconfig` magic
-# - You are using a RedHat-6-based system
+# - You've already installed the service once
+# - You are using a RedHat-7-based system
 # - You have Go installed on your production system
 # - You have sudo access
-# - You are using this with chronam
+# - You are using this with ONI
 
 make clean
 make bin/rais-server
-sudo service rais stop
-sudo rm /opt/chronam-support/rais-server
-sudo mkdir -p /opt/chronam-support/
-sudo cp rh_config/init.sh /etc/init.d/rais
+sudo systemctl stop rais
+sudo rm -f /usr/local/rais/rais-server
+sudo mkdir -p /usr/local/rais
+sudo cp rh_config/rais.service /usr/local/rais/rais.service
 
 if [ ! -f /etc/rais.toml ]; then
   sudo cp rais-example.toml /etc/rais.toml
   echo "New install detected - modify /etc/rais.toml as necessary"
 fi
 
-sudo cp bin/rais-server /opt/chronam-support/rais-server
-sudo service rais start
+sudo cp bin/rais-server /usr/local/rais/rais-server
+sudo systemctl start rais
