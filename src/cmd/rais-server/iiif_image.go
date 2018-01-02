@@ -6,7 +6,6 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
-	"log"
 	"os"
 	"path"
 	"strings"
@@ -52,21 +51,21 @@ func NewImageResource(id iiif.ID, filepath string) (*ImageResource, error) {
 
 	// First, does the file exist?
 	if _, err = os.Stat(filepath); err != nil {
-		log.Printf("Image does not exist: %#v", filepath)
+		Logger.Infof("Image does not exist: %#v", filepath)
 		return nil, ErrImageDoesNotExist
 	}
 
 	// File exists - is its extension registered?
 	newDecoder, ok := ExtDecoders[strings.ToLower(path.Ext(filepath))]
 	if !ok {
-		log.Printf("Image type unknown / invalid: %#v", filepath)
+		Logger.Errorf("Image type unknown / invalid: %#v", filepath)
 		return nil, ErrInvalidFiletype
 	}
 
 	// We have a decoder for the file type - attempt to instantiate it
 	d, err := newDecoder(filepath)
 	if err != nil {
-		log.Printf("Unable to read image %#v: %s", filepath, err)
+		Logger.Errorf("Unable to read image %#v: %s", filepath, err)
 		return nil, ErrBadImageFile
 	}
 
@@ -82,7 +81,7 @@ func (res *ImageResource) Apply(u *iiif.URL) (image.Image, error) {
 
 	img, err := res.Decoder.DecodeImage()
 	if err != nil {
-		log.Println("Unable to decode image: ", err)
+		Logger.Errorf("Unable to decode image: %s", err)
 		return nil, ErrDecodeImage
 	}
 

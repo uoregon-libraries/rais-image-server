@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"iiif"
-	"log"
 	"net/http"
 	"net/url"
+	"openjpeg"
 	"os"
 	"time"
 	"version"
@@ -14,19 +14,24 @@ import (
 	"github.com/hashicorp/golang-lru"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"github.com/uoregon-libraries/gopkg/logger"
 )
 
 var tilePath string
 var infoCache *lru.Cache
 var tileCache *lru.TwoQueueCache
+var Logger *logger.Logger
 
 const defaultAddress = ":12415"
 const defaultInfoCacheLen = 10000
+
+var defaultLogLevel = logger.Debug.String()
 
 func main() {
 	// Defaults
 	viper.SetDefault("Address", defaultAddress)
 	viper.SetDefault("InfoCacheLen", defaultInfoCacheLen)
+	viper.SetDefault("LogLevel", defaultLogLevel)
 
 	// Allow all configuration to be in environment variables
 	viper.SetEnvPrefix("RAIS")
@@ -49,15 +54,28 @@ func main() {
 	viper.BindPFlag("InfoCacheLen", pflag.CommandLine.Lookup("iiif-info-cache-size"))
 	pflag.String("capabilities-file", "", "TOML file describing capabilities, rather than everything RAIS supports")
 	viper.BindPFlag("CapabilitiesFile", pflag.CommandLine.Lookup("capabilities-file"))
+	pflag.String("log-level", defaultLogLevel, "Log level: the server will only log notifications at "+
+		"this level and above (must be DEBUG, INFO, WARN, ERROR, or CRIT)")
+	viper.BindPFlag("LogLevel", pflag.CommandLine.Lookup("log-level"))
 
 	pflag.Parse()
 
 	// Make sure required values exist
 	if !viper.IsSet("TilePath") {
-		log.Println("ERROR: --tile-path is required")
+		fmt.Println("ERROR: --tile-path is required")
 		pflag.Usage()
 		os.Exit(1)
 	}
+
+	// Make sure we have a valid log level
+	var level = logger.LogLevelFromString(viper.GetString("LogLevel"))
+	if level == logger.Invalid {
+		fmt.Println("ERROR: --log-level must be DEBUG, INFO, WARN, ERROR, or CRIT")
+		pflag.Usage()
+		os.Exit(1)
+	}
+	Logger = logger.New(level)
+	openjpeg.Logger = Logger
 
 	// Pull all values we need for all cases
 	tilePath = viper.GetString("TilePath")
@@ -66,7 +84,7 @@ func main() {
 	// Handle IIIF data only if we have a IIIF URL
 	ih := NewImageHandler(tilePath)
 	if viper.IsSet("IIIFURL") {
-		log.Printf("Attempting to start up IIIF at %s\n", viper.GetString("IIIFURL"))
+		Logger.Debugf("Attempting to start up IIIF at %s", viper.GetString("IIIFURL"))
 		iiifURL := viper.GetString("IIIFURL")
 		iiifBase, err := url.Parse(iiifURL)
 		if err == nil && iiifBase.Scheme == "" {
@@ -79,27 +97,27 @@ func main() {
 			err = fmt.Errorf("empty path")
 		}
 		if err != nil {
-			log.Fatalf("Invalid IIIF URL (%s) specified: %s", iiifURL, err)
+			Logger.Fatalf("Invalid IIIF URL (%s) specified: %s", iiifURL, err)
 		}
 
 		icl := viper.GetInt("InfoCacheLen")
 		if icl > 0 {
 			infoCache, err = lru.New(icl)
 			if err != nil {
-				log.Fatalf("Unable to start info cache: %s", err)
+				Logger.Fatalf("Unable to start info cache: %s", err)
 			}
 		}
 
 		tcl := viper.GetInt("TileCacheLen")
 		if tcl > 0 {
-			log.Printf("Creating a tile cache to hold up to %d tiles", tcl)
+			Logger.Debugf("Creating a tile cache to hold up to %d tiles", tcl)
 			tileCache, err = lru.New2Q(tcl)
 			if err != nil {
-				log.Fatalf("Unable to start info cache: %s", err)
+				Logger.Fatalf("Unable to start info cache: %s", err)
 			}
 		}
 
-		log.Printf("IIIF enabled at %s\n", iiifBase.String())
+		Logger.Infof("IIIF enabled at %s", iiifBase.String())
 		ih.EnableIIIF(iiifBase)
 
 		if viper.IsSet("CapabilitiesFile") {
@@ -107,9 +125,9 @@ func main() {
 			ih.FeatureSet = &iiif.FeatureSet{}
 			_, err := toml.DecodeFile(filename, &ih.FeatureSet)
 			if err != nil {
-				log.Fatalf("Invalid file or formatting in capabilities file '%s'", filename)
+				Logger.Fatalf("Invalid file or formatting in capabilities file '%s'", filename)
 			}
-			log.Printf("Setting IIIF capabilities from file '%s'", filename)
+			Logger.Debugf("Setting IIIF capabilities from file '%s'", filename)
 		}
 
 		http.HandleFunc(ih.IIIFBase.Path+"/", ih.IIIFRoute)
@@ -120,14 +138,14 @@ func main() {
 	http.HandleFunc("/images/resize/", ResizeHandler)
 	http.HandleFunc("/version", VersionHandler)
 
-	log.Printf("RAIS v%s starting...", version.Version)
+	Logger.Infof("RAIS v%s starting...", version.Version)
 	var srv = &http.Server{
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		Addr:         address,
 	}
 	if err := srv.ListenAndServe(); err != nil {
-		log.Fatalf("Error starting listener: %s", err)
+		Logger.Fatalf("Error starting listener: %s", err)
 	}
 }
 

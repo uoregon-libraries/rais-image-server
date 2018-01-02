@@ -9,6 +9,10 @@
 # CLI: --address
 Address = ":12415"
 
+# LogLevel: Optional, defaults to "DEBUG".  Log messages below this severity
+# are ignored.
+LogLevel = "INFO"
+
 # TilePath: Required.  Set this to the path where images can be found.  Note
 # that docker uses an environment setting to force this to "/var/local/images",
 # and environment settings override config file settings.
