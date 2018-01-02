@@ -4,15 +4,15 @@
 #include "_cgo_export.h"
 
 static void info_callback(const char *msg, void *client_data) {
-	GoLog(6, (char *)msg);
+	GoLogInfo((char *)msg);
 }
 
 static void warning_callback(const char *msg, void *client_data) {
-	GoLog(4, (char *)msg);
+	GoLogWarning((char *)msg);
 }
 
 static void error_callback(const char *msg, void *client_data) {
-	GoLog(3, (char *)msg);
+	GoLogError((char *)msg);
 }
 
 void set_handlers(opj_codec_t* p_codec) {

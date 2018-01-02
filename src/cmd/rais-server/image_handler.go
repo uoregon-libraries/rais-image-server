@@ -7,7 +7,6 @@ import (
 	"iiif"
 	"io"
 	"io/ioutil"
-	"log"
 	"math"
 	"mime"
 	"net/http"
@@ -15,6 +14,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/uoregon-libraries/gopkg/logger"
 )
 
 // AllFeatures is the complete list of everything supported by RAIS at this time
@@ -72,7 +73,7 @@ const DZITileSize = 1024
 // DZI "constants" - these can be declared once (unlike IIIF regexes) because
 // we aren't allowing a custom DZI handler path
 var (
-	DZIInfoRegex = regexp.MustCompile(`^/images/dzi/(.+).dzi$`)
+	DZIInfoRegex     = regexp.MustCompile(`^/images/dzi/(.+).dzi$`)
 	DZITilePathRegex = regexp.MustCompile(`^/images/dzi/(.+)_files/(\d+)/(\d+)_(\d+).jpg$`)
 )
 
@@ -354,7 +355,7 @@ func (ih *ImageHandler) loadInfoJSONOverride(id iiif.ID, fp string) []byte {
 }
 
 func (ih *ImageHandler) loadInfoJSONFromImageResource(id iiif.ID, fp string) ([]byte, *HandlerError) {
-	log.Printf("Loading image data from image resource (id: %s)", id)
+	logger.Debugf("Loading image data from image resource (id: %s)", id)
 	res, err := NewImageResource(id, fp)
 	if err != nil {
 		return nil, newImageResError(err)
@@ -411,7 +412,7 @@ func (ih *ImageHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *Handler
 
 	json, err := json.Marshal(info)
 	if err != nil {
-		log.Printf("ERROR!  Unable to marshal IIIFInfo response: %s", err)
+		logger.Errorf("Unable to marshal IIIFInfo response: %s", err)
 		return nil, NewError("server error", 500)
 	}
 
@@ -464,7 +465,7 @@ func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iii
 
 	if err := EncodeImage(out, img, u.Format); err != nil {
 		http.Error(w, "Unable to encode", 500)
-		log.Printf("Unable to encode to %s: %s", u.Format, err)
+		logger.Errorf("Unable to encode to %s: %s", u.Format, err)
 		return
 	}
 

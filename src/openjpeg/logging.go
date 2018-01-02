@@ -5,29 +5,31 @@ package openjpeg
 import "C"
 
 import (
-	"fmt"
 	"strings"
+
+	"github.com/uoregon-libraries/gopkg/logger"
 )
 
-// LogLevel is the hard-coded log level.  It's forcibly set to WARN.  This
-// whole thing needs a rewrite.
-var LogLevel = 4
+// GoLogInfo bridges the openjpeg logging with our internal logger
+//export GoLogInfo
+func GoLogInfo(cmessage *C.char) {
+	log(logger.Infof, cmessage)
+}
 
-// LogLevels contains all possible levels for GoLog and goLog
-var LogLevels = []string{"EMERG", "ALERT", "CRIT", "ERROR", "WARN", "NOTICE", "INFO", "DEBUG"}
+// GoLogWarning bridges the openjpeg logging with our internal logger
+//export GoLogWarning
+func GoLogWarning(cmessage *C.char) {
+	log(logger.Warnf, cmessage)
+}
 
-// GoLog bridges the openjpeg logging with our internal logger
-//export GoLog
-func GoLog(clevel C.int, cmessage *C.char) {
-	level := int(clevel)
-	message := C.GoString(cmessage)
-
-	goLog(level, "FROM OPJ: "+strings.TrimSpace(message))
+// GoLogError bridges the openjpeg logging with our internal logger
+//export GoLogError
+func GoLogError(cmessage *C.char) {
+	log(logger.Errorf, cmessage)
 }
 
 // Internal go-specific version of logger
-func goLog(level int, message string) {
-	if level <= LogLevel {
-		fmt.Printf("[%s] %s\n", LogLevels[level], message)
-	}
+func log(logfn func(string, ...interface{}), cmessage *C.char) {
+	var message = strings.TrimSpace(C.GoString(cmessage))
+	logfn("FROM OPJ: %s", message)
 }

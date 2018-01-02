@@ -3,10 +3,11 @@ package main
 import (
 	"image"
 	"image/jpeg"
-	"log"
 	"net/http"
 	"regexp"
 	"strconv"
+
+	"github.com/uoregon-libraries/gopkg/logger"
 )
 
 var tilePathRegex = regexp.MustCompile(`^/images/tiles/(?P<path>.+)/image_(?P<width>\d+)x(?P<height>\d+)_from_(?P<x1>\d+),(?P<y1>\d+)_to_(?P<x2>\d+),(?P<y2>\d+).jpg`)
@@ -45,7 +46,7 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	res, err := NewImageResource("", filepath)
 	if err != nil {
 		http.Error(w, "Unable to read source image", 500)
-		log.Println("Unable to read source image: ", err)
+		logger.Errorf("Unable to read source image: %s", err)
 		return
 	}
 	i := res.Decoder
@@ -56,7 +57,7 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	img, err := i.DecodeImage()
 	if err != nil {
 		http.Error(w, "Unable to decode image", 500)
-		log.Println("Unable to decode image: ", err)
+		logger.Errorf("Unable to decode image: %s", err)
 		return
 	}
 
@@ -64,7 +65,7 @@ func TileHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "image/jpeg")
 	if err = jpeg.Encode(w, img, &jpeg.Options{Quality: 80}); err != nil {
 		http.Error(w, "Unable to encode tile", 500)
-		log.Println("Unable to encode tile into JPEG:", err)
+		logger.Errorf("Unable to encode tile into JPEG: %s", err)
 		return
 	}
 }
@@ -92,7 +93,7 @@ func ResizeHandler(w http.ResponseWriter, req *http.Request) {
 	res, err := NewImageResource("", filepath)
 	if err != nil {
 		http.Error(w, "Unable to read source image", 500)
-		log.Println("Unable to read source image: ", err)
+		logger.Errorf("Unable to read source image: %s", err)
 		return
 	}
 	i := res.Decoder
@@ -102,7 +103,7 @@ func ResizeHandler(w http.ResponseWriter, req *http.Request) {
 	img, err := i.DecodeImage()
 	if err != nil {
 		http.Error(w, "Unable to decode image", 500)
-		log.Println("Unable to decode image: ", err)
+		logger.Errorf("Unable to decode image: %s", err)
 		return
 	}
 
@@ -110,7 +111,7 @@ func ResizeHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "image/jpeg")
 	if err = jpeg.Encode(w, img, &jpeg.Options{Quality: 80}); err != nil {
 		http.Error(w, "Unable to encode tile", 500)
-		log.Println("Unable to encode tile into JPEG:", err)
+		logger.Errorf("Unable to encode tile into JPEG: %s", err)
 		return
 	}
 }

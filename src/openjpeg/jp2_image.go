@@ -6,7 +6,6 @@ import "C"
 
 import (
 	"errors"
-	"fmt"
 	"image"
 	"jp2info"
 	"reflect"
@@ -14,6 +13,7 @@ import (
 	"unsafe"
 
 	"github.com/nfnt/resize"
+	"github.com/uoregon-libraries/gopkg/logger"
 )
 
 // JP2Image is a container for our simple JP2 operations
@@ -74,24 +74,24 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 
 	// We need the codec to be ready for all operations below
 	if err := i.initializeCodec(); err != nil {
-		goLog(3, "Error initializing codec - aborting")
+		logger.Errorf("Error initializing codec - aborting")
 		return nil, err
 	}
 
 	i.computeDecodeParameters()
 
 	if err := i.computeProgressionLevel(); err != nil {
-		goLog(3, "Unable to set progression level - aborting")
+		logger.Errorf("Unable to set progression level - aborting")
 		return nil, err
 	}
 
 	if err := i.ReadHeader(); err != nil {
-		goLog(3, "Error reading header before decode - aborting")
+		logger.Errorf("Error reading header before decode - aborting")
 		return nil, err
 	}
 
-	goLog(6, fmt.Sprintf("num comps: %d", i.image.numcomps))
-	goLog(6, fmt.Sprintf("x0: %d, x1: %d, y0: %d, y1: %d", i.image.x0, i.image.x1, i.image.y0, i.image.y1))
+	logger.Infof("num comps: %d", i.image.numcomps)
+	logger.Infof("x0: %d, x1: %d, y0: %d, y1: %d", i.image.x0, i.image.x1, i.image.y0, i.image.y1)
 
 	if err := i.rawDecode(); err != nil {
 		return nil, err
@@ -224,10 +224,10 @@ func (i *JP2Image) computeProgressionLevel() error {
 // C function.  Returns an error if said call fails.
 func (i *JP2Image) SetProgressionLevel(level int) error {
 	if level > i.GetLevels() {
-		goLog(6, fmt.Sprintf("Progression level requested (%d) is too high", level))
+		logger.Infof("Progression level requested (%d) is too high", level)
 		level = i.GetLevels()
 	}
-	goLog(6, fmt.Sprintf("Setting progression level to %d", level))
+	logger.Infof("Setting progression level to %d", level)
 
 	if C.opj_set_decoded_resolution_factor(i.codec, C.OPJ_UINT32(level)) == C.OPJ_FALSE {
 		return errors.New("Error trying to set decoded resolution factor")
