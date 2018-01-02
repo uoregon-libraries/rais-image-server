@@ -89,8 +89,8 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 		return nil, err
 	}
 
-	Logger.Infof("num comps: %d", i.image.numcomps)
-	Logger.Infof("x0: %d, x1: %d, y0: %d, y1: %d", i.image.x0, i.image.x1, i.image.y0, i.image.y1)
+	Logger.Debugf("num comps: %d", i.image.numcomps)
+	Logger.Debugf("x0: %d, x1: %d, y0: %d, y1: %d", i.image.x0, i.image.x1, i.image.y0, i.image.y1)
 
 	if err := i.rawDecode(); err != nil {
 		return nil, err
@@ -223,10 +223,10 @@ func (i *JP2Image) computeProgressionLevel() error {
 // C function.  Returns an error if said call fails.
 func (i *JP2Image) SetProgressionLevel(level int) error {
 	if level > i.GetLevels() {
-		Logger.Infof("Progression level requested (%d) is too high", level)
+		Logger.Debugf("Progression level requested (%d) is too high", level)
 		level = i.GetLevels()
 	}
-	Logger.Infof("Setting progression level to %d", level)
+	Logger.Debugf("Setting progression level to %d", level)
 
 	if C.opj_set_decoded_resolution_factor(i.codec, C.OPJ_UINT32(level)) == C.OPJ_FALSE {
 		return errors.New("Error trying to set decoded resolution factor")

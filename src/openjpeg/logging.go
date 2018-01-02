@@ -14,10 +14,12 @@ import (
 // can be overridden (as is the case with the main RAIS command)
 var Logger = l.DefaultLogger
 
-// GoLogInfo bridges the openjpeg logging with our internal logger
+// GoLogInfo bridges the openjpeg logging with our internal logger.  We map
+// openjpeg's "info" logging to debug because these tend to be very verbose and
+// not terribly important.
 //export GoLogInfo
 func GoLogInfo(cmessage *C.char) {
-	log(Logger.Infof, cmessage)
+	log(Logger.Debugf, cmessage)
 }
 
 // GoLogWarning bridges the openjpeg logging with our internal logger
