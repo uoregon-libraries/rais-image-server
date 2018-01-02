@@ -7,12 +7,12 @@ import "C"
 import (
 	"strings"
 
-	l "github.com/uoregon-libraries/gopkg/logger"
+	"github.com/uoregon-libraries/gopkg/logger"
 )
 
 // Logger defaults to use the standard uoregon-libraries logging mechanism, but
 // can be overridden (as is the case with the main RAIS command)
-var Logger = l.DefaultLogger
+var Logger = logger.DefaultLogger
 
 // GoLogInfo bridges the openjpeg logging with our internal logger.  We map
 // openjpeg's "info" logging to debug because these tend to be very verbose and

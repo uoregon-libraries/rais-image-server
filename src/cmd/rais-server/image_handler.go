@@ -353,7 +353,7 @@ func (ih *ImageHandler) loadInfoJSONOverride(id iiif.ID, fp string) []byte {
 }
 
 func (ih *ImageHandler) loadInfoJSONFromImageResource(id iiif.ID, fp string) ([]byte, *HandlerError) {
-	logger.Debugf("Loading image data from image resource (id: %s)", id)
+	Logger.Debugf("Loading image data from image resource (id: %s)", id)
 	res, err := NewImageResource(id, fp)
 	if err != nil {
 		return nil, newImageResError(err)
@@ -410,7 +410,7 @@ func (ih *ImageHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *Handler
 
 	json, err := json.Marshal(info)
 	if err != nil {
-		logger.Errorf("Unable to marshal IIIFInfo response: %s", err)
+		Logger.Errorf("Unable to marshal IIIFInfo response: %s", err)
 		return nil, NewError("server error", 500)
 	}
 
@@ -463,7 +463,7 @@ func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iii
 
 	if err := EncodeImage(out, img, u.Format); err != nil {
 		http.Error(w, "Unable to encode", 500)
-		logger.Errorf("Unable to encode to %s: %s", u.Format, err)
+		Logger.Errorf("Unable to encode to %s: %s", u.Format, err)
 		return
 	}
 
