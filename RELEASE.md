@@ -4,6 +4,14 @@ Release notes
 The top of this file contains the latest stable release and relevant notes
 about what has changed since the previous release.
 
+Release 2.9.0
+-----
+
+- Adds a timeout for HTTP connections to (hopefully) avoid "accept4: too many
+  open files" errors when things get too slow or networks drop temporarily
+- Updates the build environment to use Go 1.9.2
+- Improves the apache Open Seadragon / DeepZoom test container setup
+
 Release 2.8.1
 -----
 
