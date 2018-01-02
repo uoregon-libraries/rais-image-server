@@ -7,25 +7,29 @@ import "C"
 import (
 	"strings"
 
-	"github.com/uoregon-libraries/gopkg/logger"
+	l "github.com/uoregon-libraries/gopkg/logger"
 )
+
+// Logger defaults to use the standard uoregon-libraries logging mechanism, but
+// can be overridden (as is the case with the main RAIS command)
+var Logger = l.DefaultLogger
 
 // GoLogInfo bridges the openjpeg logging with our internal logger
 //export GoLogInfo
 func GoLogInfo(cmessage *C.char) {
-	log(logger.Infof, cmessage)
+	log(Logger.Infof, cmessage)
 }
 
 // GoLogWarning bridges the openjpeg logging with our internal logger
 //export GoLogWarning
 func GoLogWarning(cmessage *C.char) {
-	log(logger.Warnf, cmessage)
+	log(Logger.Warnf, cmessage)
 }
 
 // GoLogError bridges the openjpeg logging with our internal logger
 //export GoLogError
 func GoLogError(cmessage *C.char) {
-	log(logger.Errorf, cmessage)
+	log(Logger.Errorf, cmessage)
 }
 
 // Internal go-specific version of logger

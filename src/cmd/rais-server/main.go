@@ -5,6 +5,7 @@ import (
 	"iiif"
 	"net/http"
 	"net/url"
+	"openjpeg"
 	"os"
 	"time"
 	"version"
@@ -13,20 +14,24 @@ import (
 	"github.com/hashicorp/golang-lru"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/uoregon-libraries/gopkg/logger"
+	l "github.com/uoregon-libraries/gopkg/logger"
 )
 
 var tilePath string
 var infoCache *lru.Cache
 var tileCache *lru.TwoQueueCache
+var logger *l.Logger
 
 const defaultAddress = ":12415"
 const defaultInfoCacheLen = 10000
+
+var defaultLogLevel = l.Debug.String()
 
 func main() {
 	// Defaults
 	viper.SetDefault("Address", defaultAddress)
 	viper.SetDefault("InfoCacheLen", defaultInfoCacheLen)
+	viper.SetDefault("LogLevel", defaultLogLevel)
 
 	// Allow all configuration to be in environment variables
 	viper.SetEnvPrefix("RAIS")
@@ -49,6 +54,9 @@ func main() {
 	viper.BindPFlag("InfoCacheLen", pflag.CommandLine.Lookup("iiif-info-cache-size"))
 	pflag.String("capabilities-file", "", "TOML file describing capabilities, rather than everything RAIS supports")
 	viper.BindPFlag("CapabilitiesFile", pflag.CommandLine.Lookup("capabilities-file"))
+	pflag.String("log-level", defaultLogLevel, "Log level: the server will only log notifications at "+
+		"this level and above (must be DEBUG, INFO, WARN, ERROR, or CRIT)")
+	viper.BindPFlag("LogLevel", pflag.CommandLine.Lookup("log-level"))
 
 	pflag.Parse()
 
@@ -58,6 +66,16 @@ func main() {
 		pflag.Usage()
 		os.Exit(1)
 	}
+
+	// Make sure we have a valid log level
+	var level = l.LogLevelFromString(viper.GetString("LogLevel"))
+	if level == l.Invalid {
+		fmt.Println("ERROR: --log-level must be DEBUG, INFO, WARN, ERROR, or CRIT")
+		pflag.Usage()
+		os.Exit(1)
+	}
+	logger = l.New(level)
+	openjpeg.Logger = logger
 
 	// Pull all values we need for all cases
 	tilePath = viper.GetString("TilePath")

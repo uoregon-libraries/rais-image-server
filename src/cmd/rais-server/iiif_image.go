@@ -10,8 +10,6 @@ import (
 	"path"
 	"strings"
 	"transform"
-
-	"github.com/uoregon-libraries/gopkg/logger"
 )
 
 // Custom errors an image read/transform operation could return

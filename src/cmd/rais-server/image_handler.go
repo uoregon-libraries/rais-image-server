@@ -14,8 +14,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/uoregon-libraries/gopkg/logger"
 )
 
 // AllFeatures is the complete list of everything supported by RAIS at this time
