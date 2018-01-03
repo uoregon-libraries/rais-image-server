@@ -24,4 +24,5 @@ if [ ! -f /etc/rais.toml ]; then
 fi
 
 sudo cp bin/rais-server /usr/local/rais/rais-server
+sudo systemctl daemon-reload
 sudo systemctl start rais
