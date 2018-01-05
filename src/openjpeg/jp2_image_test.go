@@ -5,7 +5,13 @@ import (
 	"image"
 	"os"
 	"testing"
+
+	"github.com/uoregon-libraries/gopkg/logger"
 )
+
+func init() {
+	Logger = logger.New(logger.Warn)
+}
 
 func jp2i() *JP2Image {
 	dir, _ := os.Getwd()

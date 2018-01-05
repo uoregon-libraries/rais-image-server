@@ -12,7 +12,13 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/uoregon-libraries/gopkg/logger"
 )
+
+func init() {
+	Logger = logger.New(logger.Warn)
+}
 
 func rootDir() string {
 	p, _ := os.Getwd()
