@@ -11,6 +11,9 @@ Address = ":12415"
 
 # LogLevel: Optional, defaults to "DEBUG".  Log messages below this severity
 # are ignored.
+#
+# Env: RAIS_LOGLEVEL
+# CLI: --log-level
 LogLevel = "INFO"
 
 # TilePath: Required.  Set this to the path where images can be found.  Note
