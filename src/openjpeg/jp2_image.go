@@ -6,6 +6,7 @@ import "C"
 
 import (
 	"errors"
+	"fmt"
 	"image"
 	"jp2info"
 	"reflect"
@@ -229,7 +230,7 @@ func (i *JP2Image) SetProgressionLevel(level int) error {
 	Logger.Debugf("Setting progression level to %d", level)
 
 	if C.opj_set_decoded_resolution_factor(i.codec, C.OPJ_UINT32(level)) == C.OPJ_FALSE {
-		return errors.New("Error trying to set decoded resolution factor")
+		return fmt.Errorf("cannot set decoded resolution factor to %d", level)
 	}
 
 	return nil
