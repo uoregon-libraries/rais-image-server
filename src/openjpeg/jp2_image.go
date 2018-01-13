@@ -5,12 +5,9 @@ package openjpeg
 import "C"
 
 import (
-	"errors"
-	"fmt"
 	"image"
 	"jp2info"
 	"reflect"
-	"runtime"
 	"unsafe"
 
 	"github.com/nfnt/resize"
@@ -19,9 +16,6 @@ import (
 // JP2Image is a container for our simple JP2 operations
 type JP2Image struct {
 	filename     string
-	stream       *C.opj_stream_t
-	codec        *C.opj_codec_t
-	image        *C.opj_image_t
 	info         *jp2info.Info
 	decodeWidth  int
 	decodeHeight int
@@ -33,13 +27,8 @@ type JP2Image struct {
 // JP2Image instance
 func NewJP2Image(filename string) (*JP2Image, error) {
 	i := &JP2Image{filename: filename}
-	runtime.SetFinalizer(i, finalizer)
 
 	if err := i.readInfo(); err != nil {
-		return nil, err
-	}
-
-	if err := i.initializeStream(); err != nil {
 		return nil, err
 	}
 
@@ -69,44 +58,23 @@ func (i *JP2Image) SetCrop(r image.Rectangle) {
 // resized and cropped if resizing or cropping was requested.  Both cropping
 // and resizing happen here due to the nature of openjpeg, so SetScale,
 // SetResizeWH, and SetCrop must be called before this function.
-func (i *JP2Image) DecodeImage() (image.Image, error) {
-	defer i.CleanupResources()
-
-	// We need the codec to be ready for all operations below
-	if err := i.initializeCodec(); err != nil {
-		Logger.Errorf("Error initializing codec - aborting")
-		return nil, err
-	}
-
+func (i *JP2Image) DecodeImage() (img image.Image, err error) {
 	i.computeDecodeParameters()
 
-	if err := i.computeProgressionLevel(); err != nil {
-		Logger.Errorf("Unable to set progression level - aborting")
-		return nil, err
-	}
-
-	if err := i.ReadHeader(); err != nil {
-		Logger.Errorf("Error reading header before decode - aborting")
-		return nil, err
-	}
-
-	Logger.Debugf("num comps: %d", i.image.numcomps)
-	Logger.Debugf("x0: %d, x1: %d, y0: %d, y1: %d", i.image.x0, i.image.x1, i.image.y0, i.image.y1)
-
-	if err := i.rawDecode(); err != nil {
+	var jp2 *C.opj_image_t
+	if jp2, err = i.rawDecode(); err != nil {
 		return nil, err
 	}
 
 	var comps []C.opj_image_comp_t
 	compsSlice := (*reflect.SliceHeader)((unsafe.Pointer(&comps)))
-	compsSlice.Cap = int(i.image.numcomps)
-	compsSlice.Len = int(i.image.numcomps)
-	compsSlice.Data = uintptr(unsafe.Pointer(i.image.comps))
+	compsSlice.Cap = int(jp2.numcomps)
+	compsSlice.Len = int(jp2.numcomps)
+	compsSlice.Data = uintptr(unsafe.Pointer(jp2.comps))
 
 	width := int(comps[0].w)
 	height := int(comps[0].h)
 	bounds := image.Rect(0, 0, width, height)
-	var img image.Image
 
 	// We assume grayscale if we don't have at least 3 components, because it's
 	// probably the safest default
@@ -146,29 +114,6 @@ func (i *JP2Image) DecodeImage() (image.Image, error) {
 	}
 
 	return img, nil
-}
-
-// ReadHeader calls the various C functions necessary to instantiate the
-// stream, codec, and image C structures.  All initialization here is required
-// before decoding.
-func (i *JP2Image) ReadHeader() error {
-	if i.image != nil {
-		return nil
-	}
-
-	if err := i.initializeCodec(); err != nil {
-		return err
-	}
-
-	if err := i.initializeStream(); err != nil {
-		return err
-	}
-
-	if C.opj_read_header(i.stream, i.codec, &i.image) == C.OPJ_FALSE {
-		return errors.New("failed to read the header")
-	}
-
-	return nil
 }
 
 // GetWidth returns the image width
@@ -211,51 +156,18 @@ func (i *JP2Image) computeDecodeParameters() {
 
 // computeProgressionLevel gets progression level if we're resizing to specific
 // dimensions (it's zero if there isn't any scaling of the output)
-func (i *JP2Image) computeProgressionLevel() error {
+func (i *JP2Image) computeProgressionLevel() int {
 	if i.decodeWidth == i.decodeArea.Dx() && i.decodeHeight == i.decodeArea.Dy() {
-		return nil
+		return 0
 	}
 
-	return i.SetProgressionLevel(desiredProgressionLevel(i.decodeArea, i.decodeWidth, i.decodeHeight))
-}
-
-// SetProgressionLevel sanitizes the level to ensure it's not above the
-// images's maximum, then sets it via the opj_set_decoded_resolution_factor
-// C function.  Returns an error if said call fails.
-func (i *JP2Image) SetProgressionLevel(level int) error {
+	level := desiredProgressionLevel(i.decodeArea, i.decodeWidth, i.decodeHeight)
 	if level > i.GetLevels() {
 		Logger.Debugf("Progression level requested (%d) is too high", level)
 		level = i.GetLevels()
 	}
-	Logger.Debugf("Setting progression level to %d", level)
 
-	if C.opj_set_decoded_resolution_factor(i.codec, C.OPJ_UINT32(level)) == C.OPJ_FALSE {
-		return fmt.Errorf("cannot set decoded resolution factor to %d", level)
-	}
-
-	return nil
-}
-
-// rawDecode reads the raw data from the JP2 so that i.image can be used to
-// construct the response
-func (i *JP2Image) rawDecode() error {
-	// Setting decode area has to happen *after* reading the header / image data
-	if i.decodeArea != i.srcRect {
-		r := i.decodeArea
-		if C.opj_set_decode_area(i.codec, i.image, C.OPJ_INT32(r.Min.X), C.OPJ_INT32(r.Min.Y), C.OPJ_INT32(r.Max.X), C.OPJ_INT32(r.Max.Y)) == C.OPJ_FALSE {
-			return errors.New("failed to set the decoded area")
-		}
-	}
-
-	// Decode the JP2 into the image stream
-	if C.opj_decode(i.codec, i.stream, i.image) == C.OPJ_FALSE {
-		return errors.New("failed to decode image")
-	}
-	if C.opj_end_decompress(i.codec, i.stream) == C.OPJ_FALSE {
-		return errors.New("failed to close decompression")
-	}
-
-	return nil
+	return level
 }
 
 // JP2ComponentData returns a slice of Image-usable uint8s from the JP2 raw

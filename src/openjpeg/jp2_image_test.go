@@ -28,13 +28,10 @@ func TestNewJP2Image(t *testing.T) {
 	if jp2 == nil {
 		t.Error("No JP2 object!")
 	}
-
-	t.Log(jp2.image)
 }
 
 func TestDimensions(t *testing.T) {
 	jp2 := jp2i()
-	jp2.ReadHeader()
 	assert.Equal(800, jp2.GetWidth(), "jp2 width is 800px", t)
 	assert.Equal(400, jp2.GetHeight(), "jp2 height is 400px", t)
 }
