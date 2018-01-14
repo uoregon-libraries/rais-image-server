@@ -75,8 +75,8 @@ make docker
 ```
 
 *For contributors*: note that `make docker`, in addition to creating a
-production image, will produce an image called "rais-build" which can be used
-to compile and run tests.  See
+production image, will produce an image called "rais-build:f27" which can be
+used to compile and run tests.  See
 [docker/Dockerfile.build](docker/Dockerfile.build) for examples of how to make
 this happen.  Also consider using [buildrun.sh](buildrun.sh) to ease compiling
 and testing.  [dev.sh](dev.sh) is also available for easing the
