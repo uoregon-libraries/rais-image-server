@@ -103,3 +103,30 @@ func BenchmarkReadAndDecodeImage(b *testing.B) {
 		}
 	}
 }
+
+// BenchmarkReadAndDecodeImage does a benchmark against a large, tiled image to
+// see how we perform when using the best-case image type
+func BenchmarkReadAndDecodeTiledImage(b *testing.B) {
+	dir, _ := os.Getwd()
+	bigImage := dir + "/../../docker/images/jp2tests/sn00063609-19091231.jp2"
+
+	for n := 0; n < b.N; n++ {
+		var size = ((n%2)+1) * 1024
+		startTileX := n % 2
+		startTileY := (n / 2) % 3
+		startX := startTileX * size
+		endX := startX + size
+		startY := startTileY * size
+		endY := startY + size
+
+	  jp2, err := NewJP2Image(bigImage)
+		if err != nil {
+			panic(err)
+		}
+		jp2.SetCrop(image.Rect(startX, startY, endX, endY))
+		jp2.SetResizeWH(1024, 1024)
+		if _, err := jp2.DecodeImage(); err != nil {
+			panic(err)
+		}
+	}
+}
