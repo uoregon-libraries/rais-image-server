@@ -4,6 +4,14 @@ Release notes
 The top of this file contains the latest stable release and relevant notes
 about what has changed since the previous release.
 
+Release 2.10.0
+-----
+
+- Changed OpenJPEG interfacing to fix incompatibility with OpenJPEG 2.3.0
+- Upgraded Docker image to use Fedora 27, which has OpenJPEG 2.3.0, improving performance significantly
+- Minor "housekeeping" to clean up code and improve testing and benchmarking
+- Sample deploy script is now based on RHEL 7
+
 Release 2.9.1
 -----
 
