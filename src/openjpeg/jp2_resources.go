@@ -24,7 +24,7 @@ func (i *JP2Image) rawDecode() (jp2 *C.opj_image_t, err error) {
 	// Setup file stream
 	stream, err := initializeStream(i.filename)
 	if err != nil {
-		return nil, err
+		return jp2, err
 	}
 	defer C.opj_stream_destroy(stream)
 
@@ -37,16 +37,12 @@ func (i *JP2Image) rawDecode() (jp2 *C.opj_image_t, err error) {
 
 	// Fill in codec configuration from parameters
 	if C.opj_setup_decoder(codec, &parameters) == C.OPJ_FALSE {
-		return nil, fmt.Errorf("unable to setup decoder")
+		return jp2, fmt.Errorf("unable to setup decoder")
 	}
-
-	// Prepare the image pointer, *including* the defered cleanup (the C function
-	// does nothing if image is NULL, so this is safe)
-	defer C.opj_image_destroy(jp2)
 
 	// Read the header to set up the image data
 	if C.opj_read_header(stream, codec, &jp2) == C.OPJ_FALSE {
-		return nil, fmt.Errorf("failed to read the header")
+		return jp2, fmt.Errorf("failed to read the header")
 	}
 
 	Logger.Debugf("num comps: %d", jp2.numcomps)
@@ -56,13 +52,13 @@ func (i *JP2Image) rawDecode() (jp2 *C.opj_image_t, err error) {
 	if i.decodeArea != i.srcRect {
 		r := i.decodeArea
 		if C.opj_set_decode_area(codec, jp2, C.OPJ_INT32(r.Min.X), C.OPJ_INT32(r.Min.Y), C.OPJ_INT32(r.Max.X), C.OPJ_INT32(r.Max.Y)) == C.OPJ_FALSE {
-			return nil, fmt.Errorf("failed to set the decoded area")
+			return jp2, fmt.Errorf("failed to set the decoded area")
 		}
 	}
 
 	// Decode the JP2 into the image stream
 	if C.opj_decode(codec, stream, jp2) == C.OPJ_FALSE || C.opj_end_decompress(codec, stream) == C.OPJ_FALSE {
-		return nil, fmt.Errorf("failed to decode image")
+		return jp2, fmt.Errorf("failed to decode image")
 	}
 
 	return jp2, nil

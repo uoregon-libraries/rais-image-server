@@ -4,6 +4,11 @@ Release notes
 The top of this file contains the latest stable release and relevant notes
 about what has changed since the previous release.
 
+Release 2.10.1
+-----
+
+- Fixed memory leak due to mistake in openjpeg API usage
+
 Release 2.10.0
 -----
 
