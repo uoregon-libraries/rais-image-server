@@ -62,7 +62,11 @@ func (i *JP2Image) DecodeImage() (img image.Image, err error) {
 	i.computeDecodeParameters()
 
 	var jp2 *C.opj_image_t
-	if jp2, err = i.rawDecode(); err != nil {
+	jp2, err = i.rawDecode()
+	// We have to clean up the jp2 memory even if we had an error due to how the
+	// openjpeg APIs work
+	defer C.opj_image_destroy(jp2)
+	if err != nil {
 		return nil, err
 	}
 
