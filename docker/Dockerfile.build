@@ -1,17 +1,17 @@
 # This produces a build environment for RAIS.  It should be created via
 # something like this executed from the project root:
 #
-#     docker build --rm -t rais-build -f docker/Dockerfile.build .
+#     docker build --rm -t rais-build:f27 -f docker/Dockerfile.build .
 #
 # Once created, a binary can be built via a simple run command:
 #
-#     docker run --rm -v $(pwd):/opt/rais-src rais-build
+#     docker run --rm -v $(pwd):/opt/rais-src rais-build:f27
 #
 # Don't forget to run tests if you're doing development!
 #
-#     docker run --rm -v $(pwd):/opt/rais-src rais-build make test
+#     docker run --rm -v $(pwd):/opt/rais-src rais-build:f27 make test
 #
-FROM fedora:22
+FROM fedora:27
 MAINTAINER Jeremy Echols <jechols@uoregon.edu>
 
 # Install all the build dependencies

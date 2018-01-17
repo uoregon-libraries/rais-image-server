@@ -5,7 +5,13 @@ import (
 	"image"
 	"os"
 	"testing"
+
+	"github.com/uoregon-libraries/gopkg/logger"
 )
+
+func init() {
+	Logger = logger.New(logger.Warn)
+}
 
 func jp2i() *JP2Image {
 	dir, _ := os.Getwd()
@@ -22,13 +28,10 @@ func TestNewJP2Image(t *testing.T) {
 	if jp2 == nil {
 		t.Error("No JP2 object!")
 	}
-
-	t.Log(jp2.image)
 }
 
 func TestDimensions(t *testing.T) {
 	jp2 := jp2i()
-	jp2.ReadHeader()
 	assert.Equal(800, jp2.GetWidth(), "jp2 width is 800px", t)
 	assert.Equal(400, jp2.GetHeight(), "jp2 height is 400px", t)
 }
@@ -93,6 +96,33 @@ func BenchmarkReadAndDecodeImage(b *testing.B) {
 		jp2.SetResizeWH(128, 128)
 		_, err := jp2.DecodeImage()
 		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+// BenchmarkReadAndDecodeImage does a benchmark against a large, tiled image to
+// see how we perform when using the best-case image type
+func BenchmarkReadAndDecodeTiledImage(b *testing.B) {
+	dir, _ := os.Getwd()
+	bigImage := dir + "/../../docker/images/jp2tests/sn00063609-19091231.jp2"
+
+	for n := 0; n < b.N; n++ {
+		var size = ((n%2)+1) * 1024
+		startTileX := n % 2
+		startTileY := (n / 2) % 3
+		startX := startTileX * size
+		endX := startX + size
+		startY := startTileY * size
+		endY := startY + size
+
+	  jp2, err := NewJP2Image(bigImage)
+		if err != nil {
+			panic(err)
+		}
+		jp2.SetCrop(image.Rect(startX, startY, endX, endY))
+		jp2.SetResizeWH(1024, 1024)
+		if _, err := jp2.DecodeImage(); err != nil {
 			panic(err)
 		}
 	}

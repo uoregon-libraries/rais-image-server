@@ -35,10 +35,6 @@ have the same features as the development version.  You can look at the latest
 stable version in github by browsing
 [our master branch](https://github.com/uoregon-libraries/rais-image-server/tree/master).
 
-You can also grab a recent development version by looking at the
-[Dockerhub RAIS tags](https://hub.docker.com/r/uolibraries/rais/tags/).
-All "indev" images should be considered beta versions of RAIS.
-
 For an example of running a docker image as a RAIS server, look at
 [rundocker.sh](rundocker.sh).
 
@@ -75,8 +71,8 @@ make docker
 ```
 
 *For contributors*: note that `make docker`, in addition to creating a
-production image, will produce an image called "rais-build" which can be used
-to compile and run tests.  See
+production image, will produce an image called "rais-build:f27" which can be
+used to compile and run tests.  See
 [docker/Dockerfile.build](docker/Dockerfile.build) for examples of how to make
 this happen.  Also consider using [buildrun.sh](buildrun.sh) to ease compiling
 and testing.  [dev.sh](dev.sh) is also available for easing the
