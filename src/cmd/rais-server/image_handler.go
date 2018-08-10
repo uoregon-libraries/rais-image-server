@@ -305,10 +305,13 @@ func (ih *ImageHandler) loadInfoJSONFromCache(id iiif.ID) ([]byte, *HandlerError
 
 func (ih *ImageHandler) loadInfoJSONOverride(id iiif.ID, fp string) []byte {
 	// If an override file isn't found or has an error, just skip it
-	json, err := ioutil.ReadFile(fp + "-info.json")
+	var infofile = fp + "-info.json"
+	json, err := ioutil.ReadFile(infofile)
 	if err != nil {
 		return nil
 	}
+
+	Logger.Debugf("Loading image data from override file (%s)", infofile)
 
 	// If an override file *is* found, replace the id
 	fullid := ih.IIIFBase.String() + "/" + id.String()
