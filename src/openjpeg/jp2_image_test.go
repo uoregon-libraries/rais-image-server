@@ -1,11 +1,11 @@
 package openjpeg
 
 import (
-	"color-assert"
 	"image"
 	"os"
 	"testing"
 
+	"github.com/uoregon-libraries/gopkg/assert"
 	"github.com/uoregon-libraries/gopkg/logger"
 )
 

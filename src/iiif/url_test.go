@@ -1,10 +1,11 @@
 package iiif
 
 import (
-	"color-assert"
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/uoregon-libraries/gopkg/assert"
 )
 
 var weirdID = "identifier-foo-bar%2Fbaz,,,,,chameleon"

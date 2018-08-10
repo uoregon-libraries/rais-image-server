@@ -1,7 +1,6 @@
 package main
 
 import (
-	"color-assert"
 	"encoding/json"
 	"fakehttp"
 	"fmt"
@@ -13,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/uoregon-libraries/gopkg/assert"
 	"github.com/uoregon-libraries/gopkg/logger"
 )
 
