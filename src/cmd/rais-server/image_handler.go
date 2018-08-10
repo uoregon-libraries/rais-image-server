@@ -18,8 +18,9 @@ import (
 
 // AllFeatures is the complete list of everything supported by RAIS at this time
 var AllFeatures = &iiif.FeatureSet{
-	RegionByPx:  true,
-	RegionByPct: true,
+	RegionByPx:   true,
+	RegionByPct:  true,
+	RegionSquare: true,
 
 	SizeByWhListed: true,
 	SizeByW:        true,

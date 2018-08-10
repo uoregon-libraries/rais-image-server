@@ -18,6 +18,8 @@ const (
 	RTPercent
 	// RTPixel means we interpret x/y/w/h as precise coordinates within the image
 	RTPixel
+	// RTSquare means a square region where w/h are the image's shortest dimension
+	RTSquare
 )
 
 // Region represents the part of the image we'll manipulate.  It can be thought
@@ -32,6 +34,9 @@ type Region struct {
 func StringToRegion(p string) Region {
 	if p == "full" {
 		return Region{Type: RTFull}
+	}
+	if p == "square" {
+		return Region{Type: RTSquare}
 	}
 
 	r := Region{Type: RTPixel}
@@ -56,7 +61,7 @@ func (r Region) Valid() bool {
 	switch r.Type {
 	case RTNone:
 		return false
-	case RTFull:
+	case RTFull, RTSquare:
 		return true
 	}
 

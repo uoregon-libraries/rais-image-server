@@ -24,6 +24,8 @@ func (fs *FeatureSet) Supported(u *URL) bool {
 // SupportsRegion just verifies a given region type is supported
 func (fs *FeatureSet) SupportsRegion(r Region) bool {
 	switch r.Type {
+	case RTSquare:
+		return fs.RegionSquare
 	case RTPixel:
 		return fs.RegionByPx
 	case RTPercent:

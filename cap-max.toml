@@ -8,6 +8,7 @@
 # It is generally too slow for a production server, however.
 RegionByPx = true
 RegionByPct = true
+RegionSquare = true
 
 SizeByWhListed = true
 SizeByW = true

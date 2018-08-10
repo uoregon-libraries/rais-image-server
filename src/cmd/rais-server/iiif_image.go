@@ -107,6 +107,14 @@ func (res *ImageResource) prep(r iiif.Region, s iiif.Size) {
 	crop := image.Rect(0, 0, w, h)
 
 	switch r.Type {
+	case iiif.RTSquare:
+		if w < h {
+			top := (h - w) / 2
+			crop = image.Rect(0, top, w, w+top)
+		} else if h < w {
+			left := (w - h) / 2
+			crop = image.Rect(left, 0, h+left, h)
+		}
 	case iiif.RTPixel:
 		crop = image.Rect(int(r.X), int(r.Y), int(r.X+r.W), int(r.Y+r.H))
 	case iiif.RTPercent:

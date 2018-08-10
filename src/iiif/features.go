@@ -22,8 +22,9 @@ type TileSize struct {
 // arbitrary resizing can still advertise specific sizes that will work.
 type FeatureSet struct {
 	// Region options: note that full isn't specified but must be supported
-	RegionByPx  bool
-	RegionByPct bool
+	RegionByPx   bool
+	RegionByPct  bool
+	RegionSquare bool
 
 	// Size options: note that full isn't specified but must be supported
 	SizeByWhListed bool
@@ -73,6 +74,7 @@ func (fs *FeatureSet) toMap() FeaturesMap {
 	return FeaturesMap{
 		"regionByPx":          fs.RegionByPx,
 		"regionByPct":         fs.RegionByPct,
+		"regionSquare":        fs.RegionSquare,
 		"sizeByWhListed":      fs.SizeByWhListed,
 		"sizeByW":             fs.SizeByW,
 		"sizeByH":             fs.SizeByH,
