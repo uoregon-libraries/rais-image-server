@@ -16,44 +16,6 @@ import (
 	"strings"
 )
 
-// AllFeatures is the complete list of everything supported by RAIS at this time
-var AllFeatures = &iiif.FeatureSet{
-	RegionByPx:   true,
-	RegionByPct:  true,
-	RegionSquare: true,
-
-	SizeByWhListed: true,
-	SizeByW:        true,
-	SizeByH:        true,
-	SizeByPct:      true,
-	SizeByWh:       true,
-	SizeByForcedWh: true,
-	SizeAboveFull:  true,
-
-	RotationBy90s:     true,
-	RotationArbitrary: false,
-	Mirroring:         true,
-
-	Default: true,
-	Color:   true,
-	Gray:    true,
-	Bitonal: true,
-
-	Jpg:  true,
-	Png:  true,
-	Gif:  false,
-	Tif:  true,
-	Jp2:  false,
-	Pdf:  false,
-	Webp: false,
-
-	BaseURIRedirect:     true,
-	Cors:                true,
-	JsonldMediaType:     true,
-	ProfileLinkHeader:   false,
-	CanonicalLinkHeader: false,
-}
-
 func acceptsLD(req *http.Request) bool {
 	for _, h := range req.Header["Accept"] {
 		for _, accept := range strings.Split(h, ",") {
@@ -99,7 +61,7 @@ func (ih *ImageHandler) EnableIIIF(u *url.URL) {
 	ih.IIIFBaseRegex = regexp.MustCompile(rprefix + `/([^/]+)`)
 	ih.IIIFBaseOnlyRegex = regexp.MustCompile(rprefix + `/[^/]+$`)
 	ih.IIIFInfoPathRegex = regexp.MustCompile(rprefix + `/([^/]+)/info.json$`)
-	ih.FeatureSet = AllFeatures
+	ih.FeatureSet = iiif.AllFeatures()
 }
 
 // IIIFRoute takes an HTTP request and parses it to see what (if any) IIIF
