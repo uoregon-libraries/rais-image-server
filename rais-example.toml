@@ -44,7 +44,7 @@ InfoCacheLen = 10000
 
 # CapabilitiesFile: Optional, allows removal of undesired capabilities, such as
 # CORS support or GIF output.  See cap-max.toml for an example.
-# CapabilitiesFile = "/etc/rais-capabilities.toml"
+CapabilitiesFile = "/etc/rais-capabilities.toml"
 
 # TileCacheLen: Optional, defaults to 0.  Set this to the *number* of tiles
 # you'd like to cache.  Currently the cache is set to only store specific types

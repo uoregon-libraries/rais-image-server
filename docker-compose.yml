@@ -30,6 +30,7 @@ services:
       - ./bin/rais-server:/opt/rais/rais-server:ro
       - ./docker/images:/var/local/images:ro
       - ./rais-example.toml:/etc/rais-template.toml:ro
+      - ./cap-max.toml:/etc/rais-capabilities.toml:ro
       - ./docker/demo-rais-entry.sh:/entrypoint.sh:ro
     entrypoint: /entrypoint.sh
     ports:
