@@ -1,28 +1,77 @@
 package iiif
 
 import (
+	"encoding/json"
+	"fmt"
 	"sort"
 )
 
-// InfoProfile is an empty interface strictly for serializing JSON since we
-// need an array that has strings as well as sub-structures
-type InfoProfile interface{}
-type extraProfile struct {
+// ProfileWrapper is a structure which has to custom-marshal itself to provide
+// the rather awful profile IIIF defines: it's an array with any number of
+// elements, where the first element is always a string (URI to the conformance
+// level) and subsequent elements are complex structures defining further
+// capabilities.
+type ProfileWrapper struct {
+	profileElement2
+	ConformanceURL string
+}
+
+// profileElement2 holds the pieces of the profile which can be marshaled into
+// JSON without crazy pain - they just have to be marshaled as the second
+// element in the aforementioned typeless profile array.
+type profileElement2 struct {
 	Formats   []string `json:"formats,omitempty"`
 	Qualities []string `json:"qualities,omitempty"`
 	Supports  []string `json:"supports,omitempty"`
 }
 
+// MarshalJSON implements json.Marshaler
+func (p *ProfileWrapper) MarshalJSON() ([]byte, error) {
+	var hack = make([]interface{}, 2)
+	hack[0] = p.ConformanceURL
+	hack[1] = p.profileElement2
+
+	return json.Marshal(hack)
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (p *ProfileWrapper) UnmarshalJSON(data []byte) error {
+	var hack = make([]interface{}, 2)
+	hack[0] = ""
+	hack[1] = &profileElement2{}
+
+	var err = json.Unmarshal(data, &hack)
+	if err != nil {
+		return err
+	}
+
+	switch v := hack[0].(type) {
+	case string:
+		p.ConformanceURL = v
+	default:
+		return fmt.Errorf("profile[0] (%#v) should have been a string", v)
+	}
+
+	switch v := hack[1].(type) {
+	case *profileElement2:
+		p.profileElement2 = *v
+	default:
+		return fmt.Errorf("profile[1] (%#v) should have been a structure", v)
+	}
+
+	return nil
+}
+
 // Info represents the simplest possible data to provide a valid IIIF
 // information JSON response
 type Info struct {
-	Context  string        `json:"@context"`
-	ID       string        `json:"@id"`
-	Protocol string        `json:"protocol"`
-	Width    int           `json:"width"`
-	Height   int           `json:"height"`
-	Tiles    []TileSize    `json:"tiles,omitempty"`
-	Profile  []InfoProfile `json:"profile"`
+	Context  string         `json:"@context"`
+	ID       string         `json:"@id"`
+	Protocol string         `json:"protocol"`
+	Width    int            `json:"width"`
+	Height   int            `json:"height"`
+	Tiles    []TileSize     `json:"tiles,omitempty"`
+	Profile  ProfileWrapper `json:"profile"`
 }
 
 // NewInfo returns the static *Info data that's the same for any info response
@@ -61,21 +110,20 @@ func (fs *FeatureSet) baseFeatureSet() (*FeatureSet, string) {
 
 // Profile examines the features in the FeatureSet to determine first which
 // level the FeatureSet supports, then adds any variances.
-func (fs *FeatureSet) Profile() []InfoProfile {
-	var baseFS *FeatureSet
-	p := make([]InfoProfile, 1)
-	baseFS, p[0] = fs.baseFeatureSet()
+func (fs *FeatureSet) Profile() ProfileWrapper {
+	baseFS, u := fs.baseFeatureSet()
+	p := ProfileWrapper{ConformanceURL: u}
 
 	_, extraFeatures, _ := FeatureCompare(fs, baseFS)
 	if len(extraFeatures) > 0 {
-		p = append(p, extraProfileFromFeaturesMap(extraFeatures))
+		p.profileElement2 = extraProfileFromFeaturesMap(extraFeatures)
 	}
 
 	return p
 }
 
-func extraProfileFromFeaturesMap(fm FeaturesMap) extraProfile {
-	p := extraProfile{
+func extraProfileFromFeaturesMap(fm FeaturesMap) profileElement2 {
+	p := profileElement2{
 		Formats:   make([]string, 0),
 		Qualities: make([]string, 0),
 		Supports:  make([]string, 0),

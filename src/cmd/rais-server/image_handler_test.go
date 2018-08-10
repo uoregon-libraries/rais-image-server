@@ -67,7 +67,7 @@ func TestInfoHandlerJSONOverride(t *testing.T) {
 	assert.Equal(-1, w.StatusCode, "Valid info request doesn't explicitly set status code", t)
 	var data iiif.Info
 	json.Unmarshal(w.Output, &data)
-	assert.Equal("http://iiif.io/api/image/2/level2.json", data.Profile[0], "Proper profile string", t)
+	assert.Equal("http://iiif.io/api/image/2/level2.json", data.Profile.ConformanceURL, "Proper profile string", t)
 	assert.Equal(800, data.Width, "JSON-decoded width", t)
 	assert.Equal(400, data.Height, "JSON-decoded height", t)
 	assert.Equal(512, data.Tiles[0].Width, "JSON-decoded tile width", t)
@@ -86,7 +86,7 @@ func TestInfoHandlerBuiltJSON(t *testing.T) {
 	assert.Equal(-1, w.StatusCode, "Valid info request doesn't explicitly set status code", t)
 	var data iiif.Info
 	json.Unmarshal(w.Output, &data)
-	assert.Equal("http://iiif.io/api/image/2/level1.json", data.Profile[0], "Proper profile string", t)
+	assert.Equal("http://iiif.io/api/image/2/level1.json", data.Profile.ConformanceURL, "Proper profile string", t)
 	assert.Equal(800, data.Width, "JSON-decoded width", t)
 	assert.Equal(400, data.Height, "JSON-decoded height", t)
 	assert.Equal(800, data.Tiles[0].Width, "JSON-decoded tile width", t)
