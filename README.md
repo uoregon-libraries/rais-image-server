@@ -36,7 +36,7 @@ stable version in github by browsing
 [our master branch](https://github.com/uoregon-libraries/rais-image-server/tree/master).
 
 For an example of running a docker image as a RAIS server, look at
-[rundocker.sh](rundocker.sh).
+[scripts/rundocker.sh](scripts/rundocker.sh).
 
 On the first run, there will be a large download to get the image, but
 after that it will be cached locally.
@@ -47,13 +47,13 @@ usual docker commands.
 ### Docker Demo
 
 You can run a quick demo on a Linux system by pulling the "httpd:2.4" docker
-image, running `./apache.sh` and then visiting `http://localhost`.  Click the
+image, running `./scripts/apache.sh` and then visiting `http://localhost`.  Click the
 IIIF link, and you'll be able to see the test JP2 in two different forms using
 Open Seadragon: it will look the same, but its INFO response will be slightly
 different from one to the other due to one of the two images having an
 explicitly overridden info response.
 
-Additionally, if you put other files into `docker/images`, the `apache.sh`
+Additionally, if you put other files into `docker/images`, the `scripts/apache.sh`
 script will automatically add them to the OSD tile source list, allowing you to
 quickly test a variety of files.
 
@@ -74,8 +74,8 @@ make docker
 production image, will produce an image called "rais-build:f27" which can be
 used to compile and run tests.  See
 [docker/Dockerfile.build](docker/Dockerfile.build) for examples of how to make
-this happen.  Also consider using [buildrun.sh](buildrun.sh) to ease compiling
-and testing.  [dev.sh](dev.sh) is also available for easing the
+this happen.  Also consider using [scripts/buildrun.sh](scripts/buildrun.sh) to ease compiling
+and testing.  [scripts/dev.sh](scripts/dev.sh) is also available for easing the
 edit-compile-run loop on a system with no JP2 libraries, where compilation has
 to go through docker.
 
