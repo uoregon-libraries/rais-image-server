@@ -8,6 +8,8 @@ MAINTAINER Jeremy Echols <jechols@uoregon.edu>
 RUN dnf install -y openjpeg2
 RUN dnf install -y ImageMagick
 
+RUN adduser -M -N -r -s /bin/false -u 1000 rais
+USER rais
 ENV RAIS_TILEPATH /var/local/images
 EXPOSE 12415
 
