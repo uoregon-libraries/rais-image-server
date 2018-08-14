@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"iiif"
+	"rais/src/iiif"
 	"io"
 	"io/ioutil"
 	"math"

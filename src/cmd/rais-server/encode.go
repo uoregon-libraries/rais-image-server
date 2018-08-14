@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"golang.org/x/image/tiff"
-	"iiif"
+	"rais/src/iiif"
 	"image"
 	"image/gif"
 	"image/jpeg"

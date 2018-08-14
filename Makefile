@@ -6,13 +6,6 @@ MakefileDir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 # Default target builds binaries
 all: binaries
 
-# Dependencies all come via a single command
-deps: vendor/src
-vendor/src:
-	gb vendor restore
-	# Remove patented code from vendored area just in case
-	rm vendor/src/github.com/hashicorp/golang-lru/arc*
-
 # Generated code
 generate: src/transform/rotation.go
 
@@ -21,21 +14,20 @@ src/transform/rotation.go: src/transform/generator.go src/transform/template.txt
 	gofmt -l -w -s src/transform/rotation.go
 
 # Binary building rules
-binaries: deps bin/rais-server bin/jp2info
+binaries: bin/rais-server bin/jp2info
 
-# Build the server
-bin/rais-server: src/transform/rotation.go src/* src/cmd/rais-server/*
-	gb build cmd/rais-server
+bin/rais-server: src/transform/rotation.go
+	go build -o ./bin/rais-server rais/src/cmd/rais-server
 
-bin/jp2info: src/jp2info/* src/cmd/jp2info/*
-	gb build cmd/jp2info
+bin/jp2info:
+	go build -o ./bin/jp2info rais/src/cmd/jp2info
 
 # Testing
-test: deps
-	gb test
+test:
+	go test rais/src/...
 
-bench: deps
-	gb test -bench=. -run=XXX -v -test.benchtime=5s -test.count=2
+bench:
+	go test -bench=. -run=XXX -v -test.benchtime=5s -test.count=2
 
 format:
 	find src/ -name "*.go" | xargs gofmt -l -w -s

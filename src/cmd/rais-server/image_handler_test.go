@@ -2,9 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"fakehttp"
+	"rais/src/fakehttp"
 	"fmt"
-	"iiif"
+	"rais/src/iiif"
 	"net/http"
 	"net/url"
 	"os"

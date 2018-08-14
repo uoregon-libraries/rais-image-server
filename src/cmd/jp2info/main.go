@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"jp2info"
+	"rais/src/jp2info"
 	"os"
 
 	"github.com/jessevdk/go-flags"
