@@ -1,9 +1,10 @@
 package openjpeg
 
 import (
-	"color-assert"
 	"image"
 	"testing"
+
+	"github.com/uoregon-libraries/gopkg/assert"
 )
 
 func TestDesiredProgressionLevel(t *testing.T) {

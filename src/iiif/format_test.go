@@ -1,8 +1,9 @@
 package iiif
 
 import (
-	"color-assert"
 	"testing"
+
+	"github.com/uoregon-libraries/gopkg/assert"
 )
 
 func TestFormatValidity(t *testing.T) {
