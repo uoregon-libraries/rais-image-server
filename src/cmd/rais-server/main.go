@@ -83,9 +83,9 @@ func main() {
 
 	// Handle IIIF data only if we have a IIIF URL
 	ih := NewImageHandler(tilePath)
-	if viper.IsSet("IIIFURL") {
+	iiifURL := viper.GetString("IIIFURL")
+	if iiifURL != "" {
 		Logger.Debugf("Attempting to start up IIIF at %s", viper.GetString("IIIFURL"))
-		iiifURL := viper.GetString("IIIFURL")
 		iiifBase, err := url.Parse(iiifURL)
 		if err == nil && iiifBase.Scheme == "" {
 			err = fmt.Errorf("empty scheme")
@@ -120,14 +120,14 @@ func main() {
 		Logger.Infof("IIIF enabled at %s", iiifBase.String())
 		ih.EnableIIIF(iiifBase)
 
-		if viper.IsSet("CapabilitiesFile") {
-			filename := viper.GetString("CapabilitiesFile")
+		capfile := viper.GetString("CapabilitiesFile")
+		if capfile != "" {
 			ih.FeatureSet = &iiif.FeatureSet{}
-			_, err := toml.DecodeFile(filename, &ih.FeatureSet)
+			_, err := toml.DecodeFile(capfile, &ih.FeatureSet)
 			if err != nil {
-				Logger.Fatalf("Invalid file or formatting in capabilities file '%s'", filename)
+				Logger.Fatalf("Invalid file or formatting in capabilities file '%s'", capfile)
 			}
-			Logger.Debugf("Setting IIIF capabilities from file '%s'", filename)
+			Logger.Debugf("Setting IIIF capabilities from file '%s'", capfile)
 		}
 
 		http.HandleFunc(ih.IIIFBase.Path+"/", ih.IIIFRoute)
