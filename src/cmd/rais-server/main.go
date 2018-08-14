@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"rais/src/iiif"
 	"net/http"
 	"net/url"
-	"rais/src/openjpeg"
 	"os"
-	"time"
+	"rais/src/iiif"
+	"rais/src/openjpeg"
 	"rais/src/version"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/hashicorp/golang-lru"

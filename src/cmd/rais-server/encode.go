@@ -2,13 +2,14 @@ package main
 
 import (
 	"errors"
-	"golang.org/x/image/tiff"
-	"rais/src/iiif"
 	"image"
 	"image/gif"
 	"image/jpeg"
 	"image/png"
 	"io"
+	"rais/src/iiif"
+
+	"golang.org/x/image/tiff"
 )
 
 // ErrInvalidEncodeFormat is the error returned when encoding fails due to a

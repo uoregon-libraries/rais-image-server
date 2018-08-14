@@ -2,14 +2,14 @@ package main
 
 import (
 	"errors"
-	"rais/src/iiif"
 	"image"
 	"image/color"
 	"image/draw"
 	"os"
 	"path"
-	"strings"
+	"rais/src/iiif"
 	"rais/src/transform"
+	"strings"
 )
 
 // Custom errors an image read/transform operation could return
