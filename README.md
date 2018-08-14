@@ -46,16 +46,21 @@ usual docker commands.
 
 ### Docker Demo
 
-You can run a quick demo on a Linux system by pulling the "httpd:2.4" docker
-image, running `./scripts/apache.sh` and then visiting `http://localhost`.  Click the
-IIIF link, and you'll be able to see the test JP2 in two different forms using
-Open Seadragon: it will look the same, but its INFO response will be slightly
-different from one to the other due to one of the two images having an
-explicitly overridden info response.
+You can run a quick demo simply by running `docker-compose up` from this
+project's root.  A demo-friendly `docker-compose.yml` file has been set up for
+convenience, and uses nginx to serve up a web page that pulls image tiles from
+a proxied rais backend.
 
-Additionally, if you put other files into `docker/images`, the `scripts/apache.sh`
-script will automatically add them to the OSD tile source list, allowing you to
-quickly test a variety of files.
+Visit `http://localhost` (or configure a custom URL via `export URL=http://...`
+if you can't use "localhost" for some reason).  Click the IIIF link, and you'll
+be able to see the test JP2 in two different forms using Open Seadragon: it
+will look the same, but its INFO response will be slightly different from one
+to the other due to one of the two images having an explicitly overridden info
+response.
+
+Additionally, if you put other files into `docker/images`, the docker setup
+scripts will automatically add them to the OSD tile source list, allowing you
+to quickly test a variety of files.
 
 Finally, you can test out the experimental DeepZoom support by choosing the
 second link.
