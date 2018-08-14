@@ -46,17 +46,18 @@ usual docker commands.
 
 ### Docker Demo
 
-You can run a quick demo simply by running `docker-compose up` from this
-project's root.  A demo-friendly `docker-compose.yml` file has been set up for
-convenience, and uses nginx to serve up a web page that pulls image tiles from
-a proxied rais backend.
+A demo-friendly `docker-compose.yml` file has been set up for convenience, and
+uses nginx to serve up a web page that pulls image tiles from a proxied rais
+backend.
 
-Visit `http://localhost` (or configure a custom URL via `export URL=http://...`
-if you can't use "localhost" for some reason).  Click the IIIF link, and you'll
-be able to see the test JP2 in two different forms using Open Seadragon: it
-will look the same, but its INFO response will be slightly different from one
-to the other due to one of the two images having an explicitly overridden info
-response.
+You can run a quick demo simply by running `make docker` and then
+`docker-compose up` from this project's root.  This may take a few minutes, but
+once it's complete, you can visit `http://localhost` (or configure a custom URL
+via `export URL=http://...` if you can't use "localhost" for some reason).
+Click the IIIF link, and you'll be able to see the test JP2 in two different
+forms using Open Seadragon: it will look the same, but its INFO response will
+be slightly different from one to the other due to one of the two images having
+an explicitly overridden info response.
 
 Additionally, if you put other files into `docker/images`, the docker setup
 scripts will automatically add them to the OSD tile source list, allowing you
