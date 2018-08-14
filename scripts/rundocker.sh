@@ -1,7 +1,8 @@
 #!/bin/bash
 #
 # rundocker.sh: Provides an example of how to run the production docker
-# container with various settings
+# container from the latest uolibraries/rais image.  This is for use cases
+# where docker-compose is unavailable or not desired.
 #
 # After starting the container, test RAIS by browsing to
 # http://localhost:12415/iiif/test-world.jp2/full/full/0/default.jpg
