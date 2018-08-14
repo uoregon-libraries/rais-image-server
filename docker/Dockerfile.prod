@@ -1,13 +1,15 @@
 # This produces a reasonably small production image for RAIS.  You may find it
 # helpful to use the build image (Dockerfile.build) to produce the necessary
 # binary.
-FROM fedora:27
+FROM fedora:28
 MAINTAINER Jeremy Echols <jechols@uoregon.edu>
 
 # Install the runtime dependencies
 RUN dnf install -y openjpeg2
 RUN dnf install -y ImageMagick
 
+RUN adduser -M -N -r -s /bin/false -u 1000 rais
+USER rais
 ENV RAIS_TILEPATH /var/local/images
 EXPOSE 12415
 

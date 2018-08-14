@@ -1,0 +1,42 @@
+# This describes a self-contained demo of RAIS, using Apache to serve up the
+# static pages.  This isn't a production configuration file!!
+#
+# Put JP2s into docker/images and the apache entrypoint script will add them to
+# the images served by from RAIS.
+version: "3"
+services:
+  # Run this directly if you need to build the binaries: docker-compose up rais-build
+  rais-build:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.build
+    volumes:
+      - ./:/opt/rais-src:rw
+      - ./docker/images:/var/local/images:ro
+    command: make
+
+  rais:
+    image: uolibraries/rais
+    environment:
+      - URL
+    volumes:
+      - ./bin/rais-server:/opt/rais/rais-server:ro
+      - ./docker/images:/var/local/images:ro
+      - ./rais-example.toml:/etc/rais-template.toml:ro
+      - ./docker/demo-rais-entry.sh:/entrypoint.sh:ro
+    entrypoint: /entrypoint.sh
+    ports:
+      - 12415:12415
+
+  web:
+    image: nginx:1.15
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/images:/var/local/images:ro
+      - ./docker/static:/static:ro
+      - ./docker/demo-web-entry.sh:/entrypoint.sh:ro
+    entrypoint: /entrypoint.sh
+    depends_on:
+      - rais
+    ports:
+      - 80:80
