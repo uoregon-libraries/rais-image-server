@@ -2,13 +2,13 @@ package main
 
 import (
 	"encoding/json"
-	"fakehttp"
 	"fmt"
-	"iiif"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"rais/src/fakehttp"
+	"rais/src/iiif"
 	"strings"
 	"testing"
 

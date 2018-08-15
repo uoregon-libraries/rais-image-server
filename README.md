@@ -19,9 +19,6 @@ Setup
 
 [Docker](https://www.docker.com/) is the preferred way to install and run RAIS.
 
-See the [manual installation instructions](MANUAL-INSTALL.md) if you don't want to use
-Docker, or you want to see exactly what's going on behind the scenes.
-
 Note that specific build and production environments can be found in the docker
 files and the Makefile's `docker` target, which may be useful for manual
 installation.  [docker/README.md](docker/README.md) describes this in a little

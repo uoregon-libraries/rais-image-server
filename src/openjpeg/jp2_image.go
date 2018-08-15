@@ -6,7 +6,7 @@ import "C"
 
 import (
 	"image"
-	"jp2info"
+	"rais/src/jp2info"
 	"reflect"
 	"unsafe"
 

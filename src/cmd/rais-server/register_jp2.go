@@ -1,7 +1,7 @@
 package main
 
 import (
-	"openjpeg"
+	"rais/src/openjpeg"
 )
 
 func init() {
