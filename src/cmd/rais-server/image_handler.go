@@ -99,8 +99,14 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Handle info.json prior to reading the image, in case of cached info
+	info, e := ih.getInfo(id, fp)
+	if e != nil {
+		http.Error(w, e.Message, e.Code)
+		return
+	}
+
 	if ih.IIIFInfoPathRegex.MatchString(p) {
-		ih.Info(w, req, id, fp)
+		ih.Info(w, req, info)
 		return
 	}
 
@@ -257,26 +263,12 @@ func (ih *ImageHandler) DZITile(w http.ResponseWriter, req *http.Request, res *I
 
 // Info responds to a IIIF info request with appropriate JSON based on the
 // image's data and the handler's capabilities
-func (ih *ImageHandler) Info(w http.ResponseWriter, req *http.Request, id iiif.ID, fp string) {
-	// Check for cached image data first, and use that to create JSON
-	json, e := ih.loadInfoJSONFromCache(id)
-	if e != nil {
-		http.Error(w, e.Message, e.Code)
+func (ih *ImageHandler) Info(w http.ResponseWriter, req *http.Request, info *iiif.Info) {
+	// Convert info to JSON
+	json, err := marshalInfo(info)
+	if err != nil {
+		http.Error(w, err.Message, err.Code)
 		return
-	}
-
-	// Next, check for an overridden info.json file, and just spit that out
-	// directly if it exists
-	if json == nil {
-		json = ih.loadInfoJSONOverride(id, fp)
-	}
-
-	if json == nil {
-		json, e = ih.loadInfoJSONFromImageResource(id, fp)
-		if e != nil {
-			http.Error(w, e.Message, e.Code)
-			return
-		}
 	}
 
 	// Set headers - content type is dependent on client
@@ -298,23 +290,40 @@ func newImageResError(err error) *HandlerError {
 	}
 }
 
-func (ih *ImageHandler) loadInfoJSONFromCache(id iiif.ID) ([]byte, *HandlerError) {
+func (ih *ImageHandler) getInfo(id iiif.ID, fp string) (info *iiif.Info, err *HandlerError) {
+	// Check for cached image data first, and use that to create JSON
+	info = ih.loadInfoFromCache(id)
+
+	// Next, check for an overridden info.json file, and just spit that out
+	// directly if it exists
+	if info == nil {
+		info = ih.loadInfoOverride(id, fp)
+	}
+
+	if info == nil {
+		info, err = ih.loadInfoFromImageResource(id, fp)
+	}
+
+	return info, err
+}
+
+func (ih *ImageHandler) loadInfoFromCache(id iiif.ID) *iiif.Info {
 	if infoCache == nil {
-		return nil, nil
+		return nil
 	}
 
 	data, ok := infoCache.Get(id)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 
-	return ih.buildInfoJSON(id, data.(ImageInfo))
+	return ih.buildInfo(id, data.(ImageInfo))
 }
 
-func (ih *ImageHandler) loadInfoJSONOverride(id iiif.ID, fp string) []byte {
+func (ih *ImageHandler) loadInfoOverride(id iiif.ID, fp string) *iiif.Info {
 	// If an override file isn't found or has an error, just skip it
 	var infofile = fp + "-info.json"
-	json, err := ioutil.ReadFile(infofile)
+	data, err := ioutil.ReadFile(infofile)
 	if err != nil {
 		return nil
 	}
@@ -323,10 +332,18 @@ func (ih *ImageHandler) loadInfoJSONOverride(id iiif.ID, fp string) []byte {
 
 	// If an override file *is* found, replace the id
 	fullid := ih.IIIFBase.String() + "/" + id.String()
-	return bytes.Replace(json, []byte("%ID%"), []byte(fullid), 1)
+	d2 := bytes.Replace(data, []byte("%ID%"), []byte(fullid), 1)
+
+	info := new(iiif.Info)
+	err = json.Unmarshal(d2, info)
+	if err != nil {
+		Logger.Errorf("Cannot parse JSON override file %q: %s", infofile, err)
+		return nil
+	}
+	return info
 }
 
-func (ih *ImageHandler) loadInfoJSONFromImageResource(id iiif.ID, fp string) ([]byte, *HandlerError) {
+func (ih *ImageHandler) loadInfoFromImageResource(id iiif.ID, fp string) (*iiif.Info, *HandlerError) {
 	Logger.Debugf("Loading image data from image resource (id: %s)", id)
 	res, err := NewImageResource(id, fp)
 	if err != nil {
@@ -345,10 +362,10 @@ func (ih *ImageHandler) loadInfoJSONFromImageResource(id iiif.ID, fp string) ([]
 	if infoCache != nil {
 		infoCache.Add(id, imageInfo)
 	}
-	return ih.buildInfoJSON(id, imageInfo)
+	return ih.buildInfo(id, imageInfo), nil
 }
 
-func (ih *ImageHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *HandlerError) {
+func (ih *ImageHandler) buildInfo(id iiif.ID, i ImageInfo) *iiif.Info {
 	info := ih.FeatureSet.Info()
 	info.Width = i.Width
 	info.Height = i.Height
@@ -388,7 +405,10 @@ func (ih *ImageHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *Handler
 
 	// The info id is actually the full URL to the resource, not just its ID
 	info.ID = ih.IIIFBase.String() + "/" + id.String()
+	return info
+}
 
+func marshalInfo(info *iiif.Info) ([]byte, *HandlerError) {
 	json, err := json.Marshal(info)
 	if err != nil {
 		Logger.Errorf("Unable to marshal IIIFInfo response: %s", err)
