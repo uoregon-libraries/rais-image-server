@@ -58,3 +58,35 @@ CapabilitiesFile = "/etc/rais-capabilities.toml"
 #
 # Env: RAIS_TILECACHELEN
 TileCacheLen = 0
+
+####
+# If you wanted to globally limit request size, use the below values.  By
+# default, the server doesn't try to limit request size simply because it's
+# impossible for us to assume what makes sense for a given image server.
+#
+# If an image is smaller than these values, there is no effect on the incoming
+# requests.  If an image is larger, the maximum requests will be constrained
+# and the IIIF info.json profile will report these maximums so that clients
+# will be aware of the limits.
+####
+
+# ImageMaxArea is the maximum number of pixels delivered: 104857600 allows RAIS to
+# deliver a 100-megapixel image raw.
+#
+# Env: RAIS_IMAGEMAXAREA
+# CLI: --image-max-area
+ImageMaxArea = 104857600
+
+# ImageMaxWidth is the maximum width a returned image may be.  If you only want
+# tiles served, rather than whole images, you could change this to 1024.
+#
+# Env: RAIS_IMAGEMAXWIDTH
+# CLI: --image-max-width
+ImageMaxWidth = 20480
+
+# ImageMaxHeight is the maximum height a returned image may be.  If you only want
+# tiles served, rather than whole images, you could change this to 1024.
+#
+# Env: RAIS_IMAGEMAXHEIGHT
+# CLI: --image-max-height
+ImageMaxHeight = 20480

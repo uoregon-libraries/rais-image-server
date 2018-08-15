@@ -47,11 +47,19 @@ type ImageHandler struct {
 	IIIFInfoPathRegex *regexp.Regexp
 	FeatureSet        *iiif.FeatureSet
 	TilePath          string
+	MaxWidth          int
+	MaxHeight         int
+	MaxArea           int64
 }
 
 // NewImageHandler sets up a base ImageHandler with no features
 func NewImageHandler(tp string) *ImageHandler {
-	return &ImageHandler{TilePath: tp}
+	return &ImageHandler{
+		TilePath:  tp,
+		MaxWidth:  math.MaxInt32,
+		MaxHeight: math.MaxInt32,
+		MaxArea:   math.MaxInt64,
+	}
 }
 
 // EnableIIIF sets up regexes for IIIF responses
@@ -344,6 +352,13 @@ func (ih *ImageHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *Handler
 	info := ih.FeatureSet.Info()
 	info.Width = i.Width
 	info.Height = i.Height
+
+	var area = int64(i.Width) * int64(i.Height)
+	if area > ih.MaxArea || i.Width > ih.MaxWidth || i.Height > ih.MaxHeight {
+		info.Profile.MaxArea = ih.MaxArea
+		info.Profile.MaxWidth = ih.MaxWidth
+		info.Profile.MaxHeight = ih.MaxHeight
+	}
 
 	// Set up tile sizes
 	if i.TileWidth > 0 {

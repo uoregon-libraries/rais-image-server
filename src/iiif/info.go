@@ -23,6 +23,9 @@ type profileElement2 struct {
 	Formats   []string `json:"formats,omitempty"`
 	Qualities []string `json:"qualities,omitempty"`
 	Supports  []string `json:"supports,omitempty"`
+	MaxArea   int64    `json:"maxArea,omitempty"`
+	MaxWidth  int      `json:"maxWidth,omitempty"`
+	MaxHeight int      `json:"maxHeight,omitempty"`
 }
 
 // MarshalJSON implements json.Marshaler

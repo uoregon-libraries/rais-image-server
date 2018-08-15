@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"os"
@@ -57,6 +58,12 @@ func main() {
 	pflag.String("log-level", defaultLogLevel, "Log level: the server will only log notifications at "+
 		"this level and above (must be DEBUG, INFO, WARN, ERROR, or CRIT)")
 	viper.BindPFlag("LogLevel", pflag.CommandLine.Lookup("log-level"))
+	pflag.Int64("image-max-area", math.MaxInt64, "Maximum area (w x h) of images to be served")
+	viper.BindPFlag("ImageMaxArea", pflag.CommandLine.Lookup("image-max-area"))
+	pflag.Int("image-max-width", math.MaxInt32, "Maximum width of images to be served")
+	viper.BindPFlag("ImageMaxWidth", pflag.CommandLine.Lookup("image-max-width"))
+	pflag.Int("image-max-height", math.MaxInt32, "Maximum height of images to be served")
+	viper.BindPFlag("ImageMaxHeight", pflag.CommandLine.Lookup("image-max-height"))
 
 	pflag.Parse()
 
@@ -81,8 +88,12 @@ func main() {
 	tilePath = viper.GetString("TilePath")
 	address := viper.GetString("Address")
 
-	// Handle IIIF data only if we have a IIIF URL
 	ih := NewImageHandler(tilePath)
+	ih.MaxArea = viper.GetInt64("ImageMaxArea")
+	ih.MaxWidth = viper.GetInt("ImageMaxWidth")
+	ih.MaxHeight = viper.GetInt("ImageMaxHeight")
+
+	// Handle IIIF data only if we have a IIIF URL
 	iiifURL := viper.GetString("IIIFURL")
 	if iiifURL != "" {
 		Logger.Debugf("Attempting to start up IIIF at %s", viper.GetString("IIIFURL"))
