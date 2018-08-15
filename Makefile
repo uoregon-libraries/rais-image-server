@@ -14,12 +14,8 @@ src/transform/rotation.go: src/transform/generator.go src/transform/template.txt
 	gofmt -l -w -s src/transform/rotation.go
 
 # Binary building rules
-binaries: bin/rais-server bin/jp2info
-
-bin/rais-server: src/transform/rotation.go
+binaries: src/transform/rotation.go
 	go build -o ./bin/rais-server rais/src/cmd/rais-server
-
-bin/jp2info:
 	go build -o ./bin/jp2info rais/src/cmd/jp2info
 
 # Testing

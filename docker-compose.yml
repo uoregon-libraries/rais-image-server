@@ -4,6 +4,11 @@
 # Put JP2s into docker/images and the apache entrypoint script will add them to
 # the images served by from RAIS.
 version: "3"
+
+volumes:
+  gopath: {}
+  gocache: {}
+
 services:
   # Run this directly if you need to build the binaries: docker-compose up rais-build
   rais-build:
@@ -13,6 +18,8 @@ services:
     volumes:
       - ./:/opt/rais-src:rw
       - ./docker/images:/var/local/images:ro
+      - gopath:/usr/local/go
+      - gocache:/root/.cache/go-build
     command: make
 
   rais:
