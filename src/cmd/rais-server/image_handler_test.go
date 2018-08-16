@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"os"
@@ -26,8 +28,15 @@ func rootDir() string {
 	return root
 }
 
+type maximums struct {
+	w, h int
+	a    int64
+}
+
+var unlimited = maximums{math.MaxInt32, math.MaxInt32, math.MaxInt64}
+
 // Sets up everything necessary to test an IIIF request
-func dorequest(path string, acceptLD bool, t *testing.T) *fakehttp.ResponseWriter {
+func dorequest(path string, acceptLD bool, max maximums, t *testing.T) *fakehttp.ResponseWriter {
 	u, _ := url.Parse("http://example.com/foo/bar")
 	w := fakehttp.NewResponseWriter()
 	reqPath := fmt.Sprintf("/foo/bar/%s", path)
@@ -42,6 +51,9 @@ func dorequest(path string, acceptLD bool, t *testing.T) *fakehttp.ResponseWrite
 		t.Errorf("Unable to create fake request: %s", err)
 	}
 	h := NewImageHandler(rootDir())
+	h.MaxWidth = max.w
+	h.MaxHeight = max.h
+	h.MaxArea = max.a
 	h.EnableIIIF(u)
 	h.FeatureSet = iiif.FeatureSet1()
 	h.IIIFRoute(w, req)
@@ -50,11 +62,11 @@ func dorequest(path string, acceptLD bool, t *testing.T) *fakehttp.ResponseWrite
 }
 
 func request(path string, t *testing.T) *fakehttp.ResponseWriter {
-	return dorequest(path, false, t)
+	return dorequest(path, false, unlimited, t)
 }
 
 func requestLD(path string, t *testing.T) *fakehttp.ResponseWriter {
-	return dorequest(path, true, t)
+	return dorequest(path, true, unlimited, t)
 }
 
 func TestInfoHandler404(t *testing.T) {
@@ -111,6 +123,38 @@ func TestInfoRedirect(t *testing.T) {
 	locHeader := w.Headers["Location"]
 	assert.Equal(1, len(locHeader), "There's only 1 location header", t)
 	assert.Equal("/foo/bar/docker%2Fimages%2Ftestfile%2Ftest-world.jp2/info.json", locHeader[0], "Location header", t)
+}
+
+// TestInfoMaxSize verifies that when the image is bigger than the handler's
+// maximums, values are present in the info profile
+func TestInfoMaxSize(t *testing.T) {
+	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, maximums{60, 80, 480}, t)
+	var data iiif.Info
+	json.Unmarshal(w.Output, &data)
+	assert.Equal(60, data.Profile.MaxWidth, "JSON-decoded max width", t)
+	assert.Equal(80, data.Profile.MaxHeight, "JSON-decoded max height", t)
+	assert.Equal(int64(480), data.Profile.MaxArea, "JSON-decoded max area", t)
+
+	// Make sure those profile variables are in the output data
+	assert.True(bytes.Contains(w.Output, []byte("maxWidth")), "maxWidth", t)
+	assert.True(bytes.Contains(w.Output, []byte("maxHeight")), "maxHeight", t)
+	assert.True(bytes.Contains(w.Output, []byte("maxArea")), "maxArea", t)
+}
+
+// TestInfoNoMaxSize verifies that when the image is smaller than the handler's
+// maximums, values are not present in the info profile
+func TestInfoNoMaxSize(t *testing.T) {
+	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, maximums{6000, 8000, 4800000}, t)
+	var data iiif.Info
+	json.Unmarshal(w.Output, &data)
+	assert.Equal(0, data.Profile.MaxWidth, "JSON-decoded width", t)
+	assert.Equal(0, data.Profile.MaxHeight, "JSON-decoded height", t)
+	assert.Equal(int64(0), data.Profile.MaxArea, "JSON-decoded height", t)
+
+	// Make sure those profile variables aren't in the output data at all
+	assert.False(bytes.Contains(w.Output, []byte("maxWidth")), "no maxWidth", t)
+	assert.False(bytes.Contains(w.Output, []byte("maxHeight")), "no maxHeight", t)
+	assert.False(bytes.Contains(w.Output, []byte("maxArea")), "no maxArea", t)
 }
 
 func TestCommandHandler404(t *testing.T) {
