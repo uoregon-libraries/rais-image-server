@@ -136,7 +136,7 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Attempt to run the command
-	ih.Command(w, req, u, res)
+	ih.Command(w, req, u, res, info)
 }
 
 func convertStrings(s1, s2, s3 string) (i1, i2, i3 int, err error) {
@@ -268,7 +268,7 @@ func (ih *ImageHandler) DZITile(w http.ResponseWriter, req *http.Request, res *I
 
 	u := iiif.NewURL(fmt.Sprintf("%s/%d,%d,%d,%d/%d,/0/default.jpg",
 		res.FilePath, left, top, finalWidth, finalHeight, requestedWidth))
-	ih.Command(w, req, u, res)
+	ih.Command(w, req, u, res, nil)
 }
 
 // Info responds to a IIIF info request with appropriate JSON based on the
@@ -428,7 +428,7 @@ func marshalInfo(info *iiif.Info) ([]byte, *HandlerError) {
 }
 
 // Command handles image processing operations
-func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL, res *ImageResource) {
+func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL, res *ImageResource, info *iiif.Info) {
 	// For now the cache is very limited to ensure only relatively small requests
 	// are actually cached
 	willCache := tileCache != nil && u.Format == iiif.FmtJPG && u.Size.W > 0 && u.Size.W <= 1024 && u.Size.H == 0
@@ -455,7 +455,17 @@ func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iii
 		}
 	}
 
-	img, err := res.Apply(u, ih.Maximums)
+	var max = ih.Maximums
+	// If we have an info, we can make use of it for the constraints rather than
+	// using the global constraints; this is useful for overridden info.json files
+	if info != nil {
+		max = constraint{
+			Width: info.Profile.MaxWidth,
+			Height: info.Profile.MaxHeight,
+			Area: info.Profile.MaxArea,
+		}
+	}
+	img, err := res.Apply(u, max)
 	if err != nil {
 		http.Error(w, err.Message, err.Code)
 		return
