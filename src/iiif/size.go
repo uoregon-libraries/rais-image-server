@@ -1,6 +1,7 @@
 package iiif
 
 import (
+	"image"
 	"strconv"
 	"strings"
 )
@@ -91,4 +92,37 @@ func (s Size) Valid() bool {
 	}
 
 	return false
+}
+
+// GetResize determines how a given region would be resized and returns a
+// rectangle representing the scaled image's dimensions
+func (s Size) GetResize(region image.Rectangle) image.Rectangle {
+	w, h := region.Dx(), region.Dy()
+	switch s.Type {
+	case STScaleToWidth:
+		w, h = s.W, 0
+	case STScaleToHeight:
+		w, h = 0, s.H
+	case STExact:
+		w, h = s.W, s.H
+	case STBestFit:
+		w, h = s.getBestFit(w, h)
+	case STScalePercent:
+		w = int(float64(w) * s.Percent / 100.0)
+		h = int(float64(h) * s.Percent / 100.0)
+	}
+
+	return image.Rect(0, 0, w, h)
+}
+
+// getBestFit preserves the aspect ratio while determining the proper scaling
+// factor to get width and height adjusted to fit within the width and height
+// of the desired size operation
+func (s Size) getBestFit(w, h int) (int, int) {
+	fW, fH, fsW, fsH := float64(w), float64(h), float64(s.W), float64(s.H)
+	sf := fsW / fW
+	if sf*fH > fsH {
+		sf = fsH / fH
+	}
+	return int(sf * fW), int(sf * fH)
 }

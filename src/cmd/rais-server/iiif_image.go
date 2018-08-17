@@ -77,7 +77,12 @@ func NewImageResource(id iiif.ID, filepath string) (*ImageResource, error) {
 // returns an image.Image ready for encoding to the client
 func (res *ImageResource) Apply(u *iiif.URL) (image.Image, error) {
 	// Crop and resize have to be prepared before we can decode
-	res.prep(u.Region, u.Size)
+	w, h := res.Decoder.GetWidth(), res.Decoder.GetHeight()
+	crop := u.Region.GetCrop(w, h)
+	scale := u.Size.GetResize(crop)
+
+	res.Decoder.SetCrop(crop)
+	res.Decoder.SetResizeWH(scale.Dx(), scale.Dy())
 
 	img, err := res.Decoder.DecodeImage()
 	if err != nil {
@@ -100,60 +105,6 @@ func (res *ImageResource) Apply(u *iiif.URL) (image.Image, error) {
 	}
 
 	return img, nil
-}
-
-func (res *ImageResource) prep(r iiif.Region, s iiif.Size) {
-	w, h := res.Decoder.GetWidth(), res.Decoder.GetHeight()
-	crop := image.Rect(0, 0, w, h)
-
-	switch r.Type {
-	case iiif.RTSquare:
-		if w < h {
-			top := (h - w) / 2
-			crop = image.Rect(0, top, w, w+top)
-		} else if h < w {
-			left := (w - h) / 2
-			crop = image.Rect(left, 0, h+left, h)
-		}
-	case iiif.RTPixel:
-		crop = image.Rect(int(r.X), int(r.Y), int(r.X+r.W), int(r.Y+r.H))
-	case iiif.RTPercent:
-		crop = image.Rect(
-			int(r.X*float64(w)/100.0),
-			int(r.Y*float64(h)/100.0),
-			int((r.X+r.W)*float64(w)/100.0),
-			int((r.Y+r.H)*float64(h)/100.0),
-		)
-	}
-	res.Decoder.SetCrop(crop)
-
-	w, h = crop.Dx(), crop.Dy()
-	switch s.Type {
-	case iiif.STScaleToWidth:
-		w, h = s.W, 0
-	case iiif.STScaleToHeight:
-		w, h = 0, s.H
-	case iiif.STExact:
-		w, h = s.W, s.H
-	case iiif.STBestFit:
-		w, h = res.getBestFit(w, h, s)
-	case iiif.STScalePercent:
-		w = int(float64(crop.Dx()) * s.Percent / 100.0)
-		h = int(float64(crop.Dy()) * s.Percent / 100.0)
-	}
-	res.Decoder.SetResizeWH(w, h)
-}
-
-// Preserving the aspect ratio, determines the proper scaling factor to get
-// width and height adjusted to fit within the width and height of the desired
-// size operation
-func (res *ImageResource) getBestFit(width, height int, s iiif.Size) (int, int) {
-	fW, fH, fsW, fsH := float64(width), float64(height), float64(s.W), float64(s.H)
-	sf := fsW / fW
-	if sf*fH > fsH {
-		sf = fsH / fH
-	}
-	return int(sf * fW), int(sf * fH)
 }
 
 func rotate(img image.Image, rot iiif.Rotation) image.Image {
