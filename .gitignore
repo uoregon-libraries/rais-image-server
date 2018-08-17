@@ -1,5 +1,4 @@
 /bin
-/pkg
-/vendor/src
 /docker/images
 !/docker/images/testfile/test-world*
+/.env
