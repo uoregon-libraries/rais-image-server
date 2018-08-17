@@ -40,7 +40,7 @@ var AllFeatures = &iiif.FeatureSet{
 
 	Jpg:  true,
 	Png:  true,
-	Gif:  true,
+	Gif:  false,
 	Tif:  true,
 	Jp2:  false,
 	Pdf:  false,

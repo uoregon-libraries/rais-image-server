@@ -3,9 +3,9 @@
 # which RAIS doesn't support, such as WEBP output, IIIF image clients may make
 # invalid requests RAIS won't handle.
 #
-# All values below reflect the state of RAIS's capabilities as of 2016-06-14.
-# Turning off slow features, such as GIF output, can potentially reduce
-# denial-of-service attack vectors.
+# All values below reflect the state of RAIS's capabilities as of August, 2018.
+# Note that Gif output is disabled by default, but may be enabled if desired.
+# It is generally too slow for a production server, however.
 RegionByPx = true
 RegionByPct = true
 
@@ -27,7 +27,7 @@ Bitonal = true
 
 Jpg = true
 Png = true
-Gif = true
+Gif = false
 Tif = true
 
 BaseURIRedirect = true
