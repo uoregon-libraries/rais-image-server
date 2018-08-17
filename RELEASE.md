@@ -4,6 +4,41 @@ Release notes
 The top of this file contains the latest stable release and relevant notes
 about what has changed since the previous release.
 
+Release 2.11.0
+- Added capacity to change demo container's capabilities
+-----
+
+Major changes:
+
+- Supports new features defined in IIIF 2.1:
+  - maxArea, maxWidth, and maxHeight may be set via configuration values in
+    rais.toml or put into an overridden info.json file
+    - If an image is requested that exceeds these values, the server will
+      return an error, allowing for better image protection as well as reduced
+      DOS attack vectors
+  - "square" region keyword
+  - "max" size keyword
+  - Reports features "sizeByConfinedWh" and "sizeByDistortedWh" in info.json
+- GIF output has been disabled by default.  It can be re-enabled with a custom
+  capabilities toml file, but it is recommended you don't do this as GIF is
+  notoriously slow in RAIS.
+
+Docker image changes:
+
+- Uses Fedora 28 instead of 27
+- RAIS now runs as an unprivileged user
+- The demo uses docker-compose instead of being a bash script
+- Binaries use Go 1.11 for compilation
+- Added capacity to change demo container's capabilities
+
+Minor / backend changes:
+
+- Source code format is now using the "go modules" approach rather than gb (gb
+  is no longer being maintained as the author feels modules make more sense)
+- Minor test / coverage improvements
+- Slightly better logging
+- Minor code refactor
+
 Release 2.10.1
 -----
 
