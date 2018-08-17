@@ -89,9 +89,9 @@ func main() {
 	address := viper.GetString("Address")
 
 	ih := NewImageHandler(tilePath)
-	ih.MaxArea = viper.GetInt64("ImageMaxArea")
-	ih.MaxWidth = viper.GetInt("ImageMaxWidth")
-	ih.MaxHeight = viper.GetInt("ImageMaxHeight")
+	ih.Maximums.Area = viper.GetInt64("ImageMaxArea")
+	ih.Maximums.Width = viper.GetInt("ImageMaxWidth")
+	ih.Maximums.Height = viper.GetInt("ImageMaxHeight")
 
 	// Handle IIIF data only if we have a IIIF URL
 	iiifURL := viper.GetString("IIIFURL")

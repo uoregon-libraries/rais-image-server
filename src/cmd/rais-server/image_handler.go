@@ -38,6 +38,20 @@ var (
 	DZITilePathRegex = regexp.MustCompile(`^/images/dzi/(.+)_files/(\d+)/(\d+)_(\d+).jpg$`)
 )
 
+type constraint struct {
+	Width  int
+	Height int
+	Area   int64
+}
+
+var unlimited = constraint{math.MaxInt32, math.MaxInt32, math.MaxInt64}
+
+// smallerThanAny returns true if the constraint's maximums are exceeded by the
+// given width and height
+func (c constraint) smallerThanAny(w, h int) bool {
+	return w > c.Width || h > c.Height || int64(w) * int64(h) > c.Area
+}
+
 // ImageHandler responds to an IIIF URL request and parses the requested
 // transformation within the limits of the handler's capabilities
 type ImageHandler struct {
@@ -47,18 +61,14 @@ type ImageHandler struct {
 	IIIFInfoPathRegex *regexp.Regexp
 	FeatureSet        *iiif.FeatureSet
 	TilePath          string
-	MaxWidth          int
-	MaxHeight         int
-	MaxArea           int64
+	Maximums          constraint
 }
 
 // NewImageHandler sets up a base ImageHandler with no features
 func NewImageHandler(tp string) *ImageHandler {
 	return &ImageHandler{
-		TilePath:  tp,
-		MaxWidth:  math.MaxInt32,
-		MaxHeight: math.MaxInt32,
-		MaxArea:   math.MaxInt64,
+		TilePath: tp,
+		Maximums: constraint{Width: math.MaxInt32, Height: math.MaxInt32, Area: math.MaxInt64},
 	}
 }
 
@@ -370,11 +380,10 @@ func (ih *ImageHandler) buildInfo(id iiif.ID, i ImageInfo) *iiif.Info {
 	info.Width = i.Width
 	info.Height = i.Height
 
-	var area = int64(i.Width) * int64(i.Height)
-	if area > ih.MaxArea || i.Width > ih.MaxWidth || i.Height > ih.MaxHeight {
-		info.Profile.MaxArea = ih.MaxArea
-		info.Profile.MaxWidth = ih.MaxWidth
-		info.Profile.MaxHeight = ih.MaxHeight
+	if ih.Maximums.smallerThanAny(i.Width, i.Height) {
+		info.Profile.MaxArea = ih.Maximums.Area
+		info.Profile.MaxWidth = ih.Maximums.Width
+		info.Profile.MaxHeight = ih.Maximums.Height
 	}
 
 	// Set up tile sizes

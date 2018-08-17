@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"math"
 	"net/http"
 	"net/url"
 	"os"
@@ -28,15 +27,8 @@ func rootDir() string {
 	return root
 }
 
-type maximums struct {
-	w, h int
-	a    int64
-}
-
-var unlimited = maximums{math.MaxInt32, math.MaxInt32, math.MaxInt64}
-
 // Sets up everything necessary to test an IIIF request
-func dorequest(path string, acceptLD bool, max maximums, t *testing.T) *fakehttp.ResponseWriter {
+func dorequest(path string, acceptLD bool, max constraint, t *testing.T) *fakehttp.ResponseWriter {
 	u, _ := url.Parse("http://example.com/foo/bar")
 	w := fakehttp.NewResponseWriter()
 	reqPath := fmt.Sprintf("/foo/bar/%s", path)
@@ -51,9 +43,9 @@ func dorequest(path string, acceptLD bool, max maximums, t *testing.T) *fakehttp
 		t.Errorf("Unable to create fake request: %s", err)
 	}
 	h := NewImageHandler(rootDir())
-	h.MaxWidth = max.w
-	h.MaxHeight = max.h
-	h.MaxArea = max.a
+	h.Maximums.Width = max.Width
+	h.Maximums.Height = max.Height
+	h.Maximums.Area = max.Area
 	h.EnableIIIF(u)
 	h.FeatureSet = iiif.FeatureSet1()
 	h.IIIFRoute(w, req)
@@ -128,7 +120,7 @@ func TestInfoRedirect(t *testing.T) {
 // TestInfoMaxSize verifies that when the image is bigger than the handler's
 // maximums, values are present in the info profile
 func TestInfoMaxSize(t *testing.T) {
-	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, maximums{60, 80, 480}, t)
+	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, constraint{60, 80, 480}, t)
 	var data iiif.Info
 	json.Unmarshal(w.Output, &data)
 	assert.Equal(60, data.Profile.MaxWidth, "JSON-decoded max width", t)
@@ -144,7 +136,7 @@ func TestInfoMaxSize(t *testing.T) {
 // TestInfoNoMaxSize verifies that when the image is smaller than the handler's
 // maximums, values are not present in the info profile
 func TestInfoNoMaxSize(t *testing.T) {
-	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, maximums{6000, 8000, 4800000}, t)
+	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, constraint{6000, 8000, 4800000}, t)
 	var data iiif.Info
 	json.Unmarshal(w.Output, &data)
 	assert.Equal(0, data.Profile.MaxWidth, "JSON-decoded width", t)
