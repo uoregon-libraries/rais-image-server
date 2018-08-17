@@ -2,6 +2,7 @@ package iiif
 
 import (
 	"image"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -100,9 +101,11 @@ func (s Size) GetResize(region image.Rectangle) image.Rectangle {
 	w, h := region.Dx(), region.Dy()
 	switch s.Type {
 	case STScaleToWidth:
-		w, h = s.W, 0
+		s.H = math.MaxInt32
+		w, h = s.getBestFit(w, h)
 	case STScaleToHeight:
-		w, h = 0, s.H
+		s.W = math.MaxInt32
+		w, h = s.getBestFit(w, h)
 	case STExact:
 		w, h = s.W, s.H
 	case STBestFit:
