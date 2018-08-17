@@ -14,10 +14,10 @@ import (
 
 // Custom errors an image read/transform operation could return
 var (
-	ErrImageDoesNotExist = errors.New("Image file does not exist")
-	ErrInvalidFiletype   = errors.New("Invalid or unknown file type")
-	ErrDecodeImage       = errors.New("Unable to decode image")
-	ErrBadImageFile      = errors.New("Unable to read image")
+	ErrImageDoesNotExist = errors.New("image file does not exist")
+	ErrInvalidFiletype   = errors.New("invalid or unknown file type")
+	ErrDecodeImage       = errors.New("unable to decode image")
+	ErrBadImageFile      = errors.New("unable to read image")
 )
 
 // IIIFImageDecoder defines an interface for reading images in a generic way.  It's
