@@ -16,7 +16,7 @@ import (
 var (
 	ErrImageDoesNotExist = errors.New("image file does not exist")
 	ErrInvalidFiletype   = errors.New("invalid or unknown file type")
-	ErrDecodeImage       = errors.New("unable to decode image")
+	ErrDecodeImage       = NewError("unable to decode image", 500)
 	ErrBadImageFile      = errors.New("unable to read image")
 )
 
@@ -75,7 +75,7 @@ func NewImageResource(id iiif.ID, filepath string) (*ImageResource, error) {
 
 // Apply runs all image manipulation operations described by the IIIF URL, and
 // returns an image.Image ready for encoding to the client
-func (res *ImageResource) Apply(u *iiif.URL) (image.Image, error) {
+func (res *ImageResource) Apply(u *iiif.URL, max constraint) (image.Image, *HandlerError) {
 	// Crop and resize have to be prepared before we can decode
 	w, h := res.Decoder.GetWidth(), res.Decoder.GetHeight()
 	crop := u.Region.GetCrop(w, h)

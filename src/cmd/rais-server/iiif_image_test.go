@@ -33,8 +33,8 @@ func TestSquareRegionTall(t *testing.T) {
 	var d = &fakeDecoder{w: 400, h: 950, tw: 64, th: 64, l: 1}
 	var tall = &ImageResource{Decoder: d}
 	var url = iiif.NewURL("/iiif/identifier/square/full/0/default.jpg")
-	var _, err = tall.Apply(url)
-	assert.NilError(err, "tall.Apply should not have errors", t)
+	var _, err = tall.Apply(url, unlimited)
+	assert.True(err == nil, "tall.Apply should not have errors", t)
 
 	assert.Equal(image.Point{400, 400}, d.crop.Size(), "square should be width x width", t)
 	assert.Equal(0, d.crop.Min.X, "tall image left", t)
@@ -49,8 +49,8 @@ func TestSquareRegionWide(t *testing.T) {
 	var d = &fakeDecoder{w: 4000, h: 650, tw: 128, th: 128, l: 4}
 	var wide = &ImageResource{Decoder: d}
 	var url = iiif.NewURL("/iiif/identifier/square/full/0/default.jpg")
-	var _, err = wide.Apply(url)
-	assert.NilError(err, "wide.Apply should not have errors", t)
+	var _, err = wide.Apply(url, unlimited)
+	assert.True(err == nil, "wide.Apply should not have errors", t)
 
 	assert.Equal(image.Point{650, 650}, d.crop.Size(), "square should be height x height", t)
 	assert.Equal(1675, d.crop.Min.X, "wide image left", t)

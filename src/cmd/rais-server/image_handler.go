@@ -446,9 +446,9 @@ func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iii
 		}
 	}
 
-	img, err := res.Apply(u)
+	img, err := res.Apply(u, ih.Maximums)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		http.Error(w, err.Message, err.Code)
 		return
 	}
 
