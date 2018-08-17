@@ -81,6 +81,15 @@ func (res *ImageResource) Apply(u *iiif.URL, max constraint) (image.Image, *Hand
 	crop := u.Region.GetCrop(w, h)
 	scale := u.Size.GetResize(crop)
 
+	// Determine the final image output dimensions to test size constraints
+	sw, sh := scale.Dx(), scale.Dy()
+	if u.Rotation.Degrees == 90 || u.Rotation.Degrees == 270 {
+		sw, sh = sh, sw
+	}
+	if max.smallerThanAny(sw, sh) {
+		return nil, NewError("requested image size exceeds server maximums", 501)
+	}
+
 	res.Decoder.SetCrop(crop)
 	res.Decoder.SetResizeWH(scale.Dx(), scale.Dy())
 

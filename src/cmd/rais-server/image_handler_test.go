@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"os"
@@ -28,7 +29,7 @@ func rootDir() string {
 }
 
 // Sets up everything necessary to test an IIIF request
-func dorequest(path string, acceptLD bool, max constraint, t *testing.T) *fakehttp.ResponseWriter {
+func dorequestGeneric(path string, acceptLD bool, max constraint, fs *iiif.FeatureSet, t *testing.T) *fakehttp.ResponseWriter {
 	u, _ := url.Parse("http://example.com/foo/bar")
 	w := fakehttp.NewResponseWriter()
 	reqPath := fmt.Sprintf("/foo/bar/%s", path)
@@ -47,10 +48,20 @@ func dorequest(path string, acceptLD bool, max constraint, t *testing.T) *fakeht
 	h.Maximums.Height = max.Height
 	h.Maximums.Area = max.Area
 	h.EnableIIIF(u)
-	h.FeatureSet = iiif.FeatureSet1()
+	h.FeatureSet = fs
 	h.IIIFRoute(w, req)
 
 	return w
+}
+
+// Sets up everything necessary to test an IIIF request using level 1 support
+func dorequest(path string, acceptLD bool, max constraint, t *testing.T) *fakehttp.ResponseWriter {
+	return dorequestGeneric(path, acceptLD, max, iiif.FeatureSet1(), t)
+}
+
+// Sets up everything necessary to test an IIIF request using level 2 support
+func dorequestl2(path string, acceptLD bool, max constraint, t *testing.T) *fakehttp.ResponseWriter {
+	return dorequestGeneric(path, acceptLD, max, iiif.FeatureSet2(), t)
 }
 
 func request(path string, t *testing.T) *fakehttp.ResponseWriter {
@@ -172,4 +183,23 @@ func TestUnsupportedRequest(t *testing.T) {
 func TestCommandHandler(t *testing.T) {
 	w := request("docker%2Fimages%2Ftestfile%2Ftest-world.jp2/10,10,80,80/full/0/default.jpg", t)
 	assert.Equal(-1, w.StatusCode, "Valid command request doesn't explicitly set status code", t)
+}
+
+func TestCommandHandlerInvalidSize(t *testing.T) {
+	img := "docker%2Fimages%2Ftestfile%2Ftest-world.jp2/pct:10,10,80,80/full/0/default.jpg"
+	areaConstraint := constraint{math.MaxInt32, math.MaxInt32, 480}
+	wConstraint := constraint{20, math.MaxInt32, math.MaxInt64}
+	hConstraint := constraint{math.MaxInt32, 20, math.MaxInt64}
+
+	// For sanity let's make sure the request has no errors when we don't specify
+	// any constraints
+	w := dorequestl2(img, false, unlimited, t)
+	assert.Equal(-1, w.StatusCode, "Supported request with valid size gets 200", t)
+
+	w = dorequestl2(img, false, wConstraint, t)
+	assert.Equal(501, w.StatusCode, "Status code when width is too large", t)
+	w = dorequestl2(img, false, hConstraint, t)
+	assert.Equal(501, w.StatusCode, "Status code when height is too large", t)
+	w = dorequestl2(img, false, areaConstraint, t)
+	assert.Equal(501, w.StatusCode, "Status code when area is too large", t)
 }
