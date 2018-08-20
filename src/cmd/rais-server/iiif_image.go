@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"math"
 	"os"
 	"path"
 	"rais/src/iiif"
@@ -73,13 +74,54 @@ func NewImageResource(id iiif.ID, filepath string) (*ImageResource, error) {
 	return img, nil
 }
 
+// getResizeWithConstraints returns a scaled rectangle, computing the best fit
+// for the given dimensions combined with our local constraints
+func getResizeWithConstraints(crop image.Rectangle, max constraint) image.Rectangle {
+	// First figure out the ideal width and height within our max width and height
+	cx := crop.Dx()
+	cy := crop.Dy()
+
+	// Sanity - we don't actually want any upscaling
+	if max.Width > cx {
+		max.Width = cx
+	}
+	if max.Height > cy {
+		max.Height = cy
+	}
+
+	s := iiif.Size{Type: iiif.STBestFit, W: max.Width, H: max.Height}
+	scale := s.GetResize(crop)
+	sx := scale.Dx()
+	sy := scale.Dy()
+
+	// If this is within the bounds of our max area, we can return, otherwise we
+	// have to scale further
+	area := int64(sx) * int64(sy)
+	if area <= max.Area {
+		return scale
+	}
+
+	mult := math.Sqrt(float64(max.Area) / float64(area))
+	xf := mult * float64(sx)
+	yf := mult * float64(sy)
+	return image.Rect(0, 0, int(xf), int(yf))
+}
+
 // Apply runs all image manipulation operations described by the IIIF URL, and
 // returns an image.Image ready for encoding to the client
 func (res *ImageResource) Apply(u *iiif.URL, max constraint) (image.Image, *HandlerError) {
 	// Crop and resize have to be prepared before we can decode
 	w, h := res.Decoder.GetWidth(), res.Decoder.GetHeight()
 	crop := u.Region.GetCrop(w, h)
-	scale := u.Size.GetResize(crop)
+
+	// If size is "max", we actually want the "best fit" size type, but with our
+	// constraints used instead of a user-supplied value.
+	var scale image.Rectangle
+	if u.Size.Type == iiif.STMax {
+		scale = getResizeWithConstraints(crop, max)
+	} else {
+		scale = u.Size.GetResize(crop)
+	}
 
 	// Determine the final image output dimensions to test size constraints
 	sw, sh := scale.Dx(), scale.Dy()

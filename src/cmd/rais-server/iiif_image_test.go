@@ -58,3 +58,57 @@ func TestSquareRegionWide(t *testing.T) {
 	assert.Equal(2325, d.crop.Max.X, "wide image right", t)
 	assert.Equal(650, d.crop.Max.Y, "wide image bottom", t)
 }
+
+func TestMaxSizeNoConstraints(t *testing.T) {
+	var d = &fakeDecoder{w: 4000, h: 650, tw: 128, th: 128, l: 4}
+	var img = &ImageResource{Decoder: d}
+	var url = iiif.NewURL("/iiif/identifier/full/max/0/default.jpg")
+	var _, err = img.Apply(url, unlimited)
+	assert.True(err == nil, "img.Apply should not have errors", t)
+
+	assert.Equal(image.Point{4000, 650}, d.crop.Size(), "max size should be full width x height", t)
+	assert.Equal(4000, d.resizeW, "resize width", t)
+	assert.Equal(650, d.resizeH, "resize height", t)
+}
+
+func TestMaxSizeConstrainWidth(t *testing.T) {
+	var d = &fakeDecoder{w: 4000, h: 650, tw: 128, th: 128, l: 4}
+	var img = &ImageResource{Decoder: d}
+	var url = iiif.NewURL("/iiif/identifier/full/max/0/default.jpg")
+	var c = unlimited
+	c.Width = 400
+	var _, err = img.Apply(url, c)
+	assert.True(err == nil, "img.Apply should not have errors", t)
+
+	assert.Equal(image.Point{4000, 650}, d.crop.Size(), "no crop", t)
+	assert.Equal(400, d.resizeW, "resize width", t)
+	assert.Equal(65, d.resizeH, "resize height", t)
+}
+
+func TestMaxSizeConstrainHeight(t *testing.T) {
+	var d = &fakeDecoder{w: 4000, h: 650, tw: 128, th: 128, l: 4}
+	var img = &ImageResource{Decoder: d}
+	var url = iiif.NewURL("/iiif/identifier/full/max/0/default.jpg")
+	var c = unlimited
+	c.Height = 325
+	var _, err = img.Apply(url, c)
+	assert.True(err == nil, "img.Apply should not have errors", t)
+
+	assert.Equal(image.Point{4000, 650}, d.crop.Size(), "no crop", t)
+	assert.Equal(2000, d.resizeW, "resize width", t)
+	assert.Equal(325, d.resizeH, "resize height", t)
+}
+
+func TestMaxSizeConstrainArea(t *testing.T) {
+	var d = &fakeDecoder{w: 4000, h: 600, tw: 128, th: 128, l: 4}
+	var img = &ImageResource{Decoder: d}
+	var url = iiif.NewURL("/iiif/identifier/full/max/0/default.jpg")
+	var c = unlimited
+	c.Area = 37500
+	var _, err = img.Apply(url, c)
+	assert.True(err == nil, "img.Apply should not have errors", t)
+
+	assert.Equal(image.Point{4000, 600}, d.crop.Size(), "no crop", t)
+	assert.Equal(500, d.resizeW, "resize width", t)
+	assert.Equal(75, d.resizeH, "resize height", t)
+}

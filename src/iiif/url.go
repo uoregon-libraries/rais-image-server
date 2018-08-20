@@ -26,7 +26,7 @@ var pathRegex = regexp.MustCompile(fmt.Sprintf(
 	"/%s/%s/%s/%s/%s.%s$",
 	`([^/]+)`,
 	`(square|full|\d+,\d+,\d+,\d+|pct:[0-9.]+,[0-9.]+,[0-9.]+,[0-9.]+)`,
-	`(full|\d+,|,\d+|pct:[0-9.]+|\d+,\d+|!\d+,\d+)`,
+	`(max|full|\d+,|,\d+|pct:[0-9.]+|\d+,\d+|!\d+,\d+)`,
 	`(\d+|!\d+)`,
 	`(color|gray|bitonal|default|native)`,
 	`(jpg|tif|png|gif|jp2|pdf|webp)`,

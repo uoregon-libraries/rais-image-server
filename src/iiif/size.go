@@ -13,6 +13,8 @@ type SizeType int
 const (
 	// STNone is used when the Size struct wasn't able to be parsed form a string
 	STNone SizeType = iota
+	// STMax requests the maximum size the server supports
+	STMax
 	// STFull means no scaling is requested
 	STFull
 	// STScaleToWidth requests the image be scaled to a set width (aspect ratio
@@ -44,6 +46,9 @@ type Size struct {
 func StringToSize(p string) Size {
 	if p == "full" {
 		return Size{Type: STFull}
+	}
+	if p == "max" {
+		return Size{Type: STMax}
 	}
 
 	s := Size{Type: STNone}
@@ -96,7 +101,9 @@ func (s Size) Valid() bool {
 }
 
 // GetResize determines how a given region would be resized and returns a
-// rectangle representing the scaled image's dimensions
+// rectangle representing the scaled image's dimensions.  If STMax is in use,
+// this returns the full region, as only the image server itself would know its
+// capabilities and therefore it shouldn't call this in that scenario.
 func (s Size) GetResize(region image.Rectangle) image.Rectangle {
 	w, h := region.Dx(), region.Dy()
 	switch s.Type {
