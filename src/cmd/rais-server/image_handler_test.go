@@ -186,7 +186,7 @@ func TestCommandHandler(t *testing.T) {
 }
 
 func TestCommandHandlerInvalidSize(t *testing.T) {
-	img := "docker%2Fimages%2Ftestfile%2Ftest-world.jp2/pct:10,10,80,80/full/0/default.jpg"
+	img := "docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/pct:10,10,80,80/full/0/default.jpg"
 	areaConstraint := constraint{math.MaxInt32, math.MaxInt32, 480}
 	wConstraint := constraint{20, math.MaxInt32, math.MaxInt64}
 	hConstraint := constraint{math.MaxInt32, 20, math.MaxInt64}
@@ -194,7 +194,7 @@ func TestCommandHandlerInvalidSize(t *testing.T) {
 	// For sanity let's make sure the request has no errors when we don't specify
 	// any constraints
 	w := dorequestl2(img, false, unlimited, t)
-	assert.Equal(-1, w.StatusCode, "Supported request with valid size gets 200", t)
+	assert.Equal(-1, w.StatusCode, "Supported request with valid size doesn't set status code", t)
 
 	w = dorequestl2(img, false, wConstraint, t)
 	assert.Equal(501, w.StatusCode, "Status code when width is too large", t)
