@@ -464,6 +464,15 @@ func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iii
 			Height: info.Profile.MaxHeight,
 			Area: info.Profile.MaxArea,
 		}
+		if max.Width == 0 {
+			max.Width = math.MaxInt32
+		}
+		if max.Height == 0 {
+			max.Height = math.MaxInt32
+		}
+		if max.Area == 0 {
+			max.Area = math.MaxInt64
+		}
 	}
 	img, err := res.Apply(u, max)
 	if err != nil {
