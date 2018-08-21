@@ -17,6 +17,8 @@ SizeByPct = true
 SizeByWh = true
 SizeByForcedWh = true
 SizeAboveFull = true
+SizeByConfinedWh = true
+SizeByDistortedWh = true
 
 RotationBy90s = true
 Mirroring = true

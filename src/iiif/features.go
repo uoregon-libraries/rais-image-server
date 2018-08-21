@@ -27,13 +27,15 @@ type FeatureSet struct {
 	RegionSquare bool
 
 	// Size options: note that full isn't specified but must be supported
-	SizeByWhListed bool
-	SizeByW        bool
-	SizeByH        bool
-	SizeByPct      bool
-	SizeByForcedWh bool
-	SizeByWh       bool
-	SizeAboveFull  bool
+	SizeByWhListed    bool
+	SizeByW           bool
+	SizeByH           bool
+	SizeByPct         bool
+	SizeByForcedWh    bool
+	SizeByWh          bool
+	SizeAboveFull     bool
+	SizeByConfinedWh  bool
+	SizeByDistortedWh bool
 
 	// Rotation and mirroring
 	RotationBy90s     bool
@@ -81,6 +83,8 @@ func (fs *FeatureSet) toMap() FeaturesMap {
 		"sizeByPct":           fs.SizeByPct,
 		"sizeByForcedWh":      fs.SizeByForcedWh,
 		"sizeByWh":            fs.SizeByWh,
+		"sizeByConfinedWh":    fs.SizeByConfinedWh,
+		"sizeByDistortedWh":   fs.SizeByDistortedWh,
 		"sizeAboveFull":       fs.SizeAboveFull,
 		"rotationBy90s":       fs.RotationBy90s,
 		"rotationArbitrary":   fs.RotationArbitrary,
