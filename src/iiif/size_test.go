@@ -1,6 +1,7 @@
 package iiif
 
 import (
+	"image"
 	"testing"
 
 	"github.com/uoregon-libraries/gopkg/assert"
@@ -68,4 +69,42 @@ func TestInvalidSizes(t *testing.T) {
 	assert.True(!s.Valid(), "!s.Valid()", t)
 	s = StringToSize("pct:0")
 	assert.True(!s.Valid(), "!s.Valid()", t)
+}
+
+func TestGetResize(t *testing.T) {
+	s := Size{Type: STFull}
+	source := image.Rect(0, 0, 600, 1200)
+	scale := s.GetResize(source)
+	assert.Equal(scale.Dx(), source.Dx(), "full resize Dx", t)
+	assert.Equal(scale.Dy(), source.Dy(), "full resize Dy", t)
+
+	s.Type = STScaleToWidth
+	s.W = 90
+	scale = s.GetResize(source)
+	assert.Equal(scale.Dx(), 90, "scale-to-width Dx", t)
+	assert.Equal(scale.Dy(), 180, "scale-to-width Dy", t)
+
+	s.Type = STScaleToHeight
+	s.H = 90
+	scale = s.GetResize(source)
+	assert.Equal(scale.Dx(), 45, "scale-to-height Dx", t)
+	assert.Equal(scale.Dy(), 90, "scale-to-height Dy", t)
+
+	s.Type = STScalePercent
+	s.Percent = 100 * 2.0 / 3.0
+	scale = s.GetResize(source)
+	assert.Equal(scale.Dx(), 400, "scale-to-pct Dx", t)
+	assert.Equal(scale.Dy(), 800, "scale-to-pct Dy", t)
+
+	s.Type = STExact
+	s.W = 95
+	s.H = 100
+	scale = s.GetResize(source)
+	assert.Equal(scale.Dx(), 95, "scale-to-exact Dx", t)
+	assert.Equal(scale.Dy(), 100, "scale-to-exact Dy", t)
+
+	s.Type = STBestFit
+	scale = s.GetResize(source)
+	assert.Equal(scale.Dx(), 50, "scale-to-pct Dx", t)
+	assert.Equal(scale.Dy(), 100, "scale-to-pct Dy", t)
 }

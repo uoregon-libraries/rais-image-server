@@ -51,3 +51,40 @@ func FeatureSet2() *FeatureSet {
 		JsonldMediaType: true,
 	}
 }
+
+// AllFeatures returns the complete list of everything supported by RAIS at
+// this time
+func AllFeatures() *FeatureSet {
+	return &FeatureSet{
+		RegionByPx:   true,
+		RegionByPct:  true,
+		RegionSquare: true,
+
+		SizeByWhListed:    true,
+		SizeByW:           true,
+		SizeByH:           true,
+		SizeByPct:         true,
+		SizeByWh:          true,
+		SizeByForcedWh:    true,
+		SizeAboveFull:     true,
+		SizeByConfinedWh:  true,
+		SizeByDistortedWh: true,
+
+		RotationBy90s: true,
+		Mirroring:     true,
+
+		Default: true,
+		Color:   true,
+		Gray:    true,
+		Bitonal: true,
+
+		Jpg: true,
+		Png: true,
+		Gif: false,
+		Tif: true,
+
+		BaseURIRedirect: true,
+		Cors:            true,
+		JsonldMediaType: true,
+	}
+}

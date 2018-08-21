@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"math"
 	"os"
 	"path"
 	"rais/src/iiif"
@@ -14,10 +15,10 @@ import (
 
 // Custom errors an image read/transform operation could return
 var (
-	ErrImageDoesNotExist = errors.New("Image file does not exist")
-	ErrInvalidFiletype   = errors.New("Invalid or unknown file type")
-	ErrDecodeImage       = errors.New("Unable to decode image")
-	ErrBadImageFile      = errors.New("Unable to read image")
+	ErrImageDoesNotExist = errors.New("image file does not exist")
+	ErrInvalidFiletype   = errors.New("invalid or unknown file type")
+	ErrDecodeImage       = NewError("unable to decode image", 500)
+	ErrBadImageFile      = errors.New("unable to read image")
 )
 
 // IIIFImageDecoder defines an interface for reading images in a generic way.  It's
@@ -73,11 +74,66 @@ func NewImageResource(id iiif.ID, filepath string) (*ImageResource, error) {
 	return img, nil
 }
 
+// getResizeWithConstraints returns a scaled rectangle, computing the best fit
+// for the given dimensions combined with our local constraints
+func getResizeWithConstraints(crop image.Rectangle, max constraint) image.Rectangle {
+	// First figure out the ideal width and height within our max width and height
+	cx := crop.Dx()
+	cy := crop.Dy()
+
+	// Sanity - we don't actually want any upscaling
+	if max.Width > cx {
+		max.Width = cx
+	}
+	if max.Height > cy {
+		max.Height = cy
+	}
+
+	s := iiif.Size{Type: iiif.STBestFit, W: max.Width, H: max.Height}
+	scale := s.GetResize(crop)
+	sx := scale.Dx()
+	sy := scale.Dy()
+
+	// If this is within the bounds of our max area, we can return, otherwise we
+	// have to scale further
+	area := int64(sx) * int64(sy)
+	if area <= max.Area {
+		return scale
+	}
+
+	mult := math.Sqrt(float64(max.Area) / float64(area))
+	xf := mult * float64(sx)
+	yf := mult * float64(sy)
+	return image.Rect(0, 0, int(xf), int(yf))
+}
+
 // Apply runs all image manipulation operations described by the IIIF URL, and
 // returns an image.Image ready for encoding to the client
-func (res *ImageResource) Apply(u *iiif.URL) (image.Image, error) {
+func (res *ImageResource) Apply(u *iiif.URL, max constraint) (image.Image, *HandlerError) {
 	// Crop and resize have to be prepared before we can decode
-	res.prep(u.Region, u.Size)
+	w, h := res.Decoder.GetWidth(), res.Decoder.GetHeight()
+	crop := u.Region.GetCrop(w, h)
+
+	// If size is "max", we actually want the "best fit" size type, but with our
+	// constraints used instead of a user-supplied value.
+	var scale image.Rectangle
+	if u.Size.Type == iiif.STMax {
+		scale = getResizeWithConstraints(crop, max)
+	} else {
+		scale = u.Size.GetResize(crop)
+	}
+
+	// Determine the final image output dimensions to test size constraints
+	sw, sh := scale.Dx(), scale.Dy()
+	if u.Rotation.Degrees == 90 || u.Rotation.Degrees == 270 {
+		sw, sh = sh, sw
+	}
+	if max.smallerThanAny(sw, sh) {
+		return nil, NewError("requested image size exceeds server maximums", 501)
+	}
+
+	res.Decoder.SetCrop(crop)
+	res.Decoder.SetResizeWH(scale.Dx(), scale.Dy())
 
 	img, err := res.Decoder.DecodeImage()
 	if err != nil {
@@ -100,52 +156,6 @@ func (res *ImageResource) Apply(u *iiif.URL) (image.Image, error) {
 	}
 
 	return img, nil
-}
-
-func (res *ImageResource) prep(r iiif.Region, s iiif.Size) {
-	w, h := res.Decoder.GetWidth(), res.Decoder.GetHeight()
-	crop := image.Rect(0, 0, w, h)
-
-	switch r.Type {
-	case iiif.RTPixel:
-		crop = image.Rect(int(r.X), int(r.Y), int(r.X+r.W), int(r.Y+r.H))
-	case iiif.RTPercent:
-		crop = image.Rect(
-			int(r.X*float64(w)/100.0),
-			int(r.Y*float64(h)/100.0),
-			int((r.X+r.W)*float64(w)/100.0),
-			int((r.Y+r.H)*float64(h)/100.0),
-		)
-	}
-	res.Decoder.SetCrop(crop)
-
-	w, h = crop.Dx(), crop.Dy()
-	switch s.Type {
-	case iiif.STScaleToWidth:
-		w, h = s.W, 0
-	case iiif.STScaleToHeight:
-		w, h = 0, s.H
-	case iiif.STExact:
-		w, h = s.W, s.H
-	case iiif.STBestFit:
-		w, h = res.getBestFit(w, h, s)
-	case iiif.STScalePercent:
-		w = int(float64(crop.Dx()) * s.Percent / 100.0)
-		h = int(float64(crop.Dy()) * s.Percent / 100.0)
-	}
-	res.Decoder.SetResizeWH(w, h)
-}
-
-// Preserving the aspect ratio, determines the proper scaling factor to get
-// width and height adjusted to fit within the width and height of the desired
-// size operation
-func (res *ImageResource) getBestFit(width, height int, s iiif.Size) (int, int) {
-	fW, fH, fsW, fsH := float64(width), float64(height), float64(s.W), float64(s.H)
-	sf := fsW / fW
-	if sf*fH > fsH {
-		sf = fsH / fH
-	}
-	return int(sf * fW), int(sf * fH)
 }
 
 func rotate(img image.Image, rot iiif.Rotation) image.Image {

@@ -16,43 +16,6 @@ import (
 	"strings"
 )
 
-// AllFeatures is the complete list of everything supported by RAIS at this time
-var AllFeatures = &iiif.FeatureSet{
-	RegionByPx:  true,
-	RegionByPct: true,
-
-	SizeByWhListed: true,
-	SizeByW:        true,
-	SizeByH:        true,
-	SizeByPct:      true,
-	SizeByWh:       true,
-	SizeByForcedWh: true,
-	SizeAboveFull:  true,
-
-	RotationBy90s:     true,
-	RotationArbitrary: false,
-	Mirroring:         true,
-
-	Default: true,
-	Color:   true,
-	Gray:    true,
-	Bitonal: true,
-
-	Jpg:  true,
-	Png:  true,
-	Gif:  false,
-	Tif:  true,
-	Jp2:  false,
-	Pdf:  false,
-	Webp: false,
-
-	BaseURIRedirect:     true,
-	Cors:                true,
-	JsonldMediaType:     true,
-	ProfileLinkHeader:   false,
-	CanonicalLinkHeader: false,
-}
-
 func acceptsLD(req *http.Request) bool {
 	for _, h := range req.Header["Accept"] {
 		for _, accept := range strings.Split(h, ",") {
@@ -75,6 +38,20 @@ var (
 	DZITilePathRegex = regexp.MustCompile(`^/images/dzi/(.+)_files/(\d+)/(\d+)_(\d+).jpg$`)
 )
 
+type constraint struct {
+	Width  int
+	Height int
+	Area   int64
+}
+
+var unlimited = constraint{math.MaxInt32, math.MaxInt32, math.MaxInt64}
+
+// smallerThanAny returns true if the constraint's maximums are exceeded by the
+// given width and height
+func (c constraint) smallerThanAny(w, h int) bool {
+	return w > c.Width || h > c.Height || int64(w)*int64(h) > c.Area
+}
+
 // ImageHandler responds to an IIIF URL request and parses the requested
 // transformation within the limits of the handler's capabilities
 type ImageHandler struct {
@@ -84,11 +61,15 @@ type ImageHandler struct {
 	IIIFInfoPathRegex *regexp.Regexp
 	FeatureSet        *iiif.FeatureSet
 	TilePath          string
+	Maximums          constraint
 }
 
 // NewImageHandler sets up a base ImageHandler with no features
 func NewImageHandler(tp string) *ImageHandler {
-	return &ImageHandler{TilePath: tp}
+	return &ImageHandler{
+		TilePath: tp,
+		Maximums: constraint{Width: math.MaxInt32, Height: math.MaxInt32, Area: math.MaxInt64},
+	}
 }
 
 // EnableIIIF sets up regexes for IIIF responses
@@ -98,7 +79,7 @@ func (ih *ImageHandler) EnableIIIF(u *url.URL) {
 	ih.IIIFBaseRegex = regexp.MustCompile(rprefix + `/([^/]+)`)
 	ih.IIIFBaseOnlyRegex = regexp.MustCompile(rprefix + `/[^/]+$`)
 	ih.IIIFInfoPathRegex = regexp.MustCompile(rprefix + `/([^/]+)/info.json$`)
-	ih.FeatureSet = AllFeatures
+	ih.FeatureSet = iiif.AllFeatures()
 }
 
 // IIIFRoute takes an HTTP request and parses it to see what (if any) IIIF
@@ -128,8 +109,14 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Handle info.json prior to reading the image, in case of cached info
+	info, e := ih.getInfo(id, fp)
+	if e != nil {
+		http.Error(w, e.Message, e.Code)
+		return
+	}
+
 	if ih.IIIFInfoPathRegex.MatchString(p) {
-		ih.Info(w, req, id, fp)
+		ih.Info(w, req, info)
 		return
 	}
 
@@ -149,7 +136,7 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Attempt to run the command
-	ih.Command(w, req, u, res)
+	ih.Command(w, req, u, res, info)
 }
 
 func convertStrings(s1, s2, s3 string) (i1, i2, i3 int, err error) {
@@ -281,31 +268,17 @@ func (ih *ImageHandler) DZITile(w http.ResponseWriter, req *http.Request, res *I
 
 	u := iiif.NewURL(fmt.Sprintf("%s/%d,%d,%d,%d/%d,/0/default.jpg",
 		res.FilePath, left, top, finalWidth, finalHeight, requestedWidth))
-	ih.Command(w, req, u, res)
+	ih.Command(w, req, u, res, nil)
 }
 
 // Info responds to a IIIF info request with appropriate JSON based on the
 // image's data and the handler's capabilities
-func (ih *ImageHandler) Info(w http.ResponseWriter, req *http.Request, id iiif.ID, fp string) {
-	// Check for cached image data first, and use that to create JSON
-	json, e := ih.loadInfoJSONFromCache(id)
-	if e != nil {
-		http.Error(w, e.Message, e.Code)
+func (ih *ImageHandler) Info(w http.ResponseWriter, req *http.Request, info *iiif.Info) {
+	// Convert info to JSON
+	json, err := marshalInfo(info)
+	if err != nil {
+		http.Error(w, err.Message, err.Code)
 		return
-	}
-
-	// Next, check for an overridden info.json file, and just spit that out
-	// directly if it exists
-	if json == nil {
-		json = ih.loadInfoJSONOverride(id, fp)
-	}
-
-	if json == nil {
-		json, e = ih.loadInfoJSONFromImageResource(id, fp)
-		if e != nil {
-			http.Error(w, e.Message, e.Code)
-			return
-		}
 	}
 
 	// Set headers - content type is dependent on client
@@ -327,32 +300,60 @@ func newImageResError(err error) *HandlerError {
 	}
 }
 
-func (ih *ImageHandler) loadInfoJSONFromCache(id iiif.ID) ([]byte, *HandlerError) {
+func (ih *ImageHandler) getInfo(id iiif.ID, fp string) (info *iiif.Info, err *HandlerError) {
+	// Check for cached image data first, and use that to create JSON
+	info = ih.loadInfoFromCache(id)
+
+	// Next, check for an overridden info.json file, and just spit that out
+	// directly if it exists
+	if info == nil {
+		info = ih.loadInfoOverride(id, fp)
+	}
+
+	if info == nil {
+		info, err = ih.loadInfoFromImageResource(id, fp)
+	}
+
+	return info, err
+}
+
+func (ih *ImageHandler) loadInfoFromCache(id iiif.ID) *iiif.Info {
 	if infoCache == nil {
-		return nil, nil
+		return nil
 	}
 
 	data, ok := infoCache.Get(id)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 
-	return ih.buildInfoJSON(id, data.(ImageInfo))
+	return ih.buildInfo(id, data.(ImageInfo))
 }
 
-func (ih *ImageHandler) loadInfoJSONOverride(id iiif.ID, fp string) []byte {
+func (ih *ImageHandler) loadInfoOverride(id iiif.ID, fp string) *iiif.Info {
 	// If an override file isn't found or has an error, just skip it
-	json, err := ioutil.ReadFile(fp + "-info.json")
+	var infofile = fp + "-info.json"
+	data, err := ioutil.ReadFile(infofile)
 	if err != nil {
 		return nil
 	}
 
+	Logger.Debugf("Loading image data from override file (%s)", infofile)
+
 	// If an override file *is* found, replace the id
 	fullid := ih.IIIFBase.String() + "/" + id.String()
-	return bytes.Replace(json, []byte("%ID%"), []byte(fullid), 1)
+	d2 := bytes.Replace(data, []byte("%ID%"), []byte(fullid), 1)
+
+	info := new(iiif.Info)
+	err = json.Unmarshal(d2, info)
+	if err != nil {
+		Logger.Errorf("Cannot parse JSON override file %q: %s", infofile, err)
+		return nil
+	}
+	return info
 }
 
-func (ih *ImageHandler) loadInfoJSONFromImageResource(id iiif.ID, fp string) ([]byte, *HandlerError) {
+func (ih *ImageHandler) loadInfoFromImageResource(id iiif.ID, fp string) (*iiif.Info, *HandlerError) {
 	Logger.Debugf("Loading image data from image resource (id: %s)", id)
 	res, err := NewImageResource(id, fp)
 	if err != nil {
@@ -371,13 +372,19 @@ func (ih *ImageHandler) loadInfoJSONFromImageResource(id iiif.ID, fp string) ([]
 	if infoCache != nil {
 		infoCache.Add(id, imageInfo)
 	}
-	return ih.buildInfoJSON(id, imageInfo)
+	return ih.buildInfo(id, imageInfo), nil
 }
 
-func (ih *ImageHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *HandlerError) {
+func (ih *ImageHandler) buildInfo(id iiif.ID, i ImageInfo) *iiif.Info {
 	info := ih.FeatureSet.Info()
 	info.Width = i.Width
 	info.Height = i.Height
+
+	if ih.Maximums.smallerThanAny(i.Width, i.Height) {
+		info.Profile.MaxArea = ih.Maximums.Area
+		info.Profile.MaxWidth = ih.Maximums.Width
+		info.Profile.MaxHeight = ih.Maximums.Height
+	}
 
 	// Set up tile sizes
 	if i.TileWidth > 0 {
@@ -407,7 +414,10 @@ func (ih *ImageHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *Handler
 
 	// The info id is actually the full URL to the resource, not just its ID
 	info.ID = ih.IIIFBase.String() + "/" + id.String()
+	return info
+}
 
+func marshalInfo(info *iiif.Info) ([]byte, *HandlerError) {
 	json, err := json.Marshal(info)
 	if err != nil {
 		Logger.Errorf("Unable to marshal IIIFInfo response: %s", err)
@@ -418,7 +428,7 @@ func (ih *ImageHandler) buildInfoJSON(id iiif.ID, i ImageInfo) ([]byte, *Handler
 }
 
 // Command handles image processing operations
-func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL, res *ImageResource) {
+func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL, res *ImageResource, info *iiif.Info) {
 	// For now the cache is very limited to ensure only relatively small requests
 	// are actually cached
 	willCache := tileCache != nil && u.Format == iiif.FmtJPG && u.Size.W > 0 && u.Size.W <= 1024 && u.Size.H == 0
@@ -445,9 +455,28 @@ func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iii
 		}
 	}
 
-	img, err := res.Apply(u)
+	var max = ih.Maximums
+	// If we have an info, we can make use of it for the constraints rather than
+	// using the global constraints; this is useful for overridden info.json files
+	if info != nil {
+		max = constraint{
+			Width:  info.Profile.MaxWidth,
+			Height: info.Profile.MaxHeight,
+			Area:   info.Profile.MaxArea,
+		}
+		if max.Width == 0 {
+			max.Width = math.MaxInt32
+		}
+		if max.Height == 0 {
+			max.Height = math.MaxInt32
+		}
+		if max.Area == 0 {
+			max.Area = math.MaxInt64
+		}
+	}
+	img, err := res.Apply(u, max)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		http.Error(w, err.Message, err.Code)
 		return
 	}
 

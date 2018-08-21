@@ -22,17 +22,20 @@ type TileSize struct {
 // arbitrary resizing can still advertise specific sizes that will work.
 type FeatureSet struct {
 	// Region options: note that full isn't specified but must be supported
-	RegionByPx  bool
-	RegionByPct bool
+	RegionByPx   bool
+	RegionByPct  bool
+	RegionSquare bool
 
 	// Size options: note that full isn't specified but must be supported
-	SizeByWhListed bool
-	SizeByW        bool
-	SizeByH        bool
-	SizeByPct      bool
-	SizeByForcedWh bool
-	SizeByWh       bool
-	SizeAboveFull  bool
+	SizeByWhListed    bool
+	SizeByW           bool
+	SizeByH           bool
+	SizeByPct         bool
+	SizeByForcedWh    bool
+	SizeByWh          bool
+	SizeAboveFull     bool
+	SizeByConfinedWh  bool
+	SizeByDistortedWh bool
 
 	// Rotation and mirroring
 	RotationBy90s     bool
@@ -73,12 +76,15 @@ func (fs *FeatureSet) toMap() FeaturesMap {
 	return FeaturesMap{
 		"regionByPx":          fs.RegionByPx,
 		"regionByPct":         fs.RegionByPct,
+		"regionSquare":        fs.RegionSquare,
 		"sizeByWhListed":      fs.SizeByWhListed,
 		"sizeByW":             fs.SizeByW,
 		"sizeByH":             fs.SizeByH,
 		"sizeByPct":           fs.SizeByPct,
 		"sizeByForcedWh":      fs.SizeByForcedWh,
 		"sizeByWh":            fs.SizeByWh,
+		"sizeByConfinedWh":    fs.SizeByConfinedWh,
+		"sizeByDistortedWh":   fs.SizeByDistortedWh,
 		"sizeAboveFull":       fs.SizeAboveFull,
 		"rotationBy90s":       fs.RotationBy90s,
 		"rotationArbitrary":   fs.RotationArbitrary,
