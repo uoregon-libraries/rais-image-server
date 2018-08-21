@@ -61,7 +61,7 @@ func TestAllFeaturesEnabled(t *testing.T) {
 	assert.Equal("http://iiif.io/api/image/2/level2.json", i.Profile.ConformanceURL, "Profile conformance level", t)
 
 	extra := i.Profile.profileElement2
-	assert.Equal(3, len(extra.Supports), "There are 3 extra features", t)
+	assert.Equal(5, len(extra.Supports), "THERE... ARE... FOUR... (plus one) EXTRA... FEATURES!", t)
 	assert.Equal(0, len(extra.Qualities), "There are 0 extra qualities", t)
 	assert.Equal(1, len(extra.Formats), "There is 1 extra format", t)
 	assert.IncludesString("regionSquare", extra.Supports, "Custom FS support", t)
