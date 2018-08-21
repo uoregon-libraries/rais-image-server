@@ -49,7 +49,7 @@ var unlimited = constraint{math.MaxInt32, math.MaxInt32, math.MaxInt64}
 // smallerThanAny returns true if the constraint's maximums are exceeded by the
 // given width and height
 func (c constraint) smallerThanAny(w, h int) bool {
-	return w > c.Width || h > c.Height || int64(w) * int64(h) > c.Area
+	return w > c.Width || h > c.Height || int64(w)*int64(h) > c.Area
 }
 
 // ImageHandler responds to an IIIF URL request and parses the requested
@@ -460,9 +460,9 @@ func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iii
 	// using the global constraints; this is useful for overridden info.json files
 	if info != nil {
 		max = constraint{
-			Width: info.Profile.MaxWidth,
+			Width:  info.Profile.MaxWidth,
 			Height: info.Profile.MaxHeight,
-			Area: info.Profile.MaxArea,
+			Area:   info.Profile.MaxArea,
 		}
 		if max.Width == 0 {
 			max.Width = math.MaxInt32

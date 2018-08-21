@@ -70,21 +70,21 @@ func AllFeatures() *FeatureSet {
 		SizeByConfinedWh:  true,
 		SizeByDistortedWh: true,
 
-		RotationBy90s:     true,
-		Mirroring:         true,
+		RotationBy90s: true,
+		Mirroring:     true,
 
 		Default: true,
 		Color:   true,
 		Gray:    true,
 		Bitonal: true,
 
-		Jpg:  true,
-		Png:  true,
-		Gif:  false,
-		Tif:  true,
+		Jpg: true,
+		Png: true,
+		Gif: false,
+		Tif: true,
 
-		BaseURIRedirect:     true,
-		Cors:                true,
-		JsonldMediaType:     true,
+		BaseURIRedirect: true,
+		Cors:            true,
+		JsonldMediaType: true,
 	}
 }
