@@ -190,6 +190,8 @@ Full list of features supported:
   - "w,h" / sizeByForcedWH
   - "!w,h" / sizeByWH
   - "sizeAboveFull"
+  - "sizeByConfinedWh"
+  - "sizeByDistortedWh"
 - Rotation:
   - 0
   - "90,180,270" / rotationBy90s

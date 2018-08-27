@@ -23,7 +23,7 @@ test:
 	go test rais/src/...
 
 bench:
-	go test -bench=. -run=XXX -v -test.benchtime=5s -test.count=2
+	go test -bench=. -benchtime=5s -count=2 rais/src/openjpeg
 
 format:
 	find src/ -name "*.go" | xargs gofmt -l -w -s

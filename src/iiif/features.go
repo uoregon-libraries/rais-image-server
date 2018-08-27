@@ -12,7 +12,7 @@ type TileSize struct {
 	ScaleFactors []int `json:"scaleFactors"`
 }
 
-// FeatureSet represents possible IIIF 2.0 features.  The boolean fields are
+// FeatureSet represents possible IIIF 2.1 features.  The boolean fields are
 // the same as the string to report features, except that the first character
 // should be lowercased.
 //

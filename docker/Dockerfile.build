@@ -22,7 +22,7 @@ RUN dnf install -y gcc
 RUN dnf install -y make
 RUN dnf install -y tar
 
-RUN curl -L https://dl.google.com/go/go1.11rc1.linux-amd64.tar.gz > /tmp/go.tgz
+RUN curl -L https://dl.google.com/go/go1.11.linux-amd64.tar.gz > /tmp/go.tgz
 RUN cd /opt && tar -xzf /tmp/go.tgz
 
 RUN mkdir -p /usr/local/go
