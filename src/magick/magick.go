@@ -22,5 +22,5 @@ func init() {
 }
 
 func makeError(exception *C.ExceptionInfo) error {
-	return fmt.Errorf("%s: %s - %s", exception.severity, exception.reason, exception.description)
+	return fmt.Errorf("%v: %v - %v", exception.severity, exception.reason, exception.description)
 }

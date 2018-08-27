@@ -1,17 +1,17 @@
 # This produces a build environment for RAIS.  It should be created via
 # something like this executed from the project root:
 #
-#     docker build --rm -t rais-build:f27 -f docker/Dockerfile.build .
+#     docker build --rm -t rais-build:f28 -f docker/Dockerfile.build .
 #
 # Once created, a binary can be built via a simple run command:
 #
-#     docker run --rm -v $(pwd):/opt/rais-src rais-build:f27
+#     docker run --rm -v $(pwd):/opt/rais-src rais-build:f28
 #
 # Don't forget to run tests if you're doing development!
 #
-#     docker run --rm -v $(pwd):/opt/rais-src rais-build:f27 make test
+#     docker run --rm -v $(pwd):/opt/rais-src rais-build:f28 make test
 #
-FROM fedora:27
+FROM fedora:28
 MAINTAINER Jeremy Echols <jechols@uoregon.edu>
 
 # Install all the build dependencies
@@ -22,7 +22,7 @@ RUN dnf install -y gcc
 RUN dnf install -y make
 RUN dnf install -y tar
 
-RUN curl https://storage.googleapis.com/golang/go1.9.2.linux-amd64.tar.gz > /tmp/go.tgz
+RUN curl -L https://dl.google.com/go/go1.11.linux-amd64.tar.gz > /tmp/go.tgz
 RUN cd /opt && tar -xzf /tmp/go.tgz
 
 RUN mkdir -p /usr/local/go
@@ -30,15 +30,13 @@ ENV GOPATH /usr/local/go
 ENV GOROOT /opt/go
 ENV PATH /opt/go/bin:/usr/local/go/bin:$PATH
 
-RUN mkdir -p /opt/rais-src/vendor
 RUN mkdir -p /opt/rais-src/src
 WORKDIR /opt/rais-src
 
 # Pre-fetch go dependencies so builds are faster
-RUN go get github.com/constabulary/gb/...
-COPY vendor/manifest ./vendor/manifest
-COPY Makefile ./Makefile
-RUN make deps
+COPY go.mod /opt/rais-src/go.mod
+COPY go.sum /opt/rais-src/go.sum
+RUN go mod download
 
 # Enable dev more easily
 ENV PORT 12415

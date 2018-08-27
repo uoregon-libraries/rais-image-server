@@ -1,8 +1,9 @@
 package iiif
 
 import (
-	"color-assert"
 	"testing"
+
+	"github.com/uoregon-libraries/gopkg/assert"
 )
 
 var FeaturesLevel0 = FeatureSet0()
@@ -24,6 +25,11 @@ func TestRegionSupport(t *testing.T) {
 	assert.False(FeaturesLevel0.SupportsRegion(r), "RTPercent NOT supported by FL0", t)
 	assert.False(FeaturesLevel1.SupportsRegion(r), "RTPercent NOT supported by FL1", t)
 	assert.True(FeaturesLevel2.SupportsRegion(r), "RTPercent supported by FL2", t)
+
+	r.Type = RTSquare
+	assert.False(FeaturesLevel0.SupportsRegion(r), "RTSquare NOT supported by FL0", t)
+	assert.False(FeaturesLevel1.SupportsRegion(r), "RTSquare NOT supported by FL1", t)
+	assert.False(FeaturesLevel2.SupportsRegion(r), "RTSquare NOT supported by FL2", t)
 }
 
 func TestSizeSupport(t *testing.T) {

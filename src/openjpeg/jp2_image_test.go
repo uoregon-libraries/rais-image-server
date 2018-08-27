@@ -1,11 +1,11 @@
 package openjpeg
 
 import (
-	"color-assert"
 	"image"
 	"os"
 	"testing"
 
+	"github.com/uoregon-libraries/gopkg/assert"
 	"github.com/uoregon-libraries/gopkg/logger"
 )
 
@@ -108,7 +108,7 @@ func BenchmarkReadAndDecodeTiledImage(b *testing.B) {
 	bigImage := dir + "/../../docker/images/jp2tests/sn00063609-19091231.jp2"
 
 	for n := 0; n < b.N; n++ {
-		var size = ((n%2)+1) * 1024
+		var size = ((n % 2) + 1) * 1024
 		startTileX := n % 2
 		startTileY := (n / 2) % 3
 		startX := startTileX * size
@@ -116,7 +116,7 @@ func BenchmarkReadAndDecodeTiledImage(b *testing.B) {
 		startY := startTileY * size
 		endY := startY + size
 
-	  jp2, err := NewJP2Image(bigImage)
+		jp2, err := NewJP2Image(bigImage)
 		if err != nil {
 			panic(err)
 		}

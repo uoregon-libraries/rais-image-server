@@ -1,6 +1,7 @@
 package iiif
 
 import (
+	"image"
 	"strconv"
 	"strings"
 )
@@ -18,6 +19,8 @@ const (
 	RTPercent
 	// RTPixel means we interpret x/y/w/h as precise coordinates within the image
 	RTPixel
+	// RTSquare means a square region where w/h are the image's shortest dimension
+	RTSquare
 )
 
 // Region represents the part of the image we'll manipulate.  It can be thought
@@ -32,6 +35,9 @@ type Region struct {
 func StringToRegion(p string) Region {
 	if p == "full" {
 		return Region{Type: RTFull}
+	}
+	if p == "square" {
+		return Region{Type: RTSquare}
 	}
 
 	r := Region{Type: RTPixel}
@@ -56,7 +62,7 @@ func (r Region) Valid() bool {
 	switch r.Type {
 	case RTNone:
 		return false
-	case RTFull:
+	case RTFull, RTSquare:
 		return true
 	}
 
@@ -65,4 +71,32 @@ func (r Region) Valid() bool {
 	}
 
 	return true
+}
+
+// GetCrop determines the cropped area that this region represents given an
+// image width and height
+func (r Region) GetCrop(w, h int) image.Rectangle {
+	crop := image.Rect(0, 0, w, h)
+
+	switch r.Type {
+	case RTSquare:
+		if w < h {
+			top := (h - w) / 2
+			crop = image.Rect(0, top, w, w+top)
+		} else if h < w {
+			left := (w - h) / 2
+			crop = image.Rect(left, 0, h+left, h)
+		}
+	case RTPixel:
+		crop = image.Rect(int(r.X), int(r.Y), int(r.X+r.W), int(r.Y+r.H))
+	case RTPercent:
+		crop = image.Rect(
+			int(r.X*float64(w)/100.0),
+			int(r.Y*float64(h)/100.0),
+			int((r.X+r.W)*float64(w)/100.0),
+			int((r.Y+r.H)*float64(h)/100.0),
+		)
+	}
+
+	return crop
 }

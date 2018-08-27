@@ -1,6 +1,6 @@
 package main
 
-import "magick"
+import "rais/src/magick"
 
 func init() {
 	extList := []string{".tif", ".tiff", ".png", ".jpg", "jpeg", ".gif"}

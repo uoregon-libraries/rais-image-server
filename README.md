@@ -14,13 +14,44 @@ experimental DeepZoom support.
 The University of Oregon's primary use case is the [Historic Oregon
 Newspapers](http://oregonnews.uoregon.edu/) project.
 
+How efficient is RAIS?
+-----
+
+Very.
+
+Unlike commercial solutions, RAIS is completely free and a breeze to test out
+via Docker (see below).
+
+RAIS utilizes the [OpenJPEG](https://github.com/uclouvain/openjpeg) libraries,
+which have been improved over the years to deliver JP2 images at speeds
+previously seen only in commercial applications.
+
+[Historic Oregon Newspapers](https://oregonnews.uoregon.edu/) is our "flagship"
+project using RAIS.  We receive anywhere from 2 to 4 million tile requests per
+month, and response time is rarely above 500ms per tile.  It can handle dozens
+of concurrent requests with minimal performance penalties.
+
+As of mid-2018, we have nearly a million JP2 images, which take up roughly 4
+terabytes and are mounted from external network storage.  And we don't run a
+dozen servers with heavy layers of caching.  Our back-end is very modest:
+
+- We have a single VM with 6 gigs of RAM
+- Our server runs Solr, MariaDB, and ONI (a django application) in addition to RAIS
+- We set up Apache to cache thumbnails (described below).  All other images are served from RAIS.
+- We configured our instance of RAIS to cache up to 1000 tiles just in case
+  many people are drawn to a single newspaper for any reason.
+
+Despite our minimal hardware, RAIS uses roughly 600 megs of RAM, *including the
+tile cache*.  Prior to adding tile-level caching, RAM usage was generally in
+the range of 50-100 megs with brief spikes up to 400 megs during peak usage.
+Despite the hefty costs of JP2 decoding and the number of incoming requests,
+RAIS uses roughly 2-4 CPU hours per day, which is roughly equivalent to the
+django stack's CPU usage.
+
 Setup
 -----
 
 [Docker](https://www.docker.com/) is the preferred way to install and run RAIS.
-
-See the [manual installation instructions](MANUAL-INSTALL.md) if you don't want to use
-Docker, or you want to see exactly what's going on behind the scenes.
 
 Note that specific build and production environments can be found in the docker
 files and the Makefile's `docker` target, which may be useful for manual
@@ -36,7 +67,7 @@ stable version in github by browsing
 [our master branch](https://github.com/uoregon-libraries/rais-image-server/tree/master).
 
 For an example of running a docker image as a RAIS server, look at
-[rundocker.sh](rundocker.sh).
+[scripts/rundocker.sh](scripts/rundocker.sh).
 
 On the first run, there will be a large download to get the image, but
 after that it will be cached locally.
@@ -46,16 +77,22 @@ usual docker commands.
 
 ### Docker Demo
 
-You can run a quick demo on a Linux system by pulling the "httpd:2.4" docker
-image, running `./apache.sh` and then visiting `http://localhost`.  Click the
-IIIF link, and you'll be able to see the test JP2 in two different forms using
-Open Seadragon: it will look the same, but its INFO response will be slightly
-different from one to the other due to one of the two images having an
-explicitly overridden info response.
+A demo-friendly `docker-compose.yml` file has been set up for convenience, and
+uses nginx to serve up a web page that pulls image tiles from a proxied rais
+backend.
 
-Additionally, if you put other files into `docker/images`, the `apache.sh`
-script will automatically add them to the OSD tile source list, allowing you to
-quickly test a variety of files.
+You can run a quick demo simply by running `make docker` and then
+`docker-compose up` from this project's root.  This may take a few minutes, but
+once it's complete, you can visit `http://localhost` (or configure a custom URL
+via `export URL=http://...` if you can't use "localhost" for some reason).
+Click the IIIF link, and you'll be able to see the test JP2 in two different
+forms using Open Seadragon: it will look the same, but its INFO response will
+be slightly different from one to the other due to one of the two images having
+an explicitly overridden info response.
+
+Additionally, if you put other files into `docker/images`, the docker setup
+scripts will automatically add them to the OSD tile source list, allowing you
+to quickly test a variety of files.
 
 Finally, you can test out the experimental DeepZoom support by choosing the
 second link.
@@ -71,11 +108,11 @@ make docker
 ```
 
 *For contributors*: note that `make docker`, in addition to creating a
-production image, will produce an image called "rais-build:f27" which can be
+production image, will produce an image called "rais-build:f28" which can be
 used to compile and run tests.  See
 [docker/Dockerfile.build](docker/Dockerfile.build) for examples of how to make
-this happen.  Also consider using [buildrun.sh](buildrun.sh) to ease compiling
-and testing.  [dev.sh](dev.sh) is also available for easing the
+this happen.  Also consider using [scripts/buildrun.sh](scripts/buildrun.sh) to ease compiling
+and testing.  [scripts/dev.sh](scripts/dev.sh) is also available for easing the
 edit-compile-run loop on a system with no JP2 libraries, where compilation has
 to go through docker.
 
@@ -94,6 +131,10 @@ reading the example file above, which describes all the values in detail.
 
 Using with chronam
 -----
+
+**Note that we no longer use chronam, so the information provided here is
+probably very outdated now.  RAIS is much easier to use with a system that was
+built with IIIF support.**
 
 To make this tile server work with
 [chronam](https://github.com/LibraryOfCongress/chronam), you have two options.
@@ -124,47 +165,33 @@ a fork of chronam.  No hacking required!
 IIIF Features
 -----
 
-When running as an IIIF server, you can browse to any valid Image's INFO page
-to see the features supported.
+RAIS must be run with a IIIF URL to support IIIF features, otherwise only the
+chronam legacy handlers are active.  This is set via the RAIS configuration
+value "IIIFURL" or simply on the command line:
 
-To use a custom info.json response, you can create a file with the same name as
-the JP2, with "-info.json" appended at the end.  e.g., `source.jp2-info.json`.
-This can be useful for limiting features, custom resize values, etc.  To keep
-the system working on any URL, you can set the `@id` value in the custom JSON
-to `%ID%`.  Since IIIF ids are a full URL, changing paths, URLs, or ports will
-break custom info.json files unless you allow the system to fill in the ID.
-See [testfile/info.json](testfile/info.json) for an example.
+    rais-server --iiif-url https://oregonnews.uoregon.edu/iiif
 
-To customize the capabilities for all images, a custom capabilities TOML file
-can be specified on the command-line via `--capabilities-file [filename]`, the
-config value `CapabilitiesFile`, or using the environment variable
-`RAIS_CAPABILITIESFILE`.  You can remove undesired capabilities from the list
-of what RAIS supports, which will prevent them from working if a client
-requests them.  This can be helpful to avoid denial-of-service vectors, such as
-the extremely slow GIF output.  See [cap-max.toml](cap-max.toml) for an example
-that shows all currently supported features.
-
-Other than possible bugs, we are ensuring we support level 2 at a minimum, as
-well as a handful other features beyond level 2.
-
-An example INFO request would look like `http://example.com/iiif/source.jp2/info.json`,
-assuming your server is at `example.com`, the IIIF prefix is `iiif`, and the
-file "source.jp2" exists relative to the configured tile path.
+Other than possible bugs, we are ensuring we support IIIF Image API 2.1,
+level 2.  We also support a handful of features beyond level 2.
 
 Full list of features supported:
 
 - Region:
   - "full"
+  - "square"
   - "x,y,w,h": regionByPx
   - "pct:x,y,w,h": regionByPct
 - Size:
   - "full"
+  - "max"
   - "w," / sizeByW
   - ",h" / sizeByH
   - "pct:x" / sizeByPct
   - "w,h" / sizeByForcedWH
   - "!w,h" / sizeByWH
   - "sizeAboveFull"
+  - "sizeByConfinedWh"
+  - "sizeByDistortedWh"
 - Rotation:
   - 0
   - "90,180,270" / rotationBy90s
@@ -179,11 +206,38 @@ Full list of features supported:
   - jpg (This is the best format for a speedy encode and small download)
   - png
   - tif
-  - gif (Note that this is VERY slow for some reason!)
+  - gif (Note that this is VERY slow for some reason, and so is disabled by default)
 - HTTP Features:
   - baseUriRedirect
   - cors
   - jsonldMediaType
+
+To customize the capabilities for all images, a custom capabilities TOML file
+can be specified on the command-line via `--capabilities-file [filename]`, the
+config value `CapabilitiesFile`, or using the environment variable
+`RAIS_CAPABILITIESFILE`.  You can remove undesired capabilities from the list
+of what RAIS supports, which will prevent them from working if a client
+requests them.  This can be helpful to avoid denial-of-service vectors, such as
+the extremely slow GIF output (though this is now disabled by default).  See
+[cap-max.toml](cap-max.toml) for an example that shows all currently supported
+features.
+
+When running as an IIIF server, you can browse to any valid Image's INFO page
+to see the features supported.
+
+To use a custom info.json response, you can create a file with the same name as
+the JP2, with "-info.json" appended at the end.  e.g., `source.jp2-info.json`.
+This can be useful for limiting features, custom resize values, etc.  To keep
+the system working on any URL, you can set the `@id` value in the custom JSON
+to `%ID%`.  Since IIIF ids are a full URL, changing paths, URLs, or ports will
+break custom info.json files unless you allow the system to fill in the ID.
+See [docker/images/testfile/test-world.jp2-info.json](docker/images/testfile/test-world.jp2-info.json)
+for an example.
+
+An example INFO URL, as clients like Open Seadragon expect, would look like
+`http://example.com/iiif/source.jp2/info.json` (assuming, of course, that the
+IIIF URL was specified as "http://example.com/iiif" and the file "source.jp2"
+exists relative to the configured tile path).
 
 Caching
 -----
@@ -201,13 +255,10 @@ The server can optionally cache generated tiles under specific circumstances,
 but doesn't inherently cache the other images such as thumbnails.  Tiles which
 are requested at a width of 1024, 512, or 256, in JPG format, can be cached by
 setting TileCacheLen in /etc/rais.toml, or the RAIS_TILECACHELEN environment
-variable.  This defaults to not be enabled due to the cost of caching tiles
-compared to the benefits, particularly on large collections of images.
+variable.  This is disabled by default.
 
 Setting the tile cache length to anything greater than zero will enable the
-cache.  This is only recommended for systems with a small number of images or
-systems that expect a lot of traffic to hit a small subset of the collection,
-such as might be the case if there's a few featured images.
+cache.
 
 For resize requests such as thumbnails, caching can prove very beneficial, but
 for now RAIS doesn't have resize-only caching, as Apache handles this for us
@@ -243,20 +294,27 @@ are used on large collections.  It is highly advisable that the `htcacheclean`
 tool be used in tandem with Apache cache directives, and it's probably worth
 reading [the Apache caching guide](http://httpd.apache.org/docs/2.2/caching.html).
 
+***Note***: *Tile caching is only recommended for systems with a small number
+of images or systems that expect a lot of traffic to hit a small subset of the
+collection, such as might be the case if there's a few featured images.
+However, if you have an extra gig of RAM, it can be valuable to set a 1000-tile
+cache even on large collections just to better handle an unexpected influx of
+traffic to a small number of images, such as you might expect if part of your
+collection gets featured in an online exhibit.*
+
 Known Limitations
 -----
 
-RAIS was built first and foremost to serve tiles for JP2s that always have exactly
-six resolution factors ("zoom levels") and are tiled.  It has been *amazing* for us
-within that context, but we don't know much about other uses, so outside of that
-context, there may be issues worth consideration.
+RAIS was built first and foremost to serve tiles for JP2s that always have multiple
+resolution factors ("zoom levels") and are tiled.  It has been *amazing* for us
+within that context, but there are areas where it won't perform well:
 
 ### JP2: Slow on huge files
 
 Very large images (as in, hundreds of megapixels) can take a while to decode
 tiles.  In some cases, 2-3 seconds per tile.  Unfortunately, this seems to be a
-limitation of openjpeg.  If serving up files of this size, external caching may
-be a good idea.
+limitation of openjpeg.  If serving up files of this size, caching may be a
+good idea.
 
 ### JP2: only supports RGB and Grayscale
 
@@ -268,20 +326,10 @@ tested.
 ### RAM usage should be monitored
 
 Huge images and/or high traffic can cause the JP2 processor to chew up large
-amounts of RAM.  The good news is that since compiling RAIS under Go 1.6, our
-RAM is significantly lower and more predictable than with Go 1.4.
-
-Stats from about two months of monitoring:
-
-- Under Go 1.4, RAIS would slowly grow in RAM use until it was routinely above
-  1 gig of RAM (even when under relatively low load), with spikes above 2 gigs
-- Under Go 1.6, RAIS is typically under 80 megs of RAM, with spikes being few
-  and far between, with the worst spike just over 400 megs
-
-(For reference, RAIS serves about 800,000 tiles a week)
-
-**Please note**: if you enable tile caching, RAM usage will increase, possibly
-by a very significant amount.
+amounts of RAM.  If you use RAIS to serve up raw TIFF files, RAM usage is
+likely to be a massive bottleneck.  The good news is that when handling tiled,
+multi-resolution JP2s, RAM usage tends to be fairly predictable even under a
+sizeable load.  And RAIS scales horizontally very well.
 
 ### IIIF Support isn't perfect
 
@@ -294,8 +342,8 @@ bitonal, even for gray/bitonal images.
 
 It should also be noted that GIF output is amazingly slow.  Given that GIF
 output isn't even an IIIF level 2 feature, we aren't planning to put much time
-into troubleshooting the issue.  GIFs are available, but should be avoided
-except as one-offs.
+into troubleshooting the issue.  GIFs are available if you explicitly enable
+them (via a capabilities file), but should be avoided except as one-offs.
 
 ### Not all JP2 files are created equally
 
@@ -323,8 +371,8 @@ for web display.
 
 These aren't well-tested since our system is exclusively JP2.  Non-JP2 types
 that are supported (TIFF, JPG, PNG, and GIF) have to be read in fully and then
-cropped and resized in Go.  This will not be as fast as image formats built for
-deep zooming (tiled JP2s for RAIS).
+cropped and resized within the application.  This will not be as fast as image
+formats built for deep zooming (tiled JP2s for RAIS).
 
 As an example: TIFF files are usually fast to process, but can potentially take
 up a great deal of memory.  Sometimes this is okay, but it's a bottleneck

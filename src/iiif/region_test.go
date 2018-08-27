@@ -1,8 +1,9 @@
 package iiif
 
 import (
-	"color-assert"
 	"testing"
+
+	"github.com/uoregon-libraries/gopkg/assert"
 )
 
 func TestRegionTypePercent(t *testing.T) {
@@ -36,4 +37,9 @@ func TestInvalidRegion(t *testing.T) {
 func TestRegionTypeFull(t *testing.T) {
 	r := StringToRegion("full")
 	assert.True(r.Type == RTFull, "r.Type == RTFull", t)
+}
+
+func TestRegionTypeSquare(t *testing.T) {
+	r := StringToRegion("square")
+	assert.True(r.Type == RTSquare, "r.Type == RTSquare", t)
 }
