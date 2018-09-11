@@ -321,7 +321,7 @@ The openjpeg tools make this simple:
 Some notes:
 
 - A rate [`-r`] of 20.250 is equivalent to a graphicsmagick "quality" of 70,
-  which in JP2-land is about the same as a JPEG of quality 90-95
+  which in JP2-land is about the same as a JPEG of quality 90-95 (very good).
 - You may have to build openjpeg tools manually to get support for converting
   some image formats, including TIFF and PNG
 
