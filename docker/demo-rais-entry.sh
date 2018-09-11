@@ -5,8 +5,6 @@
 
 # Copy the config and edit it in-place; this allows customizing most pieces of
 # configuration for demoing
-cp /etc/rais-template.toml /etc/rais.toml
-
 url=${URL:-}
 if [[ $url == "" ]]; then
   echo "No URL provided; defaulting to 'http://localhost'"
@@ -16,5 +14,6 @@ if [[ $url == "" ]]; then
   url="http://localhost"
 fi
 
-sed -i 's|^\s*IIIFURL.*$|IIIFURL = "'$url'/images/iiif"|' /etc/rais.toml
+cp /etc/rais-template.toml /tmp/rais.toml
+sed 's|^\s*IIIFURL.*$|IIIFURL = "'$url'/images/iiif"|' /tmp/rais.toml > /etc/rais.toml
 /opt/rais/rais-server
