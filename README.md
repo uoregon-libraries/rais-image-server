@@ -222,7 +222,7 @@ the extremely slow GIF output (though this is now disabled by default).  See
 [cap-max.toml](cap-max.toml) for an example that shows all currently supported
 features.
 
-When running as an IIIF server, you can browse to any valid Image's INFO page
+When running as a IIIF server, you can browse to any valid Image's INFO page
 to see the features supported.
 
 To use a custom info.json response, you can create a file with the same name as
@@ -341,7 +341,7 @@ default response's quality choices are hard-coded to include color, gray, and
 bitonal, even for gray/bitonal images.
 
 It should also be noted that GIF output is amazingly slow.  Given that GIF
-output isn't even an IIIF level 2 feature, we aren't planning to put much time
+output isn't even a IIIF level 2 feature, we aren't planning to put much time
 into troubleshooting the issue.  GIFs are available if you explicitly enable
 them (via a capabilities file), but should be avoided except as one-offs.
 
