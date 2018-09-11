@@ -302,6 +302,47 @@ cache even on large collections just to better handle an unexpected influx of
 traffic to a small number of images, such as you might expect if part of your
 collection gets featured in an online exhibit.*
 
+Generating tiled, multi-resolution JP2s
+---
+
+Our newspaper JP2s are encoded in a way that makes them *very* friendly to
+pan-and-zoom systems.  They are encoded as multi-resolution (think "zoom
+levels"), tiled images.
+
+JP2s that aren't encoded like this will not be nearly as memory- and
+CPU-efficient.  We'd recommend tiling JP2s at a size of around 1024x1024.
+
+### Open JPEG Tools
+
+The openjpeg tools make this simple:
+
+    /bin/opj2_compress -i input.tiff -o output.jp2 -t 1024,1024 -r 20.250
+
+Some notes:
+
+- A rate [`-r`] of 20.250 is equivalent to a graphicsmagick "quality" of 70,
+  which in JP2-land is about the same as a JPEG of quality 90-95
+- You may have to build openjpeg tools manually to get support for converting
+  some image formats, including TIFF and PNG
+
+### Graphics Magick
+
+If using graphics magick, encoding is still fairly easy, though note that you
+may have to tweak the `jp2:numrlvls` argument depending on your images:
+
+    gm convert input.tiff -flatten -quality 70 \
+        -define jp2:prg=rlcp \
+        -define jp2:numrlvls=7 \
+        -define jp2:tilewidth=1024 \
+        -define jp2:tileheight=1024 output.jp2
+
+### Grayscale vs. color
+
+Note that grayscale images will require one-third the memory and processing
+power when compared to color images.  If your sources are grayscale, but you
+scan in color for better preservation, consider building grayscale derivatives
+for web display.
+
 Known Limitations
 -----
 
@@ -344,28 +385,6 @@ It should also be noted that GIF output is amazingly slow.  Given that GIF
 output isn't even a IIIF level 2 feature, we aren't planning to put much time
 into troubleshooting the issue.  GIFs are available if you explicitly enable
 them (via a capabilities file), but should be avoided except as one-offs.
-
-### Not all JP2 files are created equally
-
-Our newspaper JP2s are encoded in a way that makes them *very* friendly to
-pan-and-zoom systems.  They are encoded with tiling, which allows pieces of
-the JP2 to be read independently, and significantly reduces the memory needed
-to serve the data up to a viewer on the fly.
-
-JP2s that aren't encoded like this will not be nearly as memory- and
-CPU-efficient.  We'd recommend tiling JP2s at a size of around 1024x1024.  If
-using graphics magick, a command like this can help:
-
-    gm convert input.tiff -flatten -quality 70 \
-        -define jp2:prg=rlcp \
-        -define jp2:numrlvls=7 \
-        -define jp2:tilewidth=1024 \
-        -define jp2:tileheight=1024 output.jp2
-
-Additionally, grayscale images will require one-third the memory and processing
-power when compared to color images.  If your sources are grayscale, but you
-encode to RGB for better preservation, consider building grayscale derivatives
-for web display.
 
 ### Poor performance for non-JP2 files
 
