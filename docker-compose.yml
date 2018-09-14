@@ -26,6 +26,15 @@ services:
     image: uolibraries/rais
     environment:
       - URL
+      - RAIS_ADDRESS
+      - RAIS_LOGLEVEL
+      - RAIS_TILEPATH
+      - RAIS_IIIFURL
+      - RAIS_INFOCACHELEN
+      - RAIS_TILECACHELEN
+      - RAIS_IMAGEMAXAREA
+      - RAIS_IMAGEMAXWIDTH
+      - RAIS_IMAGEMAXHEIGHT
     volumes:
       - ./bin/rais-server:/opt/rais/rais-server:ro
       - ./docker/images:/var/local/images:ro
