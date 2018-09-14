@@ -1,7 +1,7 @@
 # Makefile directory
 MakefileDir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: all generate binaries test format lint clean distclean docker
+.PHONY: all generate binaries test format lint clean distclean docker plugins
 
 # Default target builds binaries
 all: binaries
@@ -33,7 +33,7 @@ lint:
 
 # Cleanup
 clean:
-	rm -f bin/*
+	rm -rf bin/
 	rm -rf pkg/
 	rm -f src/transform/rotation.go
 
@@ -44,3 +44,6 @@ docker:
 	docker-compose run --rm rais-build make clean
 	docker-compose run --rm rais-build make
 	docker build --rm -t uolibraries/rais:f28 -f docker/Dockerfile.prod $(MakefileDir)
+
+plugins:
+	go build -buildmode=plugin -o bin/plugins/external-images.so rais/src/plugins/external-images

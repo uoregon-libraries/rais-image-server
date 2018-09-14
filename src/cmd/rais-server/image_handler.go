@@ -11,9 +11,12 @@ import (
 	"net/http"
 	"net/url"
 	"rais/src/iiif"
+	"rais/src/plugins"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/uoregon-libraries/gopkg/logger"
 )
 
 func acceptsLD(req *http.Request) bool {
@@ -100,7 +103,8 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 	}
 
 	id := iiif.ID(parts[1])
-	fp := ih.TilePath + "/" + id.Path()
+
+	fp := ih.getIIIFPath(id)
 
 	// Check for base path and redirect if that's all we have
 	if ih.IIIFBaseOnlyRegex.MatchString(p) {
@@ -137,6 +141,20 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 
 	// Attempt to run the command
 	ih.Command(w, req, u, res, info)
+}
+
+func (ih *ImageHandler) getIIIFPath(id iiif.ID) string {
+	for _, idtopath := range idToPathPlugins {
+		fp, err := idtopath(id)
+		if err == nil {
+			return fp
+		}
+		if err == plugins.Skipped {
+			continue
+		}
+		logger.Warnf("Error trying to use plugin to translate iiif.ID: %s", err)
+	}
+	return ih.TilePath + "/" + id.Path()
 }
 
 func convertStrings(s1, s2, s3 string) (i1, i2, i3 int, err error) {

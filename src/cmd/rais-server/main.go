@@ -84,6 +84,8 @@ func main() {
 	Logger = logger.New(level)
 	openjpeg.Logger = Logger
 
+	LoadPlugins(Logger)
+
 	// Pull all values we need for all cases
 	tilePath = viper.GetString("TilePath")
 	address := viper.GetString("Address")

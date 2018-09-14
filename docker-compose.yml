@@ -37,10 +37,12 @@ services:
       - RAIS_IMAGEMAXHEIGHT
     volumes:
       - ./bin/rais-server:/opt/rais/rais-server:ro
+      - ./bin/plugins:/opt/rais/plugins:ro
       - ./docker/images:/var/local/images:ro
       - ./rais-example.toml:/etc/rais-template.toml:ro
       - ./cap-max.toml:/etc/rais-capabilities.toml:ro
       - ./docker/demo-rais-entry.sh:/entrypoint.sh:ro
+      - /tmp:/tmp
     entrypoint: /entrypoint.sh
     ports:
       - 12415:12415

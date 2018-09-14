@@ -94,6 +94,11 @@ Additionally, if you put other files into `docker/images`, the docker setup
 scripts will automatically add them to the OSD tile source list, allowing you
 to quickly test a variety of files.
 
+Note that at the end of the file list, you'll likely get an error with the
+image.  The final image in the demo is actually an external resource for
+testing out the example plugin, external-images.  See the plugins section for
+more details.
+
 Finally, you can test out the experimental DeepZoom support by choosing the
 second link.
 
@@ -161,6 +166,28 @@ Using with Open ONI
 
 RAIS works out of the box with [Open ONI](https://github.com/open-oni/open-oni),
 a fork of chronam.  No hacking required!
+
+Plugins
+-----
+
+RAIS has exposed a single overrideable function, `IDToPath`, for changing how a
+IIIF ID is converted into a path on disk.  There is an
+[example external-images plugin](src/plugins/external-images) which showcases
+how a plugin might be built to alter how RAIS interprets certain IDs.  The
+example allows external images to be downloaded and converted to JP2s on the
+fly.  Though it would be an unusual use-case, this sort of plugin (with some
+tweaks) could provide IIIF image features for external images you don't
+control, as happens with third-party digital asset management systems.
+
+To see this in action, you'll want to compile RAIS and the plugin manually.  If
+using docker, for example:
+
+    ./scripts/buildrun.sh
+    ./scripts/buildrun.sh make plugins
+
+Then start up the demo server and browse to the final image in the list.  After
+15-30 seconds, you should see an image which was requested from hubblesite.org,
+and which is now cached locally.
 
 IIIF Features
 -----

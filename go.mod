@@ -18,7 +18,7 @@ require (
 	github.com/spf13/pflag v1.0.2
 	github.com/spf13/viper v1.1.0
 	github.com/stretchr/testify v1.2.2 // indirect
-	github.com/uoregon-libraries/gopkg v0.1.1
+	github.com/uoregon-libraries/gopkg v0.2.0
 	golang.org/x/image v0.0.0-20180708004352-c73c2afc3b81
 	golang.org/x/sys v0.0.0-20180814072032-4e1fef560951 // indirect
 	golang.org/x/text v0.3.0 // indirect
