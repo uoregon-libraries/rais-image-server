@@ -27,7 +27,7 @@ func LoadPlugins(l *logger.Logger) {
 		return
 	}
 	if err != nil {
-		l.Fatalf("Unable to get stat %q: %s", plugdir, err)
+		l.Fatalf("Unable to stat %q: %s", plugdir, err)
 	}
 
 	var infos []os.FileInfo
