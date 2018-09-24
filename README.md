@@ -170,24 +170,59 @@ a fork of chronam.  No hacking required!
 Plugins
 -----
 
-RAIS has exposed a single overrideable function, `IDToPath`, for changing how a
-IIIF ID is converted into a path on disk.  There is an
-[example external-images plugin](src/plugins/external-images) which showcases
-how a plugin might be built to alter how RAIS interprets certain IDs.  The
-example allows external images to be downloaded and converted to JP2s on the
-fly.  Though it would be an unusual use-case, this sort of plugin (with some
-tweaks) could provide IIIF image features for external images you don't
-control, as happens with third-party digital asset management systems.
+RAIS has a rudimentary plugin system in place.  An example plugin can be built
+via `make plugins` or, if using docker, `./scripts/buildrun.sh make plugins`.
 
-To see this in action, you'll want to compile RAIS and the plugin manually.  If
-using docker, for example:
-
-    ./scripts/buildrun.sh
-    ./scripts/buildrun.sh make plugins
+The [example external-images plugin](src/plugins/external-images) showcases how
+a plugin might be built to alter how RAIS interprets certain IDs.  The example
+allows external images to be downloaded and converted to JP2s on the fly.
+Though it would be an unusual use-case, this sort of plugin (with some tweaks)
+could provide IIIF image features for external images you don't control, as
+happens with third-party digital asset management systems.
 
 Then start up the demo server and browse to the final image in the list.  After
 15-30 seconds, you should see an image which was requested from hubblesite.org,
 and which is now cached locally.
+
+### Behavior
+
+General behavior of plugins:
+
+- Plugins are loaded from within a "plugins" directory.  "plugins" must be in
+  the same location as the server binary.  The example plugin works in this
+  way: when `make plugins` is run, the plugins are generated in
+  `./bin/plugins/*.so`, whereas the server binary is `./bin/rais-server`.
+- Plugin order matters.  Plugins will be processed in alphabetic order.  If you
+  need plugins to have clear priorities, a naming scheme such as `00-name.so`
+  may make sense (replacing `00` with a two-digit load order value).
+- Plugins **must** be compiled on the same architecture that is used to compile
+  the RAIS server.  This means the same server, the same openjpeg libraries,
+  and the same version of Go.
+
+Functions a plugin may expose:
+
+#### `IDToPath`
+
+`func IDToPath(id iiif.ID) (path string, err error)`
+
+If the given ID isn't handled by this plugin, `plugins.ErrSkipped` should be
+returned by the plugin (the `path` returned will be ignored).
+
+The first plugin which returns a nil error "wins".  If there are multiple
+plugins trying to convert IDs to paths, you must be sure you put them in a
+sensible order.
+
+#### `SetLogger`
+
+`func SetLogger(raisLogger *logger.Logger)`
+
+All plugins may define this function, and there are no side-effects to worry
+about when defining it (regarding ordering or multiple plugins "competing").
+This function allows a plugin to make use of the central RAIS log subsystem so
+that logged messages can be consistent.  Plugins don't have to expose this
+function if they aren't logging any messages.
+
+`logger.Logger` is defined by package `github.com/uoregon-libraries/gopkg/logger`.
 
 IIIF Features
 -----
