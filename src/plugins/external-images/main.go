@@ -54,7 +54,7 @@ func SetLogger(raisLogger *logger.Logger) {
 func IDToPath(id iiif.ID) (path string, err error) {
 	var ids = string(id)
 	if ids[:7] != "extern-" {
-		return "", plugins.Skipped
+		return "", plugins.ErrSkipped
 	}
 
 	ids = ids[7:]
@@ -63,7 +63,7 @@ func IDToPath(id iiif.ID) (path string, err error) {
 	} else if ids[:6] == "https-" {
 		ids = "https://" + ids[6:]
 	} else {
-		return "", plugins.Skipped
+		return "", plugins.ErrSkipped
 	}
 
 	// Check cache - don't re-download
