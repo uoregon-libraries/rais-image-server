@@ -21,6 +21,8 @@ import (
 var tilePath string
 var infoCache *lru.Cache
 var tileCache *lru.TwoQueueCache
+
+// Logger is the server's central logger.Logger instance
 var Logger *logger.Logger
 
 const defaultAddress = ":12415"

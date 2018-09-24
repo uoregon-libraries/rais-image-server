@@ -149,7 +149,7 @@ func (ih *ImageHandler) getIIIFPath(id iiif.ID) string {
 		if err == nil {
 			return fp
 		}
-		if err == plugins.Skipped {
+		if err == plugins.ErrSkipped {
 			continue
 		}
 		logger.Warnf("Error trying to use plugin to translate iiif.ID: %s", err)

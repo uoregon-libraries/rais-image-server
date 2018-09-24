@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"plugin"
 	"rais/src/iiif"
+	"sort"
 
 	"github.com/uoregon-libraries/gopkg/logger"
 )
@@ -36,16 +37,18 @@ func LoadPlugins(l *logger.Logger) {
 		l.Fatalf("Unable to read plugin directory %q: %s", plugdir, err)
 	}
 
+	sort.Slice(infos, func(i, j int) bool { return infos[i].Name() < infos[j].Name() })
 	for _, info := range infos {
 		var fullpath = filepath.Join(plugdir, info.Name())
 		if info.IsDir() {
-			l.Warnf("Skipping unknown subdirectory %q", fullpath)
+			l.Warnf("Skipping unknown subdirectory %q (plugin subdirectories are not supported)", fullpath)
 		}
 
 		if filepath.Ext(fullpath) != ".so" {
-			l.Warnf("Skipping unknown file %q", filepath.Join(plugdir, info.Name()))
+			l.Warnf("Skipping unknown file %q (plugins must be compiled .so files)", fullpath)
 		}
 
+		l.Infof("Loading plugin %q", fullpath)
 		loadPlugin(fullpath, l)
 	}
 }
