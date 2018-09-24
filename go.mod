@@ -2,6 +2,7 @@ module rais
 
 require (
 	github.com/BurntSushi/toml v0.3.0
+	github.com/aws/aws-sdk-go v1.15.40 // indirect
 	github.com/davecgh/go-spew v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/hashicorp/golang-lru v0.0.0-20180201235237-0fb14efe8c47
