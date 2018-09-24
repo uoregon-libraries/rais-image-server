@@ -39,13 +39,14 @@ func LoadPlugins(l *logger.Logger) {
 	for _, info := range infos {
 		var fullpath = filepath.Join(plugdir, info.Name())
 		if info.IsDir() {
-			l.Warnf("Skipping unknown subdirectory %q", fullpath)
+			l.Warnf("Skipping unknown subdirectory %q (plugin subdirectories are not supported)", fullpath)
 		}
 
 		if filepath.Ext(fullpath) != ".so" {
-			l.Warnf("Skipping unknown file %q", filepath.Join(plugdir, info.Name()))
+			l.Warnf("Skipping unknown file %q (plugins must be compiled .so files)", fullpath)
 		}
 
+		l.Infof("Loading plugin %q", fullpath)
 		loadPlugin(fullpath, l)
 	}
 }
