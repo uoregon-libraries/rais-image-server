@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"plugin"
 	"rais/src/iiif"
+	"sort"
 
 	"github.com/uoregon-libraries/gopkg/logger"
 )
@@ -36,6 +37,7 @@ func LoadPlugins(l *logger.Logger) {
 		l.Fatalf("Unable to read plugin directory %q: %s", plugdir, err)
 	}
 
+	sort.Slice(infos, func(i, j int) bool { return infos[i].Name() < infos[j].Name() })
 	for _, info := range infos {
 		var fullpath = filepath.Join(plugdir, info.Name())
 		if info.IsDir() {
