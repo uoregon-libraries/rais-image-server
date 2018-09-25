@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"rais/src/iiif"
+	"rais/src/magick"
 	"rais/src/openjpeg"
 	"rais/src/version"
 	"time"
@@ -85,6 +86,7 @@ func main() {
 	}
 	Logger = logger.New(level)
 	openjpeg.Logger = Logger
+	magick.Logger = Logger
 
 	LoadPlugins(Logger)
 
