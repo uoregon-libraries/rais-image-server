@@ -58,13 +58,10 @@ func (c constraint) smallerThanAny(w, h int) bool {
 // ImageHandler responds to an IIIF URL request and parses the requested
 // transformation within the limits of the handler's capabilities
 type ImageHandler struct {
-	IIIFBase          *url.URL
-	IIIFBaseRegex     *regexp.Regexp
-	IIIFBaseOnlyRegex *regexp.Regexp
-	IIIFInfoPathRegex *regexp.Regexp
-	FeatureSet        *iiif.FeatureSet
-	TilePath          string
-	Maximums          constraint
+	IIIFBase   *url.URL
+	FeatureSet *iiif.FeatureSet
+	TilePath   string
+	Maximums   constraint
 }
 
 // NewImageHandler sets up a base ImageHandler with no features
@@ -77,11 +74,7 @@ func NewImageHandler(tp string) *ImageHandler {
 
 // EnableIIIF sets up regexes for IIIF responses
 func (ih *ImageHandler) EnableIIIF(u *url.URL) {
-	rprefix := fmt.Sprintf(`^%s`, u.Path)
 	ih.IIIFBase = u
-	ih.IIIFBaseRegex = regexp.MustCompile(rprefix + `/([^/]+)`)
-	ih.IIIFBaseOnlyRegex = regexp.MustCompile(rprefix + `/[^/]+$`)
-	ih.IIIFInfoPathRegex = regexp.MustCompile(rprefix + `/([^/]+)/info.json$`)
 	ih.FeatureSet = iiif.AllFeatures()
 }
 
@@ -93,54 +86,56 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 	var url = *req.URL
 	url.RawQuery = ""
 	p := url.String()
-	parts := ih.IIIFBaseRegex.FindStringSubmatch(p)
 
 	// If it didn't even match the base, something weird happened, so we just
 	// spit out a generic 404
-	if parts == nil {
+	prefix := ih.IIIFBase.Path + "/"
+	if !strings.Contains(p, prefix) {
 		http.NotFound(w, req)
 		return
 	}
 
-	id := iiif.ID(parts[1])
-
-	fp := ih.getIIIFPath(id)
+	iiifURL, err := iiif.NewURL(strings.Replace(p, prefix, "", 1))
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid IIIF request: %s", err), 400)
+		return
+	}
 
 	// Check for base path and redirect if that's all we have
-	if ih.IIIFBaseOnlyRegex.MatchString(p) {
+	if iiifURL.BaseURIRedirect {
 		http.Redirect(w, req, p+"/info.json", 303)
 		return
 	}
 
 	// Handle info.json prior to reading the image, in case of cached info
-	info, e := ih.getInfo(id, fp)
+	fp := ih.getIIIFPath(iiifURL.ID)
+	info, e := ih.getInfo(iiifURL.ID, fp)
 	if e != nil {
 		http.Error(w, e.Message, e.Code)
 		return
 	}
 
-	if ih.IIIFInfoPathRegex.MatchString(p) {
+	if iiifURL.Info {
 		ih.Info(w, req, info)
 		return
 	}
 
 	// No info path should mean a full command path - start reading the image
-	res, err := NewImageResource(id, fp)
+	res, err := NewImageResource(iiifURL.ID, fp)
 	if err != nil {
 		e := newImageResError(err)
 		http.Error(w, e.Message, e.Code)
 		return
 	}
 
-	u := iiif.NewURL(p)
-	if !u.Valid() {
+	if !iiifURL.Valid() {
 		// This means the URI was probably a command, but had an invalid syntax
-		http.Error(w, "Invalid IIIF request", 400)
+		http.Error(w, "Invalid IIIF request: "+iiifURL.Error().Error(), 400)
 		return
 	}
 
 	// Attempt to run the command
-	ih.Command(w, req, u, res, info)
+	ih.Command(w, req, iiifURL, res, info)
 }
 
 func (ih *ImageHandler) getIIIFPath(id iiif.ID) string {
@@ -284,8 +279,8 @@ func (ih *ImageHandler) DZITile(w http.ResponseWriter, req *http.Request, res *I
 
 	requestedWidth := DZITileSize * finalWidth / width
 
-	u := iiif.NewURL(fmt.Sprintf("%s/%d,%d,%d,%d/%d,/0/default.jpg",
-		res.FilePath, left, top, finalWidth, finalHeight, requestedWidth))
+	u, _ := iiif.NewURL(fmt.Sprintf("%s/%d,%d,%d,%d/%d,/0/default.jpg",
+		url.QueryEscape(res.FilePath), left, top, finalWidth, finalHeight, requestedWidth))
 	ih.Command(w, req, u, res, nil)
 }
 
