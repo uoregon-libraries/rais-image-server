@@ -203,3 +203,39 @@ func TestCommandHandlerInvalidSize(t *testing.T) {
 	w = dorequestl2(img, false, areaConstraint, t)
 	assert.Equal(501, w.StatusCode, "Status code when area is too large", t)
 }
+
+// BenchmarkRouting does a benchmark against the routing rules to ensure we
+// aren't creating problems when changing how we interpret the incoming URLs.
+func BenchmarkRouting(b *testing.B) {
+	// Set up all the fake request bits outside the benchmark
+	u, _ := url.Parse("http://example.com/foo/bar")
+	w := fakehttp.NewResponseWriter()
+	req, err := http.NewRequest("get", "", strings.NewReader(""))
+
+	if err != nil {
+		b.Errorf("Unable to create fake request: %s", err)
+	}
+
+	h := NewImageHandler(rootDir())
+	h.Maximums.Width = unlimited.Width
+	h.Maximums.Height = unlimited.Height
+	h.Maximums.Area = unlimited.Area
+	h.EnableIIIF(u)
+	h.FeatureSet = iiif.FeatureSet2()
+	URIs := []string{
+		u.String() + "/foo/bar/invalid%2Fimage.jp2/10,10,80,80/full/0/default.jpg",
+		u.String() + "/foo/bar/invalid%2Fimage.jp2/full/max/0/default.jpg",
+		u.String() + "/foo/bar/invalid%2Fimage.jp2/full/pct:25/90/default.jpg",
+		u.String() + "/foo/bar/invalid%2Fimage.jp2",
+		u.String() + "/foo/bar/invalid%2Fimage.jp2/pct:10,10,900,900/max/0/default.png",
+	}
+
+	for n := 0; n < b.N; n++ {
+		// We fire off fake requests of multiple types to test the different ways
+		// the URL is parsed
+		for _, requri := range URIs {
+			req.RequestURI = requri
+			h.IIIFRoute(w, req)
+		}
+	}
+}
