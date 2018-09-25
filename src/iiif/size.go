@@ -88,7 +88,7 @@ func StringToSize(p string) Size {
 // parameters are valid for that type
 func (s Size) Valid() bool {
 	switch s.Type {
-	case STFull:
+	case STFull, STMax:
 		return true
 	case STScaleToWidth:
 		return s.W > 0
