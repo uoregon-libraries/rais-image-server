@@ -2,3 +2,4 @@
 /docker/images
 !/docker/images/testfile/test-world*
 /.env
+/docker/s3credentials

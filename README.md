@@ -224,6 +224,17 @@ function if they aren't logging any messages.
 
 `logger.Logger` is defined by package `github.com/uoregon-libraries/gopkg/logger`.
 
+#### `Initialize`
+
+`func Initialize()`
+
+All plugins may define this function.  This can be used to handle things like
+custom configuration a plugin may need.  See the s3 plugin's Initialize method
+for an example of that.
+
+`Initialize()` is run after the logger is set up (unlike Go's internal `init()`
+function), so you can safely use it.
+
 IIIF Features
 -----
 

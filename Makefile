@@ -47,3 +47,4 @@ docker:
 
 plugins:
 	go build -buildmode=plugin -o bin/plugins/external-images.so rais/src/plugins/external-images
+	go build -buildmode=plugin -o bin/plugins/s3-images.so rais/src/plugins/s3-images

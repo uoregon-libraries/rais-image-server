@@ -35,6 +35,10 @@ services:
       - RAIS_IMAGEMAXAREA
       - RAIS_IMAGEMAXWIDTH
       - RAIS_IMAGEMAXHEIGHT
+      - RAIS_S3CACHE
+      - RAIS_S3ZONE
+      - RAIS_S3BUCKET
+      - AWS_SHARED_CREDENTIALS_FILE=/etc/aws.credentials
     volumes:
       - ./bin/rais-server:/opt/rais/rais-server:ro
       - ./bin/plugins:/opt/rais/plugins:ro
@@ -42,6 +46,7 @@ services:
       - ./rais-example.toml:/etc/rais-template.toml:ro
       - ./cap-max.toml:/etc/rais-capabilities.toml:ro
       - ./docker/demo-rais-entry.sh:/entrypoint.sh:ro
+      - ./docker/s3credentials:/etc/aws.credentials
       - /tmp:/tmp
     entrypoint: /entrypoint.sh
     ports:
