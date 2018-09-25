@@ -65,6 +65,9 @@ func StringToSize(p string) Size {
 	}
 
 	vals := strings.Split(p, ",")
+	if len(vals) != 2 {
+		return s
+	}
 	s.W, _ = strconv.Atoi(vals[0])
 	s.H, _ = strconv.Atoi(vals[1])
 
