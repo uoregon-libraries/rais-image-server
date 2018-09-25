@@ -9,7 +9,7 @@ cp -r /static/* /usr/share/nginx/html
 
 # Insert a tile source for every file found under /var/local/images
 sources=""
-for file in $(find /var/local/images -name "*.jp2" -o -name "*.tiff"); do
+for file in $(find /var/local/images -name "*.jp2" -o -name "*.tiff" -o -name "*.jpg"); do
   relpath=${file##/var/local/images/}
   relpath=${relpath//\//%2F}
   if [[ $sources != "" ]]; then
@@ -21,7 +21,7 @@ done
 sed "s|%SRCS%|$sources|g" /usr/share/nginx/html/template.html > /usr/share/nginx/html/iiif.html
 
 sources=""
-for file in $(find /var/local/images -name "*.jp2" -o -name "*.tiff"); do
+for file in $(find /var/local/images -name "*.jp2" -o -name "*.tiff" -o -name "*.jpg"); do
   relpath=${file##/var/local/images/}
   relpath=${relpath//\//%2F}
   if [[ $sources != "" ]]; then
