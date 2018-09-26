@@ -171,7 +171,7 @@ func (ih *ImageHandler) getIIIFPath(id iiif.ID) string {
 		}
 		logger.Warnf("Error trying to use plugin to translate iiif.ID: %s", err)
 	}
-	return ih.TilePath + "/" + id.Path()
+	return ih.TilePath + "/" + id.String()
 }
 
 func convertStrings(s1, s2, s3 string) (i1, i2, i3 int, err error) {
@@ -198,15 +198,15 @@ func (ih *ImageHandler) DZIRoute(w http.ResponseWriter, req *http.Request) {
 
 	parts := DZIInfoRegex.FindStringSubmatch(p)
 	if parts != nil {
-		id = iiif.ID(parts[1])
-		filePath = ih.TilePath + "/" + id.Path()
+		id = iiif.URLToID(parts[1])
+		filePath = ih.TilePath + "/" + id.String()
 		handler = func(r *ImageResource) { ih.DZIInfo(w, r) }
 	}
 
 	parts = DZITilePathRegex.FindStringSubmatch(p)
 	if parts != nil {
-		id = iiif.ID(parts[1])
-		filePath = ih.TilePath + "/" + id.Path()
+		id = iiif.URLToID(parts[1])
+		filePath = ih.TilePath + "/" + id.String()
 
 		level, tileX, tileY, err := convertStrings(parts[2], parts[3], parts[4])
 		if err != nil {
@@ -448,7 +448,7 @@ func (ih *ImageHandler) buildInfo(id iiif.ID, i ImageInfo) *iiif.Info {
 	}
 
 	// The info id is actually the full URL to the resource, not just its ID
-	info.ID = ih.IIIFBase.String() + "/" + id.String()
+	info.ID = ih.IIIFBase.String() + "/" + id.URLString()
 	return info
 }
 

@@ -6,20 +6,24 @@ import (
 	"strings"
 )
 
-// ID is a string identifying a particular file to process.  It can contain
-// URI-encoded data in order to allow, e.g., full paths.
+// ID is a string identifying a particular file to process.  It should be
+// unescaped for use if it's coming from a URL via URLToID().
 type ID string
-
-// Path unescapes "percentage encoding" to return a more friendly value for
-// path-on-disk usage.
-func (id ID) Path() string {
-	p, _ := url.QueryUnescape(string(id))
-	return p
-}
 
 // String just gives the ID as it was created, but obviously as a string type
 func (id ID) String() string {
 	return string(id)
+}
+
+// URLToID converts a value pulled from a URL into a suitable IIIF ID (by unescaping it)
+func URLToID(val string) ID {
+	s, _ := url.QueryUnescape(string(val))
+	return ID(s)
+}
+
+// URLString returns an escaped version of the ID, suitable for use in a URL
+func (id ID) URLString() string {
+	return url.QueryEscape(string(id))
 }
 
 // URL represents the different options composed into a IIIF URL request
@@ -52,7 +56,7 @@ func NewURL(path string) (*URL, error) {
 
 	// First check for an ID-only request, which must be redirected
 	if len(parts) == 1 {
-		u.ID = ID(path)
+		u.ID = URLToID(path)
 		u.Info = true
 		u.BaseURIRedirect = true
 		u.Path = ""
@@ -64,7 +68,7 @@ func NewURL(path string) (*URL, error) {
 	qualityFormat := parts[last]
 	if len(parts) == 2 && qualityFormat == "info.json" {
 		u.Info = true
-		u.ID = ID(parts[0])
+		u.ID = URLToID(parts[0])
 		return u, nil
 	}
 
@@ -78,7 +82,7 @@ func NewURL(path string) (*URL, error) {
 		return u, errors.New("invalid quality/format specifier")
 	}
 
-	u.ID = ID(parts[0])
+	u.ID = URLToID(parts[0])
 	u.Region = StringToRegion(parts[1])
 	u.Size = StringToSize(parts[2])
 	u.Rotation = StringToRotation(parts[3])
