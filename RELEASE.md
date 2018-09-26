@@ -105,7 +105,7 @@ Major changes:
 - Optionally caches data for info.json responses
 - Adds the ability to override the IIIF info.json response per image
 - Allows specifying configuration via /etc/rais.toml (see [rais-example.toml](rais-example.toml))
-- Allows limiting RAIS features via an IIIF capabilities file (see [cap-max.toml](cap-max.toml)
+- Allows limiting RAIS features via a IIIF capabilities file (see [cap-max.toml](cap-max.toml)
   and [cap-level0.toml](cap-level0.toml) for examples)
 
 Back-end improvements:
