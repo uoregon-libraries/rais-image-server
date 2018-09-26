@@ -11,8 +11,10 @@
 # - You have sudo access
 # - You are using this with ONI
 
+set -eu
+
 make clean
-make bin/rais-server
+make
 sudo systemctl stop rais
 sudo rm -f /usr/local/rais/rais-server
 sudo mkdir -p /usr/local/rais
