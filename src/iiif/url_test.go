@@ -2,6 +2,7 @@ package iiif
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 	"testing"
 
