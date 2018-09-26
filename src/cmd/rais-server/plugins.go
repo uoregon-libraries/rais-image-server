@@ -82,4 +82,16 @@ func loadPlugin(fullpath string, l *logger.Logger) {
 		l.Debugf("Adding IDToPath from %q", fullpath)
 		idToPathPlugins = append(idToPathPlugins, plugIDToPath(f))
 	}
+
+	sym, err = p.Lookup("Initialize")
+	if err == nil {
+		var f, ok = sym.(func())
+		if !ok {
+			l.Errorf("Plugin %q exposes an invalid Initialize function", fullpath)
+			return
+		}
+
+		l.Debugf("Calling %q.Initialize()", fullpath)
+		f()
+	}
 }
