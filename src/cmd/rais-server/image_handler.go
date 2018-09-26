@@ -107,7 +107,7 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 	var urlPath = strings.Replace(p, prefix, "", 1)
 	iiifURL, err := iiif.NewURL(urlPath)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid IIIF request %s: %s", iiifURL, err), 400)
+		http.Error(w, fmt.Sprintf("Invalid IIIF request %q: %s", iiifURL.Path, err), 400)
 		return
 	}
 
