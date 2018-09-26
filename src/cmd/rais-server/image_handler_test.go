@@ -28,7 +28,7 @@ func rootDir() string {
 	return root
 }
 
-// Sets up everything necessary to test an IIIF request
+// Sets up everything necessary to test a IIIF request
 func dorequestGeneric(path string, acceptLD bool, max constraint, fs *iiif.FeatureSet, t *testing.T) *fakehttp.ResponseWriter {
 	u, _ := url.Parse("http://example.com/foo/bar")
 	w := fakehttp.NewResponseWriter()
@@ -54,12 +54,12 @@ func dorequestGeneric(path string, acceptLD bool, max constraint, fs *iiif.Featu
 	return w
 }
 
-// Sets up everything necessary to test an IIIF request using level 1 support
+// Sets up everything necessary to test a IIIF request using level 1 support
 func dorequest(path string, acceptLD bool, max constraint, t *testing.T) *fakehttp.ResponseWriter {
 	return dorequestGeneric(path, acceptLD, max, iiif.FeatureSet1(), t)
 }
 
-// Sets up everything necessary to test an IIIF request using level 2 support
+// Sets up everything necessary to test a IIIF request using level 2 support
 func dorequestl2(path string, acceptLD bool, max constraint, t *testing.T) *fakehttp.ResponseWriter {
 	return dorequestGeneric(path, acceptLD, max, iiif.FeatureSet2(), t)
 }

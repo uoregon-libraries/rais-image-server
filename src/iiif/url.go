@@ -22,7 +22,7 @@ func (id ID) String() string {
 	return string(id)
 }
 
-// URL represents the different options composed into an IIIF URL request
+// URL represents the different options composed into a IIIF URL request
 type URL struct {
 	Path            string
 	ID              ID

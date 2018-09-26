@@ -30,7 +30,7 @@ type Region struct {
 	X, Y, W, H float64
 }
 
-// StringToRegion takes a string representing a region, as seen in an IIIF URL,
+// StringToRegion takes a string representing a region, as seen in a IIIF URL,
 // and fills in the values based on the string's format.
 func StringToRegion(p string) Region {
 	if p == "full" {

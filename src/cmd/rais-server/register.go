@@ -1,6 +1,6 @@
 package main
 
-// IIIFDecodeFn is a function which takes a filename and returns an IIIFImageDecoder
+// IIIFDecodeFn is a function which takes a filename and returns a IIIFImageDecoder
 type IIIFDecodeFn func(string) (IIIFImageDecoder, error)
 
 // ExtDecoders is our list of registered decoders for given file extensions

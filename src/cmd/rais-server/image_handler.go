@@ -55,7 +55,7 @@ func (c constraint) smallerThanAny(w, h int) bool {
 	return w > c.Width || h > c.Height || int64(w)*int64(h) > c.Area
 }
 
-// ImageHandler responds to an IIIF URL request and parses the requested
+// ImageHandler responds to a IIIF URL request and parses the requested
 // transformation within the limits of the handler's capabilities
 type ImageHandler struct {
 	IIIFBase   *url.URL
@@ -253,7 +253,7 @@ func (ih *ImageHandler) DZITile(w http.ResponseWriter, req *http.Request, res *I
 		return
 	}
 
-	// Construct an IIIF URL so we can just reuse the IIIF-centric Command function
+	// Construct a IIIF URL so we can just reuse the IIIF-centric Command function
 	var reduction uint64 = 1 << (maxLevel - uint64(l))
 
 	width := reduction * DZITileSize

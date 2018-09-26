@@ -1,6 +1,6 @@
 package iiif
 
-// Format represents an IIIF 2.0 file format a client may request
+// Format represents a IIIF 2.0 file format a client may request
 type Format string
 
 // All known file formats for IIIF 2.0

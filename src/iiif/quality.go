@@ -1,6 +1,6 @@
 package iiif
 
-// Quality is the representation of an IIIF 2.0 quality (color space / depth)
+// Quality is the representation of a IIIF 2.0 quality (color space / depth)
 // which a client may request.  We also include "native" for better
 // compatibility with older clients, since it's the same as "default".
 type Quality string
