@@ -78,6 +78,15 @@ func (ih *ImageHandler) EnableIIIF(u *url.URL) {
 	ih.FeatureSet = iiif.AllFeatures()
 }
 
+// cacheKey returns a key for caching if a given IIIF URL is cacheable by our
+// current, somewhat restrictive, rules
+func cacheKey(u *iiif.URL) string {
+	if tileCache != nil && u.Format == iiif.FmtJPG && u.Size.W > 0 && u.Size.W <= 1024 && u.Size.H <= 1024 {
+		return u.Path
+	}
+	return ""
+}
+
 // IIIFRoute takes an HTTP request and parses it to see what (if any) IIIF
 // translation is requested
 func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
@@ -118,6 +127,18 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 	if iiifURL.Info {
 		ih.Info(w, req, info)
 		return
+	}
+
+	// Check the cache before spending the cycles to read in the image.  For now
+	// the cache is very limited to ensure only relatively small requests are
+	// actually cached.
+	if key := cacheKey(iiifURL); key != "" {
+		data, ok := tileCache.Get(key)
+		if ok {
+			w.Header().Set("Content-Type", mime.TypeByExtension("."+string(iiifURL.Format)))
+			w.Write(data.([]byte))
+			return
+		}
 	}
 
 	// No info path should mean a full command path - start reading the image
@@ -442,11 +463,6 @@ func marshalInfo(info *iiif.Info) ([]byte, *HandlerError) {
 
 // Command handles image processing operations
 func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL, res *ImageResource, info *iiif.Info) {
-	// For now the cache is very limited to ensure only relatively small requests
-	// are actually cached
-	willCache := tileCache != nil && u.Format == iiif.FmtJPG && u.Size.W > 0 && u.Size.W <= 1024 && u.Size.H == 0
-	cacheKey := u.Path
-
 	// Send last modified time
 	if err := sendHeaders(w, req, res.FilePath); err != nil {
 		return
@@ -458,17 +474,8 @@ func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iii
 		return
 	}
 
-	// Check the cache now that we're sure everything is valid and supported.
-	if willCache {
-		data, ok := tileCache.Get(cacheKey)
-		if ok {
-			w.Header().Set("Content-Type", mime.TypeByExtension("."+string(u.Format)))
-			w.Write(data.([]byte))
-			return
-		}
-	}
-
 	var max = ih.Maximums
+
 	// If we have an info, we can make use of it for the constraints rather than
 	// using the global constraints; this is useful for overridden info.json files
 	if info != nil {
@@ -498,7 +505,8 @@ func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iii
 	var cacheBuf *bytes.Buffer
 	var out io.Writer = w
 
-	if willCache {
+	var key string
+	if key = cacheKey(u); key != "" {
 		cacheBuf = bytes.NewBuffer(nil)
 		out = io.MultiWriter(w, cacheBuf)
 	}
@@ -509,7 +517,7 @@ func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iii
 		return
 	}
 
-	if willCache {
-		tileCache.Add(cacheKey, cacheBuf.Bytes())
+	if key != "" {
+		tileCache.Add(key, cacheBuf.Bytes())
 	}
 }
