@@ -171,7 +171,7 @@ func (ih *ImageHandler) getIIIFPath(id iiif.ID) string {
 		}
 		logger.Warnf("Error trying to use plugin to translate iiif.ID: %s", err)
 	}
-	return ih.TilePath + "/" + id.String()
+	return ih.TilePath + "/" + string(id)
 }
 
 func convertStrings(s1, s2, s3 string) (i1, i2, i3 int, err error) {
@@ -199,14 +199,14 @@ func (ih *ImageHandler) DZIRoute(w http.ResponseWriter, req *http.Request) {
 	parts := DZIInfoRegex.FindStringSubmatch(p)
 	if parts != nil {
 		id = iiif.URLToID(parts[1])
-		filePath = ih.TilePath + "/" + id.String()
+		filePath = ih.TilePath + "/" + string(id)
 		handler = func(r *ImageResource) { ih.DZIInfo(w, r) }
 	}
 
 	parts = DZITilePathRegex.FindStringSubmatch(p)
 	if parts != nil {
 		id = iiif.URLToID(parts[1])
-		filePath = ih.TilePath + "/" + id.String()
+		filePath = ih.TilePath + "/" + string(id)
 
 		level, tileX, tileY, err := convertStrings(parts[2], parts[3], parts[4])
 		if err != nil {
@@ -376,8 +376,8 @@ func (ih *ImageHandler) loadInfoOverride(id iiif.ID, fp string) *iiif.Info {
 	Logger.Debugf("Loading image data from override file (%s)", infofile)
 
 	// If an override file *is* found, replace the id
-	fullid := ih.IIIFBase.String() + "/" + id.String()
-	d2 := bytes.Replace(data, []byte("%ID%"), []byte(fullid), 1)
+	escapedID := ih.IIIFBase.String() + "/" + id.Escaped()
+	d2 := bytes.Replace(data, []byte("%ID%"), []byte(escapedID), 1)
 
 	info := new(iiif.Info)
 	err = json.Unmarshal(d2, info)
@@ -448,7 +448,7 @@ func (ih *ImageHandler) buildInfo(id iiif.ID, i ImageInfo) *iiif.Info {
 	}
 
 	// The info id is actually the full URL to the resource, not just its ID
-	info.ID = ih.IIIFBase.String() + "/" + id.URLString()
+	info.ID = ih.IIIFBase.String() + "/" + id.Escaped()
 	return info
 }
 

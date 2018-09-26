@@ -10,19 +10,14 @@ import (
 // unescaped for use if it's coming from a URL via URLToID().
 type ID string
 
-// String just gives the ID as it was created, but obviously as a string type
-func (id ID) String() string {
-	return string(id)
-}
-
 // URLToID converts a value pulled from a URL into a suitable IIIF ID (by unescaping it)
 func URLToID(val string) ID {
 	s, _ := url.QueryUnescape(string(val))
 	return ID(s)
 }
 
-// URLString returns an escaped version of the ID, suitable for use in a URL
-func (id ID) URLString() string {
+// Escaped returns an escaped version of the ID, suitable for use in a URL
+func (id ID) Escaped() string {
 	return url.QueryEscape(string(id))
 }
 
