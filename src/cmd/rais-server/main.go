@@ -48,7 +48,7 @@ func main() {
 	viper.ReadInConfig()
 
 	// CLI flags
-	pflag.String("iiif-url", "", `Base URL for serving IIIF requests, e.g., "http://example.com:8888/images/iiif"`)
+	pflag.String("iiif-url", "", `Base URL for serving IIIF requests, e.g., "http://example.com/images/iiif"`)
 	viper.BindPFlag("IIIFURL", pflag.CommandLine.Lookup("iiif-url"))
 	pflag.String("address", defaultAddress, "http service address")
 	viper.BindPFlag("Address", pflag.CommandLine.Lookup("address"))
@@ -101,58 +101,59 @@ func main() {
 
 	// Handle IIIF data only if we have a IIIF URL
 	iiifURL := viper.GetString("IIIFURL")
-	if iiifURL != "" {
-		Logger.Debugf("Attempting to start up IIIF at %s", viper.GetString("IIIFURL"))
-		iiifBase, err := url.Parse(iiifURL)
-		if err == nil && iiifBase.Scheme == "" {
-			err = fmt.Errorf("empty scheme")
-		}
-		if err == nil && iiifBase.Host == "" {
-			err = fmt.Errorf("empty host")
-		}
-		if err == nil && iiifBase.Path == "" {
-			err = fmt.Errorf("empty path")
-		}
-		if err != nil {
-			Logger.Fatalf("Invalid IIIF URL (%s) specified: %s", iiifURL, err)
-		}
-
-		icl := viper.GetInt("InfoCacheLen")
-		if icl > 0 {
-			infoCache, err = lru.New(icl)
-			if err != nil {
-				Logger.Fatalf("Unable to start info cache: %s", err)
-			}
-		}
-
-		tcl := viper.GetInt("TileCacheLen")
-		if tcl > 0 {
-			Logger.Debugf("Creating a tile cache to hold up to %d tiles", tcl)
-			tileCache, err = lru.New2Q(tcl)
-			if err != nil {
-				Logger.Fatalf("Unable to start info cache: %s", err)
-			}
-		}
-
-		Logger.Infof("IIIF enabled at %s", iiifBase.String())
-		ih.EnableIIIF(iiifBase)
-
-		capfile := viper.GetString("CapabilitiesFile")
-		if capfile != "" {
-			ih.FeatureSet = &iiif.FeatureSet{}
-			_, err := toml.DecodeFile(capfile, &ih.FeatureSet)
-			if err != nil {
-				Logger.Fatalf("Invalid file or formatting in capabilities file '%s'", capfile)
-			}
-			Logger.Debugf("Setting IIIF capabilities from file '%s'", capfile)
-		}
-
-		http.HandleFunc(ih.IIIFBase.Path+"/", ih.IIIFRoute)
-		http.HandleFunc("/images/dzi/", ih.DZIRoute)
+	if iiifURL == "" {
+		fmt.Println("ERROR: --iiif-url must be set to the server's public URL")
+		pflag.Usage()
+		os.Exit(1)
 	}
 
-	http.HandleFunc("/images/tiles/", TileHandler)
-	http.HandleFunc("/images/resize/", ResizeHandler)
+	Logger.Debugf("Attempting to start up IIIF at %s", viper.GetString("IIIFURL"))
+	iiifBase, err := url.Parse(iiifURL)
+	if err == nil && iiifBase.Scheme == "" {
+		err = fmt.Errorf("empty scheme")
+	}
+	if err == nil && iiifBase.Host == "" {
+		err = fmt.Errorf("empty host")
+	}
+	if err == nil && iiifBase.Path == "" {
+		err = fmt.Errorf("empty path")
+	}
+	if err != nil {
+		Logger.Fatalf("Invalid IIIF URL (%s) specified: %s", iiifURL, err)
+	}
+
+	icl := viper.GetInt("InfoCacheLen")
+	if icl > 0 {
+		infoCache, err = lru.New(icl)
+		if err != nil {
+			Logger.Fatalf("Unable to start info cache: %s", err)
+		}
+	}
+
+	tcl := viper.GetInt("TileCacheLen")
+	if tcl > 0 {
+		Logger.Debugf("Creating a tile cache to hold up to %d tiles", tcl)
+		tileCache, err = lru.New2Q(tcl)
+		if err != nil {
+			Logger.Fatalf("Unable to start info cache: %s", err)
+		}
+	}
+
+	Logger.Infof("IIIF enabled at %s", iiifBase.String())
+	ih.EnableIIIF(iiifBase)
+
+	capfile := viper.GetString("CapabilitiesFile")
+	if capfile != "" {
+		ih.FeatureSet = &iiif.FeatureSet{}
+		_, err := toml.DecodeFile(capfile, &ih.FeatureSet)
+		if err != nil {
+			Logger.Fatalf("Invalid file or formatting in capabilities file '%s'", capfile)
+		}
+		Logger.Debugf("Setting IIIF capabilities from file '%s'", capfile)
+	}
+
+	http.HandleFunc(ih.IIIFBase.Path+"/", ih.IIIFRoute)
+	http.HandleFunc("/images/dzi/", ih.DZIRoute)
 	http.HandleFunc("/version", VersionHandler)
 
 	Logger.Infof("RAIS v%s starting...", version.Version)
