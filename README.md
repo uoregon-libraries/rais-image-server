@@ -36,7 +36,7 @@ terabytes and are mounted from external network storage.  And we don't run a
 dozen servers with heavy layers of caching.  Our back-end is very modest:
 
 - We have a single VM with 6 gigs of RAM
-- Our server runs Solr, MariaDB, and ONI (a django application) in addition to RAIS
+- Our server runs Solr, MariaDB, and [Open ONI](https://github.com/open-oni/open-oni) (a django application) in addition to RAIS
 - We set up Apache to cache thumbnails (described below).  All other images are served from RAIS.
 - We configured our instance of RAIS to cache up to 1000 tiles just in case
   many people are drawn to a single newspaper for any reason.
