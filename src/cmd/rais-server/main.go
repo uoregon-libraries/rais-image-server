@@ -29,6 +29,9 @@ var Logger *logger.Logger
 const defaultAddress = ":12415"
 const defaultInfoCacheLen = 10000
 
+// cacheHits and cacheMisses allow some rudimentary tracking of cache value
+var cacheHits, cacheMisses int64
+
 var defaultLogLevel = logger.Debug.String()
 
 func main() {
@@ -155,6 +158,15 @@ func main() {
 	http.HandleFunc(ih.IIIFBase.Path+"/", ih.IIIFRoute)
 	http.HandleFunc("/images/dzi/", ih.DZIRoute)
 	http.HandleFunc("/version", VersionHandler)
+
+	if tileCache != nil {
+		go func() {
+			for {
+				time.Sleep(time.Minute * 10)
+				Logger.Infof("Cache hits: %d; cache misses: %d", cacheHits, cacheMisses)
+			}
+		}()
+	}
 
 	Logger.Infof("RAIS v%s starting...", version.Version)
 	var srv = &http.Server{
