@@ -134,39 +134,6 @@ while command-line flags will override both configuration files and
 environtmental variables.  Configuration is best explained and understood by
 reading the example file above, which describes all the values in detail.
 
-Using with chronam
------
-
-**Note that we no longer use chronam, so the information provided here is
-probably very outdated now.  RAIS is much easier to use with a system that was
-built with IIIF support.**
-
-To make this tile server work with
-[chronam](https://github.com/LibraryOfCongress/chronam), you have two options.
-
-You can [modify chronam directly](https://gist.github.com/eikeon/5124779),
-which is easier for a quick test, but can make it tougher when chronam is
-updated.
-
-For a longer-term solution, you can instead make your web server proxy all
-traffic for `/images/tiles/` to the tile server.  In Apache, you'd need to
-enable proxy and proxy_http mods, and add this to your config:
-
-`ProxyPass /images/tiles/ http://localhost:8888/images/tiles/`
-
-Unfortunately, the version of chronam we're using has a lot of other dynamic
-image URLs, so serving JP2s exclusively ended up requiring a lot of other
-chronam hacks.  Our work isn't portable due to the extensive customizations we
-have done to the site, but you can see the branch merge commit where we
-centralized all dynamic image URLs [in this commit to the oregonnews
-project](https://github.com/uoregon-libraries/oregonnews/commit/c8aad3287bf80cc4ca6716b91abd8b714be956a1)
-
-Using with Open ONI
------
-
-RAIS works out of the box with [Open ONI](https://github.com/open-oni/open-oni),
-a fork of chronam.  No hacking required!
-
 Plugins
 -----
 
