@@ -34,7 +34,6 @@ lint:
 # Cleanup
 clean:
 	rm -rf bin/
-	rm -rf pkg/
 	rm -f src/transform/rotation.go
 
 # (Re)build the separated docker containers
