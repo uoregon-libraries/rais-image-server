@@ -36,13 +36,10 @@ clean:
 	rm -rf bin/
 	rm -f src/transform/rotation.go
 
-# (Re)build the separated docker containers
+# Generate the docker build container
 docker:
-	docker pull uolibraries/rais
 	docker-compose build rais-build
-	docker-compose run --rm rais-build make clean
-	docker-compose run --rm rais-build make
-	docker build --rm -t uolibraries/rais:f28 -f docker/Dockerfile.prod $(MakefileDir)
+	docker build --rm -t uolibraries/rais:latest-indev $(MakefileDir)/docker
 
 plugins:
 	go build -buildmode=plugin -o bin/plugins/external-images.so rais/src/plugins/external-images

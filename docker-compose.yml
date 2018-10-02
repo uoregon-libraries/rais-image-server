@@ -1,20 +1,19 @@
-# This describes a self-contained demo of RAIS, using Apache to serve up the
+# This describes a self-contained demo of RAIS, using nginx to serve up the
 # static pages.  This isn't a production configuration file!!
 #
 # Put JP2s into docker/images and the apache entrypoint script will add them to
 # the images served by from RAIS.
-version: "3"
+version: "3.4"
 
 volumes:
   gopath: {}
   gocache: {}
 
 services:
-  # Run this directly if you need to build the binaries: docker-compose up rais-build
   rais-build:
     build:
-      context: .
-      dockerfile: ./docker/Dockerfile.build
+      context: ./docker
+      target: build
     volumes:
       - ./:/opt/rais-src:rw
       - ./docker/images:/var/local/images:ro
