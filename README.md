@@ -356,12 +356,17 @@ CPU-efficient.  We'd recommend tiling JP2s at a size of around 1024x1024.
 
 The openjpeg tools make this simple:
 
-    /bin/opj2_compress -i input.tiff -o output.jp2 -t 1024,1024 -r 20.250
+    /bin/opj2_compress -i input.tiff -o output.jp2 -t 1024,1024 -r 20.250 -n 6
 
 Some notes:
 
 - A rate [`-r`] of 20.250 is equivalent to a graphicsmagick "quality" of 70,
   which in JP2-land is about the same as a JPEG of quality 90-95 (very good).
+- `-n 6` specifies that there are six resolution levels.  This can be optimized
+  based on the image's size if desired, but 6 is the default.  Typically 6 will
+  be fine, but a decent guideline is to start at 6 levels for a 16-megapixel
+  image and add a resolution level each time the number of megapixels
+  quadruples.  e.g., 16mp = `-n 6`, 64mp = `-n 7`, 256mp = `-n 8`, etc.
 - You may have to build openjpeg tools manually to get support for converting
   some image formats, including TIFF and PNG
 
