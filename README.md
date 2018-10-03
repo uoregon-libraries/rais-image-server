@@ -137,8 +137,22 @@ reading the example file above, which describes all the values in detail.
 Plugins
 -----
 
-RAIS has a rudimentary plugin system in place.  An example plugin can be built
+### Example plugins
+
+RAIS has a rudimentary plugin system in place.  Example plugins can be built
 via `make plugins` or, if using docker, `./scripts/buildrun.sh make plugins`.
+
+**Note**: the external images plugin is *not secure*.  It is meant for
+demonstration only, and should not be used in a live server.  Remove
+`bin/plugins/external-images.so` and restart RAIS if you accidentally ran it
+with this plugin enabled.
+
+The example Plugins may be built all at once (`make plugins`) or individually
+(e.g., `make s3-images`).  Due to the security issues with the external images
+plugin, it is strongly recommended you use `make plugins` only on development
+servers that aren't exposed to the entire Internet.
+
+#### External Images
 
 The [example external-images plugin](src/plugins/external-images) showcases how
 a plugin might be built to alter how RAIS interprets certain IDs.  The example
@@ -150,6 +164,23 @@ happens with third-party digital asset management systems.
 Then start up the demo server and browse to the final image in the list.  After
 15-30 seconds, you should see an image which was requested from hubblesite.org,
 and which is now cached locally.
+
+#### S3 Images
+
+The [s3-images plugin](src/plugins/s3-images) is an example that can be tweaked
+to pull from a particular S3 bucket on demand.  This plugin shows how you can
+access configuration from a plugin as well as simple S3 access that's not
+available from a "vanilla" RAIS build.
+
+See [rais-example.toml](rais-example.toml) for configuration details.
+
+Because this plugin is only able to access a server-configured S3 bucket, it is
+considered to be secure, assuming your S3 bucket isn't able to get uploads from
+unknown people on the Internet.
+
+There is minimal documentation for this plugin at the moment (it was originally
+just another example of how to *build* a plugin).  The comments at the top of
+[main.go](src/plugins/s3-images/main.go) have more details.
 
 ### Behavior
 
