@@ -324,9 +324,9 @@ the value of caching is minimal, and may be removed in the future.
 
 The server can optionally cache generated tiles under specific circumstances,
 but doesn't inherently cache the other images such as thumbnails.  Tiles which
-are requested at a width of 1024, 512, or 256, in JPG format, can be cached by
-setting TileCacheLen in /etc/rais.toml, or the RAIS_TILECACHELEN environment
-variable.  This is disabled by default.
+are requested at a width and height of 1024 or below, in JPG format, can be
+cached by setting TileCacheLen in /etc/rais.toml, or the RAIS_TILECACHELEN
+environment variable.  This is disabled by default.
 
 Setting the tile cache length to anything greater than zero will enable the
 cache.
