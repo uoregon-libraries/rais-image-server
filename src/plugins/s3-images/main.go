@@ -7,8 +7,8 @@
 //
 // When a resource is requested, if its IIIF id begins with "s3:", we treat the
 // rest of the id as an s3 id to be pulled from the configured zone and bucket.
-// retrieve the asset.  As zone and bucket are configured on the server end,
-// attack vectors seen in the external images plugin are effectively nullified.
+// As zone and bucket are configured on the server end, attack vectors seen in
+// the external images plugin are effectively nullified.
 //
 // We assume the asset is already a format RAIS can serve (preferably JP2), and
 // we cache it locally with the same extension it has in S3.  The IDToPath
