@@ -18,6 +18,8 @@ import (
 	"github.com/spf13/viper"
 	"github.com/uoregon-libraries/gopkg/interrupts"
 	"github.com/uoregon-libraries/gopkg/logger"
+	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 var tilePath string
@@ -54,6 +56,8 @@ func main() {
 	// CLI flags
 	pflag.String("iiif-url", "", `Base URL for serving IIIF requests, e.g., "http://example.com/images/iiif"`)
 	viper.BindPFlag("IIIFURL", pflag.CommandLine.Lookup("iiif-url"))
+	pflag.String("datadog-address", "", `Host and address to datadog agent, e.g., "localhost:8126"`)
+	viper.BindPFlag("DatadogAddress", pflag.CommandLine.Lookup("datadog-address"))
 	pflag.String("address", defaultAddress, "http service address")
 	viper.BindPFlag("Address", pflag.CommandLine.Lookup("address"))
 	pflag.String("tile-path", "", "Base path for images")
@@ -111,6 +115,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	datadogAddress := viper.GetString("DatadogAddress")
+	if datadogAddress == "" {
+		fmt.Println("ERROR: --datadog-address must be set")
+		pflag.Usage()
+		os.Exit(1)
+	}
+
 	Logger.Debugf("Attempting to start up IIIF at %s", viper.GetString("IIIFURL"))
 	iiifBase, err := url.Parse(iiifURL)
 	if err == nil && iiifBase.Scheme == "" {
@@ -156,9 +167,12 @@ func main() {
 		Logger.Debugf("Setting IIIF capabilities from file '%s'", capfile)
 	}
 
-	http.HandleFunc(ih.IIIFBase.Path+"/", ih.IIIFRoute)
-	http.HandleFunc("/images/dzi/", ih.DZIRoute)
-	http.HandleFunc("/version", VersionHandler)
+	tracer.Start(tracer.WithAgentAddr(datadogAddress))
+	defer tracer.Stop()
+
+	http.Handle(ih.IIIFBase.Path+"/", httptrace.WrapHandler(http.HandlerFunc(ih.IIIFRoute), "RAIS", "iiif"))
+	http.Handle("/images/dzi/", httptrace.WrapHandler(http.HandlerFunc(ih.DZIRoute), "RAIS", "dzi"))
+	http.Handle("/version", httptrace.WrapHandler(http.HandlerFunc(VersionHandler), "RAIS", "version"))
 
 	if tileCache != nil {
 		go func() {

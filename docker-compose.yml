@@ -49,6 +49,7 @@ services:
       - RAIS_S3CACHE
       - RAIS_S3ZONE
       - RAIS_S3BUCKET
+      - RAIS_DATADOGADDRESS=dd-agent:8126
       - AWS_SHARED_CREDENTIALS_FILE=/etc/aws.credentials
     volumes:
       - ./bin/rais-server:/opt/rais/rais-server:ro
