@@ -9,6 +9,7 @@ import (
 	"rais/src/iiif"
 	"rais/src/magick"
 	"rais/src/openjpeg"
+	"rais/src/plugins"
 	"rais/src/version"
 	"time"
 
@@ -18,8 +19,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/uoregon-libraries/gopkg/interrupts"
 	"github.com/uoregon-libraries/gopkg/logger"
-	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 var tilePath string
@@ -56,8 +55,6 @@ func main() {
 	// CLI flags
 	pflag.String("iiif-url", "", `Base URL for serving IIIF requests, e.g., "http://example.com/images/iiif"`)
 	viper.BindPFlag("IIIFURL", pflag.CommandLine.Lookup("iiif-url"))
-	pflag.String("datadog-address", "", `Host and address to datadog agent, e.g., "localhost:8126"`)
-	viper.BindPFlag("DatadogAddress", pflag.CommandLine.Lookup("datadog-address"))
 	pflag.String("address", defaultAddress, "http service address")
 	viper.BindPFlag("Address", pflag.CommandLine.Lookup("address"))
 	pflag.String("tile-path", "", "Base path for images")
@@ -115,13 +112,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	datadogAddress := viper.GetString("DatadogAddress")
-	if datadogAddress == "" {
-		fmt.Println("ERROR: --datadog-address must be set")
-		pflag.Usage()
-		os.Exit(1)
-	}
-
 	Logger.Debugf("Attempting to start up IIIF at %s", viper.GetString("IIIFURL"))
 	iiifBase, err := url.Parse(iiifURL)
 	if err == nil && iiifBase.Scheme == "" {
@@ -167,12 +157,9 @@ func main() {
 		Logger.Debugf("Setting IIIF capabilities from file '%s'", capfile)
 	}
 
-	tracer.Start(tracer.WithAgentAddr(datadogAddress))
-	defer tracer.Stop()
-
-	http.Handle(ih.IIIFBase.Path+"/", httptrace.WrapHandler(http.HandlerFunc(ih.IIIFRoute), "RAIS", "iiif"))
-	http.Handle("/images/dzi/", httptrace.WrapHandler(http.HandlerFunc(ih.DZIRoute), "RAIS", "dzi"))
-	http.Handle("/version", httptrace.WrapHandler(http.HandlerFunc(VersionHandler), "RAIS", "version"))
+	handle(ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
+	handle("/images/dzi/", http.HandlerFunc(ih.DZIRoute))
+	handle("/version", http.HandlerFunc(VersionHandler))
 
 	if tileCache != nil {
 		go func() {
@@ -211,6 +198,23 @@ func main() {
 			Logger.Fatalf("Error starting listener: %s", err)
 		}
 	}
+}
+
+// handle sends the pattern and raw handler to plugins, and sets up routing on
+// whatever is returned (if anything).  All plugins which wrap handlers are
+// allowed to run, but the behavior could definitely get weird depending on
+// what a given plugin does.  Ye be warned.
+func handle(pattern string, handler http.Handler) {
+	for _, plug := range wrapHandlerPlugins {
+		var h2, err = plug(pattern, handler)
+		if err != plugins.ErrSkipped {
+			logger.Fatalf("Error trying to wrap handler %q: %s", pattern, err)
+		}
+		if err == nil {
+			handler = h2
+		}
+	}
+	http.Handle(pattern, handler)
 }
 
 // VersionHandler spits out the raw version string to the browser

@@ -2,6 +2,7 @@ package main
 
 import (
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"plugin"
@@ -14,8 +15,10 @@ import (
 type plugGeneric func()
 type plugIDToPath func(iiif.ID) (string, error)
 type plugLogger func(*logger.Logger)
+type plugWrapHandler func(string, http.Handler) (http.Handler, error)
 
 var idToPathPlugins []plugIDToPath
+var wrapHandlerPlugins []plugWrapHandler
 var teardownPlugins []plugGeneric
 
 // LoadPlugins searches for any plugins in the binary's directory + /plugins
@@ -122,8 +125,22 @@ func loadPlugin(fullpath string, l *logger.Logger) {
 			return
 		}
 
-		l.Debugf("Adding Teardown from %q", fullpath)
+		l.Debugf("Found %q.Teardown", fullpath)
 		teardown = plugGeneric(f)
+		fnCount++
+	}
+
+	var wrapHandler plugWrapHandler
+	sym, err = p.Lookup("WrapHandler")
+	if err == nil {
+		var f, ok = sym.(func(string, http.Handler) (http.Handler, error))
+		if !ok {
+			l.Errorf("%q.WrapHandler is invalid", fullpath)
+			return
+		}
+
+		l.Debugf("Found %q.WrapHandler", fullpath)
+		wrapHandler = plugWrapHandler(f)
 		fnCount++
 	}
 
@@ -146,5 +163,8 @@ func loadPlugin(fullpath string, l *logger.Logger) {
 	}
 	if teardown != nil {
 		teardownPlugins = append(teardownPlugins, teardown)
+	}
+	if wrapHandler != nil {
+		wrapHandlerPlugins = append(wrapHandlerPlugins, wrapHandler)
 	}
 }
