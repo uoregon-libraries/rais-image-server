@@ -32,4 +32,4 @@ for file in $(find /var/local/images -name "*.jp2" -o -name "*.tiff" -o -name "*
 done
 sed "s|%SRCS%|$sources|g" /usr/share/nginx/html/template.html > /usr/share/nginx/html/dzi.html
 
-nginx -g "daemon off;"
+exec nginx -g "daemon off;"

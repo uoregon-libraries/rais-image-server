@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/golang-lru"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"github.com/uoregon-libraries/gopkg/interrupts"
 	"github.com/uoregon-libraries/gopkg/logger"
 )
 
@@ -174,8 +175,18 @@ func main() {
 		WriteTimeout: 30 * time.Second,
 		Addr:         address,
 	}
+
+	interrupts.TrapIntTerm(func() {
+		Logger.Infof("Stopping RAIS...")
+		srv.Shutdown(nil)
+		Logger.Infof("Stopped")
+	})
+
 	if err := srv.ListenAndServe(); err != nil {
-		Logger.Fatalf("Error starting listener: %s", err)
+		// Don't report a fatal error when we close the server
+		if err != http.ErrServerClosed {
+			Logger.Fatalf("Error starting listener: %s", err)
+		}
 	}
 }
 
