@@ -1,8 +1,17 @@
 # This describes a self-contained demo of RAIS, using nginx to serve up the
 # static pages.  This isn't a production configuration file!!
 #
+# If you don't set up an override file (docker-compose.override-example.yml,
+# for instance), this will just use the stable version of RAIS from dockerhub.
+#
 # Put JP2s into docker/images and the apache entrypoint script will add them to
 # the images served by from RAIS.
+#
+# Note that the "rais-build" container may seem entirely unnecessary here, and
+# takes a few minutes to initially build.  However, it is very helpful when any
+# kind of custom building needs to happen, such as using the datadog plugin or
+# doing local development.  It's simply easier to know it'll be available than
+# to have commands that fail in potentially confusing ways.
 version: "3.4"
 
 volumes:
@@ -10,18 +19,6 @@ volumes:
   gocache: {}
 
 services:
-  dd-agent:
-    image: datadog/agent:latest
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /proc/:/host/proc/:ro
-      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
-    expose:
-      - 8126
-    environment:
-      - DD_API_KEY
-      - DD_APM_ENABLED=true
-
   rais-build:
     build:
       context: ./docker
@@ -46,23 +43,12 @@ services:
       - RAIS_IMAGEMAXAREA
       - RAIS_IMAGEMAXWIDTH
       - RAIS_IMAGEMAXHEIGHT
-      - RAIS_S3CACHE
-      - RAIS_S3ZONE
-      - RAIS_S3BUCKET
-      - RAIS_DATADOGADDRESS=dd-agent:8126
-      - AWS_SHARED_CREDENTIALS_FILE=/etc/aws.credentials
     volumes:
-      - ./bin/rais-server:/opt/rais/rais-server:ro
-      - ./bin/plugins:/opt/rais/plugins:ro
       - ./docker/images:/var/local/images:ro
       - ./rais-example.toml:/etc/rais-template.toml:ro
       - ./cap-max.toml:/etc/rais-capabilities.toml:ro
       - ./docker/demo-rais-entry.sh:/entrypoint.sh:ro
-      - ./docker/s3credentials:/etc/aws.credentials
-      - /tmp:/tmp
     entrypoint: /entrypoint.sh
-    ports:
-      - 12415:12415
 
   web:
     image: nginx:1.15
