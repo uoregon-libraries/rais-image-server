@@ -207,11 +207,10 @@ func main() {
 func handle(pattern string, handler http.Handler) {
 	for _, plug := range wrapHandlerPlugins {
 		var h2, err = plug(pattern, handler)
-		if err != plugins.ErrSkipped {
-			logger.Fatalf("Error trying to wrap handler %q: %s", pattern, err)
-		}
 		if err == nil {
 			handler = h2
+		} else if err != plugins.ErrSkipped {
+			logger.Fatalf("Error trying to wrap handler %q: %s", pattern, err)
 		}
 	}
 	http.Handle(pattern, handler)
