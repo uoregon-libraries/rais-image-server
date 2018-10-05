@@ -114,10 +114,9 @@ make docker
 
 *For contributors*: note that `make docker`, in addition to creating a
 production image, will produce an image called "raisimageserver_rais-build"
-which can be used to compile and run tests.  See
-[docker/Dockerfile.build](docker/Dockerfile.build) for examples of how to make
-this happen.  Also consider using [scripts/buildrun.sh](scripts/buildrun.sh) to ease compiling
-and testing.  [scripts/dev.sh](scripts/dev.sh) is also available for easing the
+which can be used to compile and run tests. Consider using
+[scripts/buildrun.sh](scripts/buildrun.sh) to ease compiling and testing.
+[scripts/dev.sh](scripts/dev.sh) is also available for easing the
 edit-compile-run loop on a system with no JP2 libraries, where compilation has
 to go through docker.
 
