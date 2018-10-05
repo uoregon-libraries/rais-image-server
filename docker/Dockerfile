@@ -34,6 +34,9 @@ ENV GOPATH /usr/local/go
 ENV GOROOT /opt/go
 ENV PATH /opt/go/bin:/usr/local/go/bin:$PATH
 
+# Make sure the build box can lint code
+RUN go get -u golang.org/x/lint/golint
+
 # Clone the RAIS repo
 RUN git clone https://github.com/uoregon-libraries/rais-image-server.git /opt/rais-src
 WORKDIR /opt/rais-src
