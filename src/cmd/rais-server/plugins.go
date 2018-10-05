@@ -77,7 +77,7 @@ func loadPlugin(fullpath string, l *logger.Logger) {
 	var log plugLogger
 	sym, err = p.Lookup("SetLogger")
 	if err == nil {
-		var f, ok = sym.(plugLogger)
+		var f, ok = sym.(func(*logger.Logger))
 		if !ok {
 			l.Errorf("%q.SetLogger is invalid", fullpath)
 			return
@@ -90,7 +90,7 @@ func loadPlugin(fullpath string, l *logger.Logger) {
 	var idToPath plugIDToPath
 	sym, err = p.Lookup("IDToPath")
 	if err == nil {
-		var f, ok = sym.(plugIDToPath)
+		var f, ok = sym.(func(iiif.ID) (string, error))
 		if !ok {
 			l.Errorf("%q.IDToPath is invalid", fullpath)
 			return
@@ -103,7 +103,7 @@ func loadPlugin(fullpath string, l *logger.Logger) {
 	var init plugGeneric
 	sym, err = p.Lookup("Initialize")
 	if err == nil {
-		var f, ok = sym.(plugGeneric)
+		var f, ok = sym.(func())
 		if !ok {
 			l.Errorf("%q.Initialize is invalid", fullpath)
 			return
@@ -116,7 +116,7 @@ func loadPlugin(fullpath string, l *logger.Logger) {
 	var teardown plugGeneric
 	sym, err = p.Lookup("Teardown")
 	if err == nil {
-		var f, ok = sym.(plugGeneric)
+		var f, ok = sym.(func())
 		if !ok {
 			l.Errorf("%q.Teardown is invalid", fullpath)
 			return
