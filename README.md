@@ -197,18 +197,10 @@ General behavior of plugins:
   the RAIS server.  This means the same server, the same openjpeg libraries,
   and the same version of Go.
 
-Functions a plugin may expose:
+### Plugin Functions
 
-#### `IDToPath`
-
-`func IDToPath(id iiif.ID) (path string, err error)`
-
-If the given ID isn't handled by this plugin, `plugins.ErrSkipped` should be
-returned by the plugin (the `path` returned will be ignored).
-
-The first plugin which returns a nil error "wins".  If there are multiple
-plugins trying to convert IDs to paths, you must be sure you put them in a
-sensible order.
+This section contains the complete list of exposed functions a plugin may
+expose, and a detailed description of their function signature and behavior.
 
 #### `SetLogger`
 
@@ -232,6 +224,25 @@ for an example of that.
 
 `Initialize()` is run after the logger is set up (unlike Go's internal `init()`
 function), so you can safely use it.
+
+#### `Teardown`
+
+`func Teardown()`
+
+All plugins may define a Teardown function for handling any necessary cleanup.
+This is called when RAIS is about to exit, though it is not guaranteed to be
+called (for instance, if power goes out or the server is force-killed).
+
+#### `IDToPath`
+
+`func IDToPath(id iiif.ID) (path string, err error)`
+
+If the given ID isn't handled by this plugin, `plugins.ErrSkipped` should be
+returned by the plugin (the `path` returned will be ignored).
+
+The first plugin which returns a nil error "wins".  If there are multiple
+plugins trying to convert IDs to paths, you must be sure you put them in a
+sensible order.
 
 IIIF Features
 -----
