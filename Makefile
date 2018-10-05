@@ -45,7 +45,7 @@ bin/plugins/datadog.so:
 	go build -buildmode=plugin -o bin/plugins/datadog.so rais/src/plugins/datadog
 
 bin/plugins/external-images.so: src/plugins/external-images/*
-	@echo -e "\033[1;31mWarning\033[0m: the external images plugin is not secure!  It should be used as an example only!"
+	@echo "\033[1;31mWarning\033[0m: the external images plugin is not secure!  It should be used as an example only!"
 	go build -buildmode=plugin -o bin/plugins/external-images.so rais/src/plugins/external-images
 
 bin/plugins/s3-images.so: src/plugins/s3-images/*
