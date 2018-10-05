@@ -27,6 +27,7 @@ import (
 
 var l *logger.Logger
 
+// Initialize reads configuration and sets up the datadog agent
 func Initialize() {
 	var ddaddr = viper.GetString("DatadogAddress")
 
@@ -38,10 +39,13 @@ func Initialize() {
 	tracer.Start(tracer.WithAgentAddr(ddaddr))
 }
 
+// WrapHandler takes all RAIS routes' handlers and puts the datadog
+// instrumentation into them
 func WrapHandler(pattern string, handler http.Handler) (http.Handler, error) {
 	return httptrace.WrapHandler(handler, "RAIS/datadog", pattern), nil
 }
 
+// Teardown tells datadog to shut down the tracer gracefully
 func Teardown() {
 	tracer.Stop()
 }
