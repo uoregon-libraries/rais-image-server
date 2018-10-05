@@ -179,6 +179,15 @@ func main() {
 	interrupts.TrapIntTerm(func() {
 		Logger.Infof("Stopping RAIS...")
 		srv.Shutdown(nil)
+
+		if len(teardownPlugins) > 0 {
+			Logger.Infof("Tearing down plugins")
+			for _, plug := range teardownPlugins {
+				plug()
+			}
+			Logger.Infof("Plugin teardown complete")
+		}
+
 		Logger.Infof("Stopped")
 	})
 

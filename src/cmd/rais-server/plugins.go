@@ -16,6 +16,7 @@ type plugIDToPath func(iiif.ID) (string, error)
 type plugLogger func(*logger.Logger)
 
 var idToPathPlugins []plugIDToPath
+var teardownPlugins []plugGeneric
 
 // LoadPlugins searches for any plugins in the binary's directory + /plugins
 func LoadPlugins(l *logger.Logger) {
@@ -112,6 +113,20 @@ func loadPlugin(fullpath string, l *logger.Logger) {
 		fnCount++
 	}
 
+	var teardown plugGeneric
+	sym, err = p.Lookup("Teardown")
+	if err == nil {
+		var f, ok = sym.(plugGeneric)
+		if !ok {
+			l.Errorf("%q.Teardown is invalid", fullpath)
+			return
+		}
+
+		l.Debugf("Adding Teardown from %q", fullpath)
+		teardown = plugGeneric(f)
+		fnCount++
+	}
+
 	if fnCount == 0 {
 		l.Warnf("%q doesn't expose any known functions", fullpath)
 		return
@@ -125,8 +140,11 @@ func loadPlugin(fullpath string, l *logger.Logger) {
 		init()
 	}
 
-	// Index the IDToPath function if available
+	// Index other available functions
 	if idToPath != nil {
 		idToPathPlugins = append(idToPathPlugins, idToPath)
+	}
+	if teardown != nil {
+		teardownPlugins = append(teardownPlugins, teardown)
 	}
 }
