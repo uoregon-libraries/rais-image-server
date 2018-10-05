@@ -10,6 +10,18 @@ volumes:
   gocache: {}
 
 services:
+  dd-agent:
+    image: datadog/agent:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+    expose:
+      - 8126
+    environment:
+      - DD_API_KEY
+      - DD_APM_ENABLED=true
+
   rais-build:
     build:
       context: ./docker
@@ -37,6 +49,7 @@ services:
       - RAIS_S3CACHE
       - RAIS_S3ZONE
       - RAIS_S3BUCKET
+      - RAIS_DATADOGADDRESS=dd-agent:8126
       - AWS_SHARED_CREDENTIALS_FILE=/etc/aws.credentials
     volumes:
       - ./bin/rais-server:/opt/rais/rais-server:ro

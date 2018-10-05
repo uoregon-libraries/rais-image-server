@@ -182,6 +182,16 @@ There is minimal documentation for this plugin at the moment (it was originally
 just another example of how to *build* a plugin).  The comments at the top of
 [main.go](src/plugins/s3-images/main.go) have more details.
 
+#### DataDog
+
+The [datadog plugin](src/plugins/datadog) shows the use of WrapHandler (see
+below) by adding the DataDog tracing agent to all clients' requests.  This
+allows high-level performance monitoring with minimal code.
+
+This is again mostly an example (though it is production-ready if the behavior
+makes sense for you), so the documentation is primarily contained within the
+[main.go](src/plugins/datadog/main.go) file.
+
 ### Behavior
 
 General behavior of plugins:
@@ -224,6 +234,29 @@ for an example of that.
 
 `Initialize()` is run after the logger is set up (unlike Go's internal `init()`
 function), so you can safely use it.
+
+#### `WrapHandler`
+
+`func WrapHandler(pattern string, handler http.Handler) (http.Handler, error)`
+
+WrapHandler is called three times in RAIS: once for the main IIIF handler, once
+for the experimental DZI handler, and finally for the `/version` handler.  It
+is meant only as a very high-level wrapper for the moment, and doesn't (easily)
+allow adding custom handlers to RAIS.
+
+A plugin implementing WrapHandler can use the pattern to identify the path
+being wrapped -- though the IIIF path is variable, so this can be used for
+logging or other "identity" logic, but not easily for filtering.  The handler
+passed in is the current state of the handler.  A wrapper could add middleware,
+logging, etc.  See the [datadog plugin](src/plugins/datadog) for an example.
+
+Any number of plugins can implement WrapHandler.  Each plugin's returned
+handler is sent to the next plugin in the list.
+
+If a plugin handles this function, but needs to skip a particular pattern, it
+should return `nil, plugins.ErrSkipped`.  This indicates to RAIS that the
+plugin didn't fail, but simply chose to avoid trying to handle the given
+pattern and handler.
 
 #### `Teardown`
 

@@ -9,6 +9,7 @@ import (
 	"rais/src/iiif"
 	"rais/src/magick"
 	"rais/src/openjpeg"
+	"rais/src/plugins"
 	"rais/src/version"
 	"time"
 
@@ -156,9 +157,9 @@ func main() {
 		Logger.Debugf("Setting IIIF capabilities from file '%s'", capfile)
 	}
 
-	http.HandleFunc(ih.IIIFBase.Path+"/", ih.IIIFRoute)
-	http.HandleFunc("/images/dzi/", ih.DZIRoute)
-	http.HandleFunc("/version", VersionHandler)
+	handle(ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
+	handle("/images/dzi/", http.HandlerFunc(ih.DZIRoute))
+	handle("/version", http.HandlerFunc(VersionHandler))
 
 	if tileCache != nil {
 		go func() {
@@ -197,6 +198,22 @@ func main() {
 			Logger.Fatalf("Error starting listener: %s", err)
 		}
 	}
+}
+
+// handle sends the pattern and raw handler to plugins, and sets up routing on
+// whatever is returned (if anything).  All plugins which wrap handlers are
+// allowed to run, but the behavior could definitely get weird depending on
+// what a given plugin does.  Ye be warned.
+func handle(pattern string, handler http.Handler) {
+	for _, plug := range wrapHandlerPlugins {
+		var h2, err = plug(pattern, handler)
+		if err == nil {
+			handler = h2
+		} else if err != plugins.ErrSkipped {
+			logger.Fatalf("Error trying to wrap handler %q: %s", pattern, err)
+		}
+	}
+	http.Handle(pattern, handler)
 }
 
 // VersionHandler spits out the raw version string to the browser
