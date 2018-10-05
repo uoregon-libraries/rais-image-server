@@ -176,7 +176,9 @@ See [rais-example.toml](rais-example.toml) for configuration details.
 
 Because this plugin is only able to access a server-configured S3 bucket, it is
 considered to be secure, assuming your S3 bucket isn't able to get uploads from
-unknown people on the Internet.
+unknown people on the Internet.  Because of this, the S3 plugin is enabled in
+the docker image by default.  However, if the S3 configuration isn't set up, it
+won't actually do anything.
 
 There is minimal documentation for this plugin at the moment (it was originally
 just another example of how to *build* a plugin).  The comments at the top of
