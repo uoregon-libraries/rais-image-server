@@ -24,8 +24,10 @@ services:
     volumes:
       # Mount in binaries
       - ./bin/rais-server:/opt/rais/rais-server:ro
+      # Mount in all plugins.  Note that this is probably *not* what you want
+      # in production - you will want to be more selective to ensure you never
+      # accidentally mount the external images plugin!
       - ./bin/plugins:/opt/rais/plugins:ro
-      - /tmp:/tmp
     entrypoint: /entrypoint.sh
     ports:
       - 12415:12415
