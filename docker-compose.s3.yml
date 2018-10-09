@@ -34,3 +34,4 @@ services:
       - AWS_SHARED_CREDENTIALS_FILE=/etc/aws.credentials
     volumes:
       - ./docker/s3credentials:/etc/aws.credentials
+      - ./bin/plugins/s3-images.so:/opt/rais/plugins/s3-images.so:ro
