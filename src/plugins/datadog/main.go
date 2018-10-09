@@ -26,10 +26,13 @@ import (
 )
 
 var l *logger.Logger
+var serviceName string
 
 // Initialize reads configuration and sets up the datadog agent
 func Initialize() {
 	var ddaddr = viper.GetString("DatadogAddress")
+	viper.SetDefault("DatadogServiceName", "RAIS/datadog")
+	serviceName = viper.GetString("DatadogServiceName")
 
 	if ddaddr == "" {
 		l.Fatalf("ERROR: DatadogAddress must be configured, or RAIS_DATADOGADDRESS must be set in the environment")
@@ -42,7 +45,7 @@ func Initialize() {
 // WrapHandler takes all RAIS routes' handlers and puts the datadog
 // instrumentation into them
 func WrapHandler(pattern string, handler http.Handler) (http.Handler, error) {
-	return httptrace.WrapHandler(handler, "RAIS/datadog", pattern), nil
+	return httptrace.WrapHandler(handler, serviceName, pattern), nil
 }
 
 // Teardown tells datadog to shut down the tracer gracefully
