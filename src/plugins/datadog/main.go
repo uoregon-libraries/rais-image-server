@@ -11,6 +11,10 @@
 // RAIS_DATADOGADDRESS must be in your RAIS environment.  This is shown in our
 // demo docker-compose.yml.
 //
+// If you want to set a custom service name, set "DatadogServiceName" or else
+// expose RAIS_DatadogServiceName in your environment.  The default service
+// name is "RAIS/datadog".
+//
 // If you want instrumentation that goes deeper than request round-tripping,
 // please be aware that RAIS does not currently support this.
 
