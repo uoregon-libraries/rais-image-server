@@ -30,7 +30,7 @@ type Region struct {
 	X, Y, W, H float64
 }
 
-// StringToRegion takes a string representing a region, as seen in an IIIF URL,
+// StringToRegion takes a string representing a region, as seen in a IIIF URL,
 // and fills in the values based on the string's format.
 func StringToRegion(p string) Region {
 	if p == "full" {
@@ -47,6 +47,10 @@ func StringToRegion(p string) Region {
 	}
 
 	vals := strings.Split(p, ",")
+	if len(vals) < 4 {
+		return Region{Type: RTNone}
+	}
+
 	r.X, _ = strconv.ParseFloat(vals[0], 64)
 	r.Y, _ = strconv.ParseFloat(vals[1], 64)
 	r.W, _ = strconv.ParseFloat(vals[2], 64)
@@ -67,6 +71,10 @@ func (r Region) Valid() bool {
 	}
 
 	if r.W <= 0 || r.H <= 0 || r.X < 0 || r.Y < 0 {
+		return false
+	}
+
+	if r.Type == RTPercent && (r.X+r.W > 100 || r.Y+r.H > 100) {
 		return false
 	}
 

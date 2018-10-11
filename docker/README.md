@@ -1,23 +1,8 @@
 Docker
 ===
 
-This directory contains split up docker files:
-
-- `Dockerfile.build` relies on the fedora image and adds the build dependencies
-  needed to compile RAIS
-- `Dockerfile.prod` is a simpler image with only runtime dependencies, and
-  assumes it can copy `rais-server` from a "bin" subdirectory.
-
-It also contains demo files/folders:
-
-- `demo-rais-entry.sh` and `demo-web-entry.sh` should be left alone, and simply
-  bootstrap the docker setup for demo use.
-- `ngingx.conf` is used for serving up static content and proxying to RAIS.
-  This can be used as an example of how you might set up RAIS with ngingx in
-  production.
-- `images/` contains a single test image, but any JP2 files you add will be
-  served up in the demo stack
-- `static/` contains the Open Seadragon sources as well as static HTML for nginx
+This directory contains everything necessary to run RAIS under Docker,
+including a test image for the docker-compose-based demo.
 
 Building docker images
 ---

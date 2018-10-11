@@ -12,7 +12,7 @@ type Rotation struct {
 	Degrees float64
 }
 
-// StringToRotation creates a Rotation from a string as seen in an IIIF URL.
+// StringToRotation creates a Rotation from a string as seen in a IIIF URL.
 // An invalid string would result in a 0-degree rotation as opposed to an error
 // condition.  This is a known issue which needs to be fixed.
 func StringToRotation(p string) Rotation {

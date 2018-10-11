@@ -11,9 +11,12 @@ import (
 	"net/http"
 	"net/url"
 	"rais/src/iiif"
+	"rais/src/plugins"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/uoregon-libraries/gopkg/logger"
 )
 
 func acceptsLD(req *http.Request) bool {
@@ -52,16 +55,13 @@ func (c constraint) smallerThanAny(w, h int) bool {
 	return w > c.Width || h > c.Height || int64(w)*int64(h) > c.Area
 }
 
-// ImageHandler responds to an IIIF URL request and parses the requested
+// ImageHandler responds to a IIIF URL request and parses the requested
 // transformation within the limits of the handler's capabilities
 type ImageHandler struct {
-	IIIFBase          *url.URL
-	IIIFBaseRegex     *regexp.Regexp
-	IIIFBaseOnlyRegex *regexp.Regexp
-	IIIFInfoPathRegex *regexp.Regexp
-	FeatureSet        *iiif.FeatureSet
-	TilePath          string
-	Maximums          constraint
+	IIIFBase   *url.URL
+	FeatureSet *iiif.FeatureSet
+	TilePath   string
+	Maximums   constraint
 }
 
 // NewImageHandler sets up a base ImageHandler with no features
@@ -74,12 +74,17 @@ func NewImageHandler(tp string) *ImageHandler {
 
 // EnableIIIF sets up regexes for IIIF responses
 func (ih *ImageHandler) EnableIIIF(u *url.URL) {
-	rprefix := fmt.Sprintf(`^%s`, u.Path)
 	ih.IIIFBase = u
-	ih.IIIFBaseRegex = regexp.MustCompile(rprefix + `/([^/]+)`)
-	ih.IIIFBaseOnlyRegex = regexp.MustCompile(rprefix + `/[^/]+$`)
-	ih.IIIFInfoPathRegex = regexp.MustCompile(rprefix + `/([^/]+)/info.json$`)
 	ih.FeatureSet = iiif.AllFeatures()
+}
+
+// cacheKey returns a key for caching if a given IIIF URL is cacheable by our
+// current, somewhat restrictive, rules
+func cacheKey(u *iiif.URL) string {
+	if tileCache != nil && u.Format == iiif.FmtJPG && u.Size.W > 0 && u.Size.W <= 1024 && u.Size.H <= 1024 {
+		return u.Path
+	}
+	return ""
 }
 
 // IIIFRoute takes an HTTP request and parses it to see what (if any) IIIF
@@ -90,53 +95,85 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 	var url = *req.URL
 	url.RawQuery = ""
 	p := url.String()
-	parts := ih.IIIFBaseRegex.FindStringSubmatch(p)
 
 	// If it didn't even match the base, something weird happened, so we just
 	// spit out a generic 404
-	if parts == nil {
+	prefix := ih.IIIFBase.Path + "/"
+	if !strings.Contains(p, prefix) {
 		http.NotFound(w, req)
 		return
 	}
 
-	id := iiif.ID(parts[1])
-	fp := ih.TilePath + "/" + id.Path()
+	var urlPath = strings.Replace(p, prefix, "", 1)
+	iiifURL, err := iiif.NewURL(urlPath)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid IIIF request %q: %s", iiifURL.Path, err), 400)
+		return
+	}
 
 	// Check for base path and redirect if that's all we have
-	if ih.IIIFBaseOnlyRegex.MatchString(p) {
+	if iiifURL.BaseURIRedirect {
 		http.Redirect(w, req, p+"/info.json", 303)
 		return
 	}
 
 	// Handle info.json prior to reading the image, in case of cached info
-	info, e := ih.getInfo(id, fp)
+	fp := ih.getIIIFPath(iiifURL.ID)
+	info, e := ih.getInfo(iiifURL.ID, fp)
 	if e != nil {
 		http.Error(w, e.Message, e.Code)
 		return
 	}
 
-	if ih.IIIFInfoPathRegex.MatchString(p) {
+	if iiifURL.Info {
 		ih.Info(w, req, info)
 		return
 	}
 
+	// Check the cache before spending the cycles to read in the image.  For now
+	// the cache is very limited to ensure only relatively small requests are
+	// actually cached.
+	if key := cacheKey(iiifURL); key != "" {
+		data, ok := tileCache.Get(key)
+		if ok {
+			cacheHits++
+			w.Header().Set("Content-Type", mime.TypeByExtension("."+string(iiifURL.Format)))
+			w.Write(data.([]byte))
+			return
+		}
+		cacheMisses++
+	}
+
 	// No info path should mean a full command path - start reading the image
-	res, err := NewImageResource(id, fp)
+	res, err := NewImageResource(iiifURL.ID, fp)
 	if err != nil {
 		e := newImageResError(err)
 		http.Error(w, e.Message, e.Code)
 		return
 	}
 
-	u := iiif.NewURL(p)
-	if !u.Valid() {
+	if !iiifURL.Valid() {
 		// This means the URI was probably a command, but had an invalid syntax
-		http.Error(w, "Invalid IIIF request", 400)
+		http.Error(w, "Invalid IIIF request: "+iiifURL.Error().Error(), 400)
 		return
 	}
 
 	// Attempt to run the command
-	ih.Command(w, req, u, res, info)
+	ih.Command(w, req, iiifURL, res, info)
+}
+
+func (ih *ImageHandler) getIIIFPath(id iiif.ID) string {
+	for _, idtopath := range idToPathPlugins {
+		fp, err := idtopath(id)
+		if err == nil {
+			return fp
+		}
+		if err == plugins.ErrSkipped {
+			continue
+		}
+		logger.Warnf("Error trying to use plugin to translate iiif.ID: %s", err)
+	}
+	return ih.TilePath + "/" + string(id)
 }
 
 func convertStrings(s1, s2, s3 string) (i1, i2, i3 int, err error) {
@@ -163,15 +200,15 @@ func (ih *ImageHandler) DZIRoute(w http.ResponseWriter, req *http.Request) {
 
 	parts := DZIInfoRegex.FindStringSubmatch(p)
 	if parts != nil {
-		id = iiif.ID(parts[1])
-		filePath = ih.TilePath + "/" + id.Path()
+		id = iiif.URLToID(parts[1])
+		filePath = ih.TilePath + "/" + string(id)
 		handler = func(r *ImageResource) { ih.DZIInfo(w, r) }
 	}
 
 	parts = DZITilePathRegex.FindStringSubmatch(p)
 	if parts != nil {
-		id = iiif.ID(parts[1])
-		filePath = ih.TilePath + "/" + id.Path()
+		id = iiif.URLToID(parts[1])
+		filePath = ih.TilePath + "/" + string(id)
 
 		level, tileX, tileY, err := convertStrings(parts[2], parts[3], parts[4])
 		if err != nil {
@@ -240,7 +277,7 @@ func (ih *ImageHandler) DZITile(w http.ResponseWriter, req *http.Request, res *I
 		return
 	}
 
-	// Construct an IIIF URL so we can just reuse the IIIF-centric Command function
+	// Construct a IIIF URL so we can just reuse the IIIF-centric Command function
 	var reduction uint64 = 1 << (maxLevel - uint64(l))
 
 	width := reduction * DZITileSize
@@ -266,8 +303,8 @@ func (ih *ImageHandler) DZITile(w http.ResponseWriter, req *http.Request, res *I
 
 	requestedWidth := DZITileSize * finalWidth / width
 
-	u := iiif.NewURL(fmt.Sprintf("%s/%d,%d,%d,%d/%d,/0/default.jpg",
-		res.FilePath, left, top, finalWidth, finalHeight, requestedWidth))
+	u, _ := iiif.NewURL(fmt.Sprintf("%s/%d,%d,%d,%d/%d,/0/default.jpg",
+		url.QueryEscape(res.FilePath), left, top, finalWidth, finalHeight, requestedWidth))
 	ih.Command(w, req, u, res, nil)
 }
 
@@ -341,8 +378,8 @@ func (ih *ImageHandler) loadInfoOverride(id iiif.ID, fp string) *iiif.Info {
 	Logger.Debugf("Loading image data from override file (%s)", infofile)
 
 	// If an override file *is* found, replace the id
-	fullid := ih.IIIFBase.String() + "/" + id.String()
-	d2 := bytes.Replace(data, []byte("%ID%"), []byte(fullid), 1)
+	escapedID := ih.IIIFBase.String() + "/" + id.Escaped()
+	d2 := bytes.Replace(data, []byte("%ID%"), []byte(escapedID), 1)
 
 	info := new(iiif.Info)
 	err = json.Unmarshal(d2, info)
@@ -413,7 +450,7 @@ func (ih *ImageHandler) buildInfo(id iiif.ID, i ImageInfo) *iiif.Info {
 	}
 
 	// The info id is actually the full URL to the resource, not just its ID
-	info.ID = ih.IIIFBase.String() + "/" + id.String()
+	info.ID = ih.IIIFBase.String() + "/" + id.Escaped()
 	return info
 }
 
@@ -429,11 +466,6 @@ func marshalInfo(info *iiif.Info) ([]byte, *HandlerError) {
 
 // Command handles image processing operations
 func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL, res *ImageResource, info *iiif.Info) {
-	// For now the cache is very limited to ensure only relatively small requests
-	// are actually cached
-	willCache := tileCache != nil && u.Format == iiif.FmtJPG && u.Size.W > 0 && u.Size.W <= 1024 && u.Size.H == 0
-	cacheKey := u.Path
-
 	// Send last modified time
 	if err := sendHeaders(w, req, res.FilePath); err != nil {
 		return
@@ -445,17 +477,8 @@ func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iii
 		return
 	}
 
-	// Check the cache now that we're sure everything is valid and supported.
-	if willCache {
-		data, ok := tileCache.Get(cacheKey)
-		if ok {
-			w.Header().Set("Content-Type", mime.TypeByExtension("."+string(u.Format)))
-			w.Write(data.([]byte))
-			return
-		}
-	}
-
 	var max = ih.Maximums
+
 	// If we have an info, we can make use of it for the constraints rather than
 	// using the global constraints; this is useful for overridden info.json files
 	if info != nil {
@@ -485,7 +508,8 @@ func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iii
 	var cacheBuf *bytes.Buffer
 	var out io.Writer = w
 
-	if willCache {
+	var key string
+	if key = cacheKey(u); key != "" {
 		cacheBuf = bytes.NewBuffer(nil)
 		out = io.MultiWriter(w, cacheBuf)
 	}
@@ -496,7 +520,7 @@ func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iii
 		return
 	}
 
-	if willCache {
-		tileCache.Add(cacheKey, cacheBuf.Bytes())
+	if key != "" {
+		tileCache.Add(key, cacheBuf.Bytes())
 	}
 }

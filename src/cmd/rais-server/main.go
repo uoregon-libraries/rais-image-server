@@ -7,7 +7,9 @@ import (
 	"net/url"
 	"os"
 	"rais/src/iiif"
+	"rais/src/magick"
 	"rais/src/openjpeg"
+	"rais/src/plugins"
 	"rais/src/version"
 	"time"
 
@@ -15,16 +17,22 @@ import (
 	"github.com/hashicorp/golang-lru"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"github.com/uoregon-libraries/gopkg/interrupts"
 	"github.com/uoregon-libraries/gopkg/logger"
 )
 
 var tilePath string
 var infoCache *lru.Cache
 var tileCache *lru.TwoQueueCache
+
+// Logger is the server's central logger.Logger instance
 var Logger *logger.Logger
 
 const defaultAddress = ":12415"
 const defaultInfoCacheLen = 10000
+
+// cacheHits and cacheMisses allow some rudimentary tracking of cache value
+var cacheHits, cacheMisses int64
 
 var defaultLogLevel = logger.Debug.String()
 
@@ -45,7 +53,7 @@ func main() {
 	viper.ReadInConfig()
 
 	// CLI flags
-	pflag.String("iiif-url", "", `Base URL for serving IIIF requests, e.g., "http://example.com:8888/images/iiif"`)
+	pflag.String("iiif-url", "", `Base URL for serving IIIF requests, e.g., "http://example.com/images/iiif"`)
 	viper.BindPFlag("IIIFURL", pflag.CommandLine.Lookup("iiif-url"))
 	pflag.String("address", defaultAddress, "http service address")
 	viper.BindPFlag("Address", pflag.CommandLine.Lookup("address"))
@@ -83,6 +91,9 @@ func main() {
 	}
 	Logger = logger.New(level)
 	openjpeg.Logger = Logger
+	magick.Logger = Logger
+
+	LoadPlugins(Logger)
 
 	// Pull all values we need for all cases
 	tilePath = viper.GetString("TilePath")
@@ -95,59 +106,69 @@ func main() {
 
 	// Handle IIIF data only if we have a IIIF URL
 	iiifURL := viper.GetString("IIIFURL")
-	if iiifURL != "" {
-		Logger.Debugf("Attempting to start up IIIF at %s", viper.GetString("IIIFURL"))
-		iiifBase, err := url.Parse(iiifURL)
-		if err == nil && iiifBase.Scheme == "" {
-			err = fmt.Errorf("empty scheme")
-		}
-		if err == nil && iiifBase.Host == "" {
-			err = fmt.Errorf("empty host")
-		}
-		if err == nil && iiifBase.Path == "" {
-			err = fmt.Errorf("empty path")
-		}
-		if err != nil {
-			Logger.Fatalf("Invalid IIIF URL (%s) specified: %s", iiifURL, err)
-		}
-
-		icl := viper.GetInt("InfoCacheLen")
-		if icl > 0 {
-			infoCache, err = lru.New(icl)
-			if err != nil {
-				Logger.Fatalf("Unable to start info cache: %s", err)
-			}
-		}
-
-		tcl := viper.GetInt("TileCacheLen")
-		if tcl > 0 {
-			Logger.Debugf("Creating a tile cache to hold up to %d tiles", tcl)
-			tileCache, err = lru.New2Q(tcl)
-			if err != nil {
-				Logger.Fatalf("Unable to start info cache: %s", err)
-			}
-		}
-
-		Logger.Infof("IIIF enabled at %s", iiifBase.String())
-		ih.EnableIIIF(iiifBase)
-
-		capfile := viper.GetString("CapabilitiesFile")
-		if capfile != "" {
-			ih.FeatureSet = &iiif.FeatureSet{}
-			_, err := toml.DecodeFile(capfile, &ih.FeatureSet)
-			if err != nil {
-				Logger.Fatalf("Invalid file or formatting in capabilities file '%s'", capfile)
-			}
-			Logger.Debugf("Setting IIIF capabilities from file '%s'", capfile)
-		}
-
-		http.HandleFunc(ih.IIIFBase.Path+"/", ih.IIIFRoute)
-		http.HandleFunc("/images/dzi/", ih.DZIRoute)
+	if iiifURL == "" {
+		fmt.Println("ERROR: --iiif-url must be set to the server's public URL")
+		pflag.Usage()
+		os.Exit(1)
 	}
 
-	http.HandleFunc("/images/tiles/", TileHandler)
-	http.HandleFunc("/images/resize/", ResizeHandler)
-	http.HandleFunc("/version", VersionHandler)
+	Logger.Debugf("Attempting to start up IIIF at %s", viper.GetString("IIIFURL"))
+	iiifBase, err := url.Parse(iiifURL)
+	if err == nil && iiifBase.Scheme == "" {
+		err = fmt.Errorf("empty scheme")
+	}
+	if err == nil && iiifBase.Host == "" {
+		err = fmt.Errorf("empty host")
+	}
+	if err == nil && iiifBase.Path == "" {
+		err = fmt.Errorf("empty path")
+	}
+	if err != nil {
+		Logger.Fatalf("Invalid IIIF URL (%s) specified: %s", iiifURL, err)
+	}
+
+	icl := viper.GetInt("InfoCacheLen")
+	if icl > 0 {
+		infoCache, err = lru.New(icl)
+		if err != nil {
+			Logger.Fatalf("Unable to start info cache: %s", err)
+		}
+	}
+
+	tcl := viper.GetInt("TileCacheLen")
+	if tcl > 0 {
+		Logger.Debugf("Creating a tile cache to hold up to %d tiles", tcl)
+		tileCache, err = lru.New2Q(tcl)
+		if err != nil {
+			Logger.Fatalf("Unable to start info cache: %s", err)
+		}
+	}
+
+	Logger.Infof("IIIF enabled at %s", iiifBase.String())
+	ih.EnableIIIF(iiifBase)
+
+	capfile := viper.GetString("CapabilitiesFile")
+	if capfile != "" {
+		ih.FeatureSet = &iiif.FeatureSet{}
+		_, err := toml.DecodeFile(capfile, &ih.FeatureSet)
+		if err != nil {
+			Logger.Fatalf("Invalid file or formatting in capabilities file '%s'", capfile)
+		}
+		Logger.Debugf("Setting IIIF capabilities from file '%s'", capfile)
+	}
+
+	handle(ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
+	handle("/images/dzi/", http.HandlerFunc(ih.DZIRoute))
+	handle("/version", http.HandlerFunc(VersionHandler))
+
+	if tileCache != nil {
+		go func() {
+			for {
+				time.Sleep(time.Minute * 10)
+				Logger.Infof("Cache hits: %d; cache misses: %d", cacheHits, cacheMisses)
+			}
+		}()
+	}
 
 	Logger.Infof("RAIS v%s starting...", version.Version)
 	var srv = &http.Server{
@@ -155,9 +176,44 @@ func main() {
 		WriteTimeout: 30 * time.Second,
 		Addr:         address,
 	}
+
+	interrupts.TrapIntTerm(func() {
+		Logger.Infof("Stopping RAIS...")
+		srv.Shutdown(nil)
+
+		if len(teardownPlugins) > 0 {
+			Logger.Infof("Tearing down plugins")
+			for _, plug := range teardownPlugins {
+				plug()
+			}
+			Logger.Infof("Plugin teardown complete")
+		}
+
+		Logger.Infof("Stopped")
+	})
+
 	if err := srv.ListenAndServe(); err != nil {
-		Logger.Fatalf("Error starting listener: %s", err)
+		// Don't report a fatal error when we close the server
+		if err != http.ErrServerClosed {
+			Logger.Fatalf("Error starting listener: %s", err)
+		}
 	}
+}
+
+// handle sends the pattern and raw handler to plugins, and sets up routing on
+// whatever is returned (if anything).  All plugins which wrap handlers are
+// allowed to run, but the behavior could definitely get weird depending on
+// what a given plugin does.  Ye be warned.
+func handle(pattern string, handler http.Handler) {
+	for _, plug := range wrapHandlerPlugins {
+		var h2, err = plug(pattern, handler)
+		if err == nil {
+			handler = h2
+		} else if err != plugins.ErrSkipped {
+			logger.Fatalf("Error trying to wrap handler %q: %s", pattern, err)
+		}
+	}
+	http.Handle(pattern, handler)
 }
 
 // VersionHandler spits out the raw version string to the browser

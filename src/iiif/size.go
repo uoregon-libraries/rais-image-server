@@ -35,14 +35,14 @@ const (
 )
 
 // Size represents the type of scaling as well as the parameters for scaling
-// for an IIIF 2.0 server
+// for a IIIF 2.0 server
 type Size struct {
 	Type    SizeType
 	Percent float64
 	W, H    int
 }
 
-// StringToSize creates a Size from a string as seen in an IIIF URL.
+// StringToSize creates a Size from a string as seen in a IIIF URL.
 func StringToSize(p string) Size {
 	if p == "full" {
 		return Size{Type: STFull}
@@ -65,6 +65,9 @@ func StringToSize(p string) Size {
 	}
 
 	vals := strings.Split(p, ",")
+	if len(vals) != 2 {
+		return s
+	}
 	s.W, _ = strconv.Atoi(vals[0])
 	s.H, _ = strconv.Atoi(vals[1])
 
@@ -85,7 +88,7 @@ func StringToSize(p string) Size {
 // parameters are valid for that type
 func (s Size) Valid() bool {
 	switch s.Type {
-	case STFull:
+	case STFull, STMax:
 		return true
 	case STScaleToWidth:
 		return s.W > 0

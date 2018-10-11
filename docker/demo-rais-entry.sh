@@ -16,4 +16,4 @@ fi
 
 cp /etc/rais-template.toml /tmp/rais.toml
 sed 's|^\s*IIIFURL.*$|IIIFURL = "'$url'/images/iiif"|' /tmp/rais.toml > /etc/rais.toml
-/opt/rais/rais-server
+exec /opt/rais/rais-server
