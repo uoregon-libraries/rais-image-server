@@ -136,10 +136,12 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 	if key := cacheKey(iiifURL); key != "" {
 		data, ok := tileCache.Get(key)
 		if ok {
+			cacheHits++
 			w.Header().Set("Content-Type", mime.TypeByExtension("."+string(iiifURL.Format)))
 			w.Write(data.([]byte))
 			return
 		}
+		cacheMisses++
 	}
 
 	// No info path should mean a full command path - start reading the image

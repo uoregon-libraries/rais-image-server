@@ -7,8 +7,8 @@
 //
 // When a resource is requested, if its IIIF id begins with "s3:", we treat the
 // rest of the id as an s3 id to be pulled from the configured zone and bucket.
-// retrieve the asset.  As zone and bucket are configured on the server end,
-// attack vectors seen in the external images plugin are effectively nullified.
+// As zone and bucket are configured on the server end, attack vectors seen in
+// the external images plugin are effectively nullified.
 //
 // We assume the asset is already a format RAIS can serve (preferably JP2), and
 // we cache it locally with the same extension it has in S3.  The IDToPath
@@ -46,6 +46,7 @@ var m sync.RWMutex
 
 var l *logger.Logger
 
+var enabled bool
 var s3cache, s3zone, s3bucket string
 
 func Initialize() {
@@ -55,16 +56,19 @@ func Initialize() {
 	s3bucket = viper.GetString("S3Bucket")
 
 	if s3zone == "" {
-		l.Fatalf("S3 plugin failure: S3Zone must be set in rais.toml or RAIS_S3ZONE must be set in the environment")
+		l.Infof("S3 plugin will not be enabled: S3Zone must be set in rais.toml or RAIS_S3ZONE must be set in the environment")
+		return
 	}
 
 	if s3bucket == "" {
-		l.Fatalf("S3 plugin failure: S3Bucket must be set in rais.toml or RAIS_S3BUCKET must be set in the environment")
+		l.Infof("S3 plugin will not be enabled: S3Bucket must be set in rais.toml or RAIS_S3BUCKET must be set in the environment")
+		return
 	}
 
 	l.Debugf("Setting S3 cache location to %q", s3cache)
 	l.Debugf("Setting S3 zone to %q", s3zone)
 	l.Debugf("Setting S3 bucket to %q", s3bucket)
+	enabled = true
 
 	if fileutil.IsDir(s3cache) {
 		return
@@ -83,6 +87,10 @@ func SetLogger(raisLogger *logger.Logger) {
 // IDToPath implements the auto-download logic when a IIIF ID
 // starts with "s3:"
 func IDToPath(id iiif.ID) (path string, err error) {
+	if !enabled {
+		return "", plugins.ErrSkipped
+	}
+
 	var ids = string(id)
 	if ids[:3] != "s3:" {
 		return "", plugins.ErrSkipped

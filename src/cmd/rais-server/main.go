@@ -9,6 +9,7 @@ import (
 	"rais/src/iiif"
 	"rais/src/magick"
 	"rais/src/openjpeg"
+	"rais/src/plugins"
 	"rais/src/version"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/hashicorp/golang-lru"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"github.com/uoregon-libraries/gopkg/interrupts"
 	"github.com/uoregon-libraries/gopkg/logger"
 )
 
@@ -28,6 +30,9 @@ var Logger *logger.Logger
 
 const defaultAddress = ":12415"
 const defaultInfoCacheLen = 10000
+
+// cacheHits and cacheMisses allow some rudimentary tracking of cache value
+var cacheHits, cacheMisses int64
 
 var defaultLogLevel = logger.Debug.String()
 
@@ -152,9 +157,18 @@ func main() {
 		Logger.Debugf("Setting IIIF capabilities from file '%s'", capfile)
 	}
 
-	http.HandleFunc(ih.IIIFBase.Path+"/", ih.IIIFRoute)
-	http.HandleFunc("/images/dzi/", ih.DZIRoute)
-	http.HandleFunc("/version", VersionHandler)
+	handle(ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
+	handle("/images/dzi/", http.HandlerFunc(ih.DZIRoute))
+	handle("/version", http.HandlerFunc(VersionHandler))
+
+	if tileCache != nil {
+		go func() {
+			for {
+				time.Sleep(time.Minute * 10)
+				Logger.Infof("Cache hits: %d; cache misses: %d", cacheHits, cacheMisses)
+			}
+		}()
+	}
 
 	Logger.Infof("RAIS v%s starting...", version.Version)
 	var srv = &http.Server{
@@ -162,9 +176,44 @@ func main() {
 		WriteTimeout: 30 * time.Second,
 		Addr:         address,
 	}
+
+	interrupts.TrapIntTerm(func() {
+		Logger.Infof("Stopping RAIS...")
+		srv.Shutdown(nil)
+
+		if len(teardownPlugins) > 0 {
+			Logger.Infof("Tearing down plugins")
+			for _, plug := range teardownPlugins {
+				plug()
+			}
+			Logger.Infof("Plugin teardown complete")
+		}
+
+		Logger.Infof("Stopped")
+	})
+
 	if err := srv.ListenAndServe(); err != nil {
-		Logger.Fatalf("Error starting listener: %s", err)
+		// Don't report a fatal error when we close the server
+		if err != http.ErrServerClosed {
+			Logger.Fatalf("Error starting listener: %s", err)
+		}
 	}
+}
+
+// handle sends the pattern and raw handler to plugins, and sets up routing on
+// whatever is returned (if anything).  All plugins which wrap handlers are
+// allowed to run, but the behavior could definitely get weird depending on
+// what a given plugin does.  Ye be warned.
+func handle(pattern string, handler http.Handler) {
+	for _, plug := range wrapHandlerPlugins {
+		var h2, err = plug(pattern, handler)
+		if err == nil {
+			handler = h2
+		} else if err != plugins.ErrSkipped {
+			logger.Fatalf("Error trying to wrap handler %q: %s", pattern, err)
+		}
+	}
+	http.Handle(pattern, handler)
 }
 
 // VersionHandler spits out the raw version string to the browser

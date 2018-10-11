@@ -1,3 +1,4 @@
-Dockerfile
-docker/*
-pkg/*
+/Dockerfile
+/docker/images/
+/.git
+/bin

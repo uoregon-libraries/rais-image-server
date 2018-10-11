@@ -3,3 +3,4 @@
 !/docker/images/testfile/test-world*
 /.env
 /docker/s3credentials
+/docker-compose.override.yml
