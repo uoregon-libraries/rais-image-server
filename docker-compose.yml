@@ -15,7 +15,7 @@
 version: "3.4"
 
 volumes:
-  gopath: {}
+  gopkg: {}
   gocache: {}
 
 services:
@@ -26,8 +26,8 @@ services:
     volumes:
       - ./:/opt/rais-src:rw
       - ./docker/images:/var/local/images:ro
-      - gopath:/usr/local/go
       - gocache:/root/.cache/go-build
+      - gopkg:/usr/local/go/pkg
     command: make
 
   rais:
