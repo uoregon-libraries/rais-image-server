@@ -46,9 +46,14 @@ var m sync.RWMutex
 
 var l *logger.Logger
 
-var enabled bool
 var s3cache, s3zone, s3bucket string
 
+// Disabled lets the plugin manager know not to add this plugin's functions to
+// the global list unless sanity checks in Initialize() pass
+var Disabled = true
+
+// Initialize sets up package variables for the s3 pulls and verifies sanity of
+// some of the configuration
 func Initialize() {
 	viper.SetDefault("S3Cache", "/var/local/rais-s3")
 	s3cache = viper.GetString("S3Cache")
@@ -68,7 +73,7 @@ func Initialize() {
 	l.Debugf("Setting S3 cache location to %q", s3cache)
 	l.Debugf("Setting S3 zone to %q", s3zone)
 	l.Debugf("Setting S3 bucket to %q", s3bucket)
-	enabled = true
+	Disabled = false
 
 	if fileutil.IsDir(s3cache) {
 		return
@@ -87,10 +92,6 @@ func SetLogger(raisLogger *logger.Logger) {
 // IDToPath implements the auto-download logic when a IIIF ID
 // starts with "s3:"
 func IDToPath(id iiif.ID) (path string, err error) {
-	if !enabled {
-		return "", plugins.ErrSkipped
-	}
-
 	var ids = string(id)
 	if ids[:3] != "s3:" {
 		return "", plugins.ErrSkipped

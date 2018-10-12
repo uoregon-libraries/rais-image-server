@@ -22,7 +22,6 @@ package main
 
 import (
 	"net/http"
-	"rais/src/plugins"
 
 	"github.com/spf13/viper"
 	"github.com/uoregon-libraries/gopkg/logger"
@@ -32,7 +31,10 @@ import (
 
 var l *logger.Logger
 var serviceName string
-var enabled bool
+
+// Disabled lets the plugin manager know not to add this plugin's functions to
+// the global list unless sanity checks in Initialize() pass
+var Disabled = true
 
 // Initialize reads configuration and sets up the datadog agent
 func Initialize() {
@@ -45,7 +47,7 @@ func Initialize() {
 		return
 	}
 
-	enabled = true
+	Disabled = false
 	l.Debugf("Connecting to datadog agent at %q", ddaddr)
 	tracer.Start(tracer.WithAgentAddr(ddaddr))
 }
@@ -53,17 +55,12 @@ func Initialize() {
 // WrapHandler takes all RAIS routes' handlers and puts the datadog
 // instrumentation into them
 func WrapHandler(pattern string, handler http.Handler) (http.Handler, error) {
-	if !enabled {
-		return nil, plugins.ErrSkipped
-	}
 	return httptrace.WrapHandler(handler, serviceName, pattern), nil
 }
 
 // Teardown tells datadog to shut down the tracer gracefully
 func Teardown() {
-	if enabled {
-		tracer.Stop()
-	}
+	tracer.Stop()
 }
 
 // SetLogger is called by the RAIS server's plugin manager to let plugins use

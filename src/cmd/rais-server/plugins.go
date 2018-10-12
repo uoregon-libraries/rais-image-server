@@ -157,6 +157,21 @@ func loadPlugin(fullpath string, l *logger.Logger) {
 		init()
 	}
 
+	// After initialization, we check if the plugin explicitly set itself to Disabled
+	sym, err = p.Lookup("Disabled")
+	if err == nil {
+		var disabled, ok = sym.(*bool)
+		if !ok {
+			l.Errorf("%q.Disabled is not a boolean", fullpath)
+			return
+		}
+		if *disabled {
+			l.Infof("%q is disabled", fullpath)
+			return
+		}
+		l.Debugf("%q is explicitly enabled", fullpath)
+	}
+
 	// Index other available functions
 	if idToPath != nil {
 		idToPathPlugins = append(idToPathPlugins, idToPath)
