@@ -41,17 +41,12 @@ docker:
 	docker-compose build rais-build
 	docker build --rm -t uolibraries/rais:latest-indev $(MakefileDir)/docker
 
-bin/plugins/datadog.so:
-	go build -buildmode=plugin -o bin/plugins/datadog.so rais/src/plugins/datadog
-
-bin/plugins/external-images.so: src/plugins/external-images/*
+s3-images:
+	go build -buildmode=plugin -o bin/plugins/s3-images.so rais/src/plugins/s3-images
+external-images:
 	@echo -e "\033[1;31mWarning\033[0m: the external images plugin is not secure!  It should be used as an example only!"
 	go build -buildmode=plugin -o bin/plugins/external-images.so rais/src/plugins/external-images
+datadog:
+	go build -buildmode=plugin -o bin/plugins/datadog.so rais/src/plugins/datadog
 
-bin/plugins/s3-images.so: src/plugins/s3-images/*
-	go build -buildmode=plugin -o bin/plugins/s3-images.so rais/src/plugins/s3-images
-
-s3-images: bin/plugins/s3-images.so
-external-images: bin/plugins/external-images.so
-datadog: bin/plugins/datadog.so
 plugins: s3-images external-images datadog
