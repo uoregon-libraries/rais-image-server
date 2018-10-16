@@ -11,6 +11,7 @@ import (
 	"rais/src/openjpeg"
 	"rais/src/plugins"
 	"rais/src/version"
+	"sync"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -177,7 +178,10 @@ func main() {
 		Addr:         address,
 	}
 
+	var wait sync.WaitGroup
+
 	interrupts.TrapIntTerm(func() {
+		wait.Add(1)
 		Logger.Infof("Stopping RAIS...")
 		srv.Shutdown(nil)
 
@@ -190,6 +194,7 @@ func main() {
 		}
 
 		Logger.Infof("Stopped")
+		wait.Done()
 	})
 
 	if err := srv.ListenAndServe(); err != nil {
@@ -198,6 +203,7 @@ func main() {
 			Logger.Fatalf("Error starting listener: %s", err)
 		}
 	}
+	wait.Wait()
 }
 
 // handle sends the pattern and raw handler to plugins, and sets up routing on
