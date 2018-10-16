@@ -48,5 +48,7 @@ external-images:
 	go build -buildmode=plugin -o bin/plugins/external-images.so rais/src/plugins/external-images
 datadog:
 	go build -buildmode=plugin -o bin/plugins/datadog.so rais/src/plugins/datadog
+json-tracer:
+	go build -buildmode=plugin -o bin/plugins/json-tracer.so rais/src/plugins/json-tracer
 
-plugins: s3-images external-images datadog
+plugins: s3-images external-images datadog json-tracer
