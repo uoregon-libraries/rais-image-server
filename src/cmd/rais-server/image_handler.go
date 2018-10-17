@@ -505,22 +505,19 @@ func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iii
 
 	w.Header().Set("Content-Type", mime.TypeByExtension("."+string(u.Format)))
 
-	var cacheBuf *bytes.Buffer
-	var out io.Writer = w
-
-	var key string
-	if key = cacheKey(u); key != "" {
-		cacheBuf = bytes.NewBuffer(nil)
-		out = io.MultiWriter(w, cacheBuf)
-	}
-
-	if err := EncodeImage(out, img, u.Format); err != nil {
+	cacheBuf := bytes.NewBuffer(nil)
+	if err := EncodeImage(cacheBuf, img, u.Format); err != nil {
 		http.Error(w, "Unable to encode", 500)
 		Logger.Errorf("Unable to encode to %s: %s", u.Format, err)
 		return
 	}
 
-	if key != "" {
+	if key := cacheKey(u); key != "" {
 		tileCache.Add(key, cacheBuf.Bytes())
+	}
+
+	if _, err := io.Copy(w, cacheBuf); err != nil {
+		Logger.Errorf("Unable to encode to %s: %s", u.Format, err)
+		return
 	}
 }
