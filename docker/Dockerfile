@@ -66,4 +66,4 @@ COPY --from=build /opt/rais-src/bin /opt/rais/
 
 USER rais
 EXPOSE 12415
-ENTRYPOINT ["/opt/rais/bin/rais-server"]
+ENTRYPOINT ["/opt/rais/rais-server"]
