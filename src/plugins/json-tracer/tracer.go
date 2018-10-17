@@ -48,7 +48,11 @@ func (t *tracer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var now = time.Now()
 	var sr = statusRecorder{w, 200}
 	t.handler.ServeHTTP(&sr, req)
-	go t.appendTrace(req.URL.Path, now, time.Since(now), sr.status)
+	var path = req.URL.RawPath
+	if path == "" {
+		path = req.URL.Path
+	}
+	go t.appendTrace(path, now, time.Since(now), sr.status)
 }
 
 func (t *tracer) appendTrace(path string, start time.Time, duration time.Duration, status int) {
