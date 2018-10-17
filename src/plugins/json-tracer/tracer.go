@@ -69,6 +69,13 @@ func (t *tracer) appendTrace(path string, start time.Time, duration time.Duratio
 	}
 }
 
+func (t *tracer) shutdown(wg *sync.WaitGroup) {
+	t.Lock()
+	writeTraces(t.traceList.list)
+	t.Unlock()
+	wg.Done()
+}
+
 type registry struct {
 	sync.Mutex
 	list []*tracer
@@ -86,8 +93,11 @@ func (r *registry) shutdown() {
 	r.Lock()
 	defer r.Unlock()
 
+	var wg sync.WaitGroup
 	for _, t := range r.list {
-		t.Lock()
-		writeTraces(t.traceList.list)
+		wg.Add(1)
+		go t.shutdown(&wg)
 	}
+
+	wg.Wait()
 }
