@@ -31,10 +31,9 @@ reading the example file above, which describes all the values in detail.
 IIIF Features
 -----
 
-Other than possible bugs, we are ensuring we support IIIF Image API 2.1,
-level 2.  We also support a handful of features beyond level 2.
-
-See [the IIIF Features wiki page](https://github.com/uoregon-libraries/rais-image-server/wiki/IIIF-Features)
+RAIS supports level 2 of the IIIF Image API 2.1 as well as a handful of
+features beyond level 2.  See
+[the IIIF Features wiki page](https://github.com/uoregon-libraries/rais-image-server/wiki/IIIF-Features)
 for an in-depth look at feature support.
 
 Caching
