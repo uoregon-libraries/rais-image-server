@@ -30,9 +30,7 @@ var reg *registry
 // the global list unless sanity checks in Initialize() pass
 var Disabled = true
 
-// flushTime is the duration after which traces are flushed to disk.  This
-// isn't precise, as data is only flushed after a request is made in order to
-// avoid a mostly-no-op goroutine which would necessitate more locking
+// flushTime is the duration after which traces are flushed to disk
 var flushTime time.Duration
 
 // maxTraces is used to forcibly flush data at a certain point even if the

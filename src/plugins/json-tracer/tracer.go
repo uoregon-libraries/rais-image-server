@@ -22,14 +22,12 @@ type traceList struct {
 }
 
 func newTraceList() *traceList {
-	return &traceList{
-		createdAt: time.Now(),
-		list:      make([]trace, 0, maxTraces),
-	}
+	return &traceList{list: make([]trace, 0, maxTraces)}
 }
 
 type tracer struct {
 	sync.Mutex
+	done      bool
 	handler   http.Handler
 	traceList *traceList
 }
@@ -45,8 +43,7 @@ func (sr *statusRecorder) WriteHeader(code int) {
 }
 
 // ServeHTTP implements http.Handler.  We call the underlying handler and store
-// timing data locally.  If we have enough timing data, we send it off to be
-// written to disk.
+// timing data locally.
 func (t *tracer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var now = time.Now()
 	var sr = statusRecorder{w, 200}
@@ -55,7 +52,7 @@ func (t *tracer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if path == "" {
 		path = req.URL.Path
 	}
-	go t.appendTrace(path, now, time.Since(now), sr.status)
+	t.appendTrace(path, now, time.Since(now), sr.status)
 }
 
 // getReqType is a bit ugly and hacky, but attempts to determine what kind of
@@ -99,6 +96,9 @@ func (t *tracer) appendTrace(path string, start time.Time, duration time.Duratio
 	t.Lock()
 	defer t.Unlock()
 
+	if len(t.traceList.list) == 0 {
+		t.traceList.createdAt = time.Now()
+	}
 	t.traceList.list = append(t.traceList.list, trace{
 		Path:     path,
 		Type:     getReqType(path),
@@ -106,17 +106,39 @@ func (t *tracer) appendTrace(path string, start time.Time, duration time.Duratio
 		Duration: duration.Seconds(),
 		Status:   status,
 	})
+}
 
-	if len(t.traceList.list) >= maxTraces || time.Since(t.traceList.createdAt) > flushTime {
-		var oldList = t.traceList
-		t.traceList = newTraceList()
-		writeTraces(oldList.list)
+// loop checks regularly for either the max trace value being met (or exceeded)
+// or the last flush having been long enough ago to flush to disk.  This must
+// run in a background goroutine.
+func (t *tracer) loop() {
+	for {
+		var pending []trace
+		t.Lock()
+		var tlen = len(t.traceList.list)
+		if tlen > 0 && (tlen >= maxTraces || time.Since(t.traceList.createdAt) > flushTime) {
+			pending = t.traceList.list
+			t.traceList = newTraceList()
+		}
+		var done = t.done
+		t.Unlock()
+
+		if len(pending) > 0 {
+			writeTraces(pending)
+		}
+
+		if done {
+			return
+		}
+
+		time.Sleep(5 * time.Second)
 	}
 }
 
 func (t *tracer) shutdown(wg *sync.WaitGroup) {
 	t.Lock()
 	writeTraces(t.traceList.list)
+	t.done = true
 	t.Unlock()
 	wg.Done()
 }
@@ -128,6 +150,7 @@ type registry struct {
 
 func (r *registry) new(h http.Handler) *tracer {
 	var t = &tracer{handler: h, traceList: newTraceList()}
+	go t.loop()
 	r.Lock()
 	r.list = append(r.list, t)
 	r.Unlock()
