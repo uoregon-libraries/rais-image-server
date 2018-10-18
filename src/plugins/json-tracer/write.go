@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"math/rand"
 	"path/filepath"
@@ -18,7 +19,8 @@ func writeTraces(list []trace) {
 
 	// We build the filename from a nanosecond-level timestamp and a random
 	// integer to make collisions effectively impossible
-	var ts = time.Now().Format("2006-01-02_15-04-05_999999999")
+	var now = time.Now()
+	var ts = now.Format("2006-01-02_15-04-05_") + fmt.Sprintf("%09d", now.Nanosecond())
 	var rnd = rand.Intn(math.MaxInt32)
 	var rndS = strconv.Itoa(int(1e9 + rnd%1e9))[1:]
 	var fullpath = filepath.Join(jsonOutDir, ts+rndS)
