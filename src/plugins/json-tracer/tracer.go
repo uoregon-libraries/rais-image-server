@@ -32,16 +32,6 @@ type tracer struct {
 	events  *eventList
 }
 
-type statusRecorder struct {
-	http.ResponseWriter
-	status int
-}
-
-func (sr *statusRecorder) WriteHeader(code int) {
-	sr.status = code
-	sr.ResponseWriter.WriteHeader(code)
-}
-
 // ServeHTTP implements http.Handler.  We call the underlying handler and store
 // timing data locally.
 func (t *tracer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
