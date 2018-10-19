@@ -1,10 +1,11 @@
 // This file creates a plugin for instrumenting RAIS for internal use.  It
 // provides similar information as the DataDog plugin, but in a more "raw" way.
 // Usage will require a new configuration value, "TracerOutputDirectory", or an
-// environment value in RAIS_TRACEROUTPUTDIRECTORY.  To avoid docker-compose
-// file proliferation, this plugin doesn't provide an example for stringing
-// together docker-compose.blah.yml files.  To use this with docker-compose,
-// do something like this in docker-compose.override.yml:
+// environment value in RAIS_TRACEROUTPUTDIRECTORY.
+//
+// To avoid docker-compose file proliferation, this plugin doesn't provide an
+// example for stringing together docker-compose.blah.yml files.  To use this
+// with docker-compose, do something like this in docker-compose.override.yml:
 //
 // environment:
 //   - RAIS_TRACEROUTPUTDIRECTORY=/tmp/rais-traces
