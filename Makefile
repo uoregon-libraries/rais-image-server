@@ -30,6 +30,7 @@ format:
 
 lint:
 	golint src/...
+	go vet rais/src/...
 
 # Cleanup
 clean:
