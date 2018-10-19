@@ -1,21 +1,20 @@
 // This file creates a plugin for instrumenting RAIS for internal use.  It
 // provides similar information as the DataDog plugin, but in a more "raw" way.
-// Usage will require a new configuration value, "TracerOutputDirectory", or an
-// environment value in RAIS_TRACEROUTPUTDIRECTORY.
+// Usage will require a new configuration value, "TracerOut", or an environment
+// value in RAIS_TRACEROUT.
 //
 // To avoid docker-compose file proliferation, this plugin doesn't provide an
 // example for stringing together docker-compose.blah.yml files.  To use this
 // with docker-compose, do something like this in docker-compose.override.yml:
 //
 // environment:
-//   - RAIS_TRACEROUTPUTDIRECTORY=/tmp/rais-traces
-//   - RAIS_TRACEFLUSHMINUTES=10
+//   - RAIS_TRACEROUT=/tmp/rais-traces.json
+//   - RAIS_TRACERFLUSHSECONDS=10
 
 package main
 
 import (
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/spf13/viper"
@@ -23,7 +22,7 @@ import (
 )
 
 var l *logger.Logger
-var jsonOutDir string
+var jsonOut string
 var reg *registry
 
 // Disabled lets the plugin manager know not to add this plugin's functions to
@@ -35,20 +34,12 @@ var flushTime time.Duration
 
 // Initialize reads configuration and sets up the JSON output directory
 func Initialize() {
-	viper.SetDefault("TraceFlushMinutes", 10)
+	viper.SetDefault("TracerFlushSeconds", 10)
+	flushTime = time.Second * time.Duration(viper.GetInt("TracerFlushSeconds"))
+	jsonOut = viper.GetString("TracerOut")
 
-	jsonOutDir = viper.GetString("TracerOutputDirectory")
-	var flushMinutes = viper.GetInt("TraceFlushMinutes")
-	flushTime = time.Minute * time.Duration(flushMinutes)
-
-	if jsonOutDir == "" {
-		l.Warnf("TracerOutputDirectory must be configured, or RAIS_TRACEROUTPUTDIRECTORY must be set in the environment  **JSON Tracer plugin is disabled**")
-		return
-	}
-
-	var err = os.MkdirAll(jsonOutDir, 0750)
-	if err != nil {
-		l.Errorf("json-tracer plugin: unable to create json tracer output directory %q: %s", jsonOutDir, err)
+	if jsonOut == "" {
+		l.Warnf("TracerOut must be configured, or RAIS_TRACEROUT must be set in the environment  **JSON Tracer plugin is disabled**")
 		return
 	}
 

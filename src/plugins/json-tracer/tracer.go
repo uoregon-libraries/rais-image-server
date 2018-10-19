@@ -16,20 +16,13 @@ type event struct {
 	Status   int
 }
 
-type eventList struct {
-	createdAt time.Time
-	list      []event
-}
-
-func newEventList() *eventList {
-	return &eventList{list: make([]event, 0, 256)}
-}
-
 type tracer struct {
 	sync.Mutex
-	done    bool
-	handler http.Handler
-	events  *eventList
+	done          chan bool
+	nextFlushTime time.Time
+	handler       http.Handler
+	events        []event
+	writeFailures int
 }
 
 // ServeHTTP implements http.Handler.  We call the underlying handler and store
@@ -91,10 +84,7 @@ func (t *tracer) appendEvent(path string, start, finish time.Time, status int) {
 	t.Lock()
 	defer t.Unlock()
 
-	if len(t.events.list) == 0 {
-		t.events.createdAt = time.Now()
-	}
-	t.events.list = append(t.events.list, event{
+	t.events = append(t.events, event{
 		Path:     path,
 		Type:     getReqType(path),
 		Start:    start,
@@ -107,33 +97,21 @@ func (t *tracer) appendEvent(path string, start, finish time.Time, status int) {
 // flush to disk again.  This must run in a background goroutine.
 func (t *tracer) loop() {
 	for {
-		var pending []event
-		t.Lock()
-		var tlen = len(t.events.list)
-		if tlen > 0 && time.Since(t.events.createdAt) > flushTime {
-			pending = t.events.list
-			t.events = newEventList()
-		}
-		var done = t.done
-		t.Unlock()
-
-		if len(pending) > 0 {
-			writeEvents(pending)
-		}
-
-		if done {
+		select {
+		case <-t.done:
 			return
+		default:
+			if t.ready() {
+				t.flush()
+			}
+			time.Sleep(time.Second)
 		}
-
-		time.Sleep(5 * time.Second)
 	}
 }
 
 func (t *tracer) shutdown(wg *sync.WaitGroup) {
-	t.Lock()
-	writeEvents(t.events.list)
-	t.done = true
-	t.Unlock()
+	t.flush()
+	t.done <- true
 	wg.Done()
 }
 
@@ -141,8 +119,17 @@ type registry struct {
 	list []*tracer
 }
 
+func makeEvents() []event {
+	return make([]event, 0, 256)
+}
+
 func (r *registry) new(h http.Handler) *tracer {
-	var t = &tracer{handler: h, events: newEventList()}
+	var t = &tracer{
+		handler:       h,
+		events:        makeEvents(),
+		nextFlushTime: time.Now().Add(flushTime),
+		done:          make(chan bool, 1),
+	}
 	go t.loop()
 	r.list = append(r.list, t)
 	return t

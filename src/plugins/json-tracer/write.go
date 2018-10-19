@@ -2,71 +2,86 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
-	"math"
-	"math/rand"
-	"path/filepath"
-	"strconv"
+	"os"
 	"time"
-
-	"github.com/uoregon-libraries/gopkg/fileutil"
 )
 
-func writeEvents(list []event) {
-	if len(list) == 0 {
+// ready returns true if the tracer is ready to flush events to disk
+func (t *tracer) ready() bool {
+	t.Lock()
+	defer t.Unlock()
+	return time.Now().After(t.nextFlushTime) && len(t.events) > 0
+}
+
+func (t *tracer) flush() {
+	t.Lock()
+	defer t.Unlock()
+
+	t.nextFlushTime = time.Now().Add(flushTime)
+
+	// This is only necessary for forced flushing, such as on shutdown
+	if len(t.events) == 0 {
 		return
 	}
 
-	// We build the filename from a nanosecond-level timestamp and a random
-	// integer to make collisions effectively impossible
-	var now = time.Now()
-	var ts = now.Format("2006-01-02_15-04-05_") + fmt.Sprintf("%09d", now.Nanosecond())
-	var rnd = rand.Intn(math.MaxInt32)
-	var rndS = strconv.Itoa(int(1e9 + rnd%1e9))[1:]
-	var fullpath = filepath.Join(jsonOutDir, ts+rndS)
+	// Generate the JSON output first so we can report truly fatal errors before bothering with file IO
+	var towrite []byte
+	for _, ev := range t.events {
+		var bytes, err = json.Marshal(ev)
+		if err != nil {
+			l.Errorf("json-tracer plugin: skipping 1 event: unable to marshal event (%#v) data: %s", ev, err)
+			continue
+		}
+		towrite = append(towrite, bytes...)
+		towrite = append(towrite, '\n')
+	}
 
-	var f = fileutil.NewSafeFile(fullpath)
-	var bytes, err = json.Marshal(list)
+	var f, err = os.OpenFile(jsonOut, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
-		l.Criticalf("Unrecoverable instrumentation failure: unable to marshal event data: %s", err)
-		f.Cancel()
+		l.Errorf("json-tracer plugin: unable to open %q for appending: %s", jsonOut, err)
+		t.addWriteFailure()
+		return
+	}
+	defer f.Close()
+
+	_, err = f.Write(towrite)
+	if err != nil {
+		l.Errorf("json-tracer plugin: unable to write events: %s", err)
+		t.addWriteFailure()
 		return
 	}
 
-	tryWrite(f, bytes)
-}
-
-func tryWrite(f fileutil.WriteCancelCloser, bytes []byte) {
-	var try uint
-	for try = 0; try < 8; try++ {
-		var _, err = f.Write(bytes)
-		if err == nil {
-			tryClose(f)
-			return
-		}
-
-		var backoff = 1 << try
-		l.Warnf("Unable to write instrumentation data to file; trying again in %d seconds.  Error: %s", backoff, err)
-		time.Sleep(time.Duration(backoff) * time.Second)
+	err = f.Close()
+	if err != nil {
+		l.Errorf("json-tracer plugin: unable to close %q: %s", jsonOut, err)
+		t.addWriteFailure()
+		return
 	}
 
-	l.Criticalf("Unrecoverable instrumentation failure: unable to write event data after many attempts")
-	f.Cancel()
+	if t.writeFailures > 0 {
+		l.Infof("json-tracer plugin: successfully wrote held events")
+	}
+	t.events = makeEvents()
+	t.writeFailures = 0
 }
 
-func tryClose(f fileutil.WriteCancelCloser) {
-	var try uint
-	for try = 0; try < 8; try++ {
-		var err = f.Close()
-		if err == nil {
-			return
-		}
-
-		var backoff = 1 << try
-		l.Warnf("Unable to close instrumentation file; trying again in %d seconds.  Error: %s", backoff, err)
-		time.Sleep(time.Duration(backoff) * time.Second)
+func (t *tracer) addWriteFailure() {
+	// Let's max out at 8 failures to avoid waiting so long that the next flush never happens
+	if t.writeFailures < 8 {
+		t.writeFailures++
 	}
 
-	l.Criticalf("Unrecoverable instrumentation failure: unable to close event data file after many attempts")
-	f.Cancel()
+	// We'll forcibly change the next flush attempt so we can recover quickly if
+	// the problem is short-lived, but try less and less often the more failures
+	// we've logged
+	var sec = 1 << uint(t.writeFailures)
+	t.nextFlushTime = time.Now().Add(time.Second * time.Duration(sec))
+	l.Warnf("json-tracer plugin: next flush() in %d second(s)", sec)
+
+	// If we've been failing for a while and we have over 10k stored events, we start dropping some....
+	var elen = len(t.events)
+	if t.writeFailures > 5 && elen > 10000 {
+		t.events = t.events[elen-10000:]
+		l.Criticalf("json-tracer plugin: continued write failures has resulted in dropping %d events", elen-len(t.events))
+	}
 }
