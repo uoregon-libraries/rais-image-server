@@ -138,23 +138,17 @@ func (t *tracer) shutdown(wg *sync.WaitGroup) {
 }
 
 type registry struct {
-	sync.Mutex
 	list []*tracer
 }
 
 func (r *registry) new(h http.Handler) *tracer {
 	var t = &tracer{handler: h, events: newEventList()}
 	go t.loop()
-	r.Lock()
 	r.list = append(r.list, t)
-	r.Unlock()
 	return t
 }
 
 func (r *registry) shutdown() {
-	r.Lock()
-	defer r.Unlock()
-
 	var wg sync.WaitGroup
 	for _, t := range r.list {
 		wg.Add(1)
