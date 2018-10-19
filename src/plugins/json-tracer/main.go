@@ -30,7 +30,7 @@ var reg *registry
 // the global list unless sanity checks in Initialize() pass
 var Disabled = true
 
-// flushTime is the duration after which traces are flushed to disk
+// flushTime is the duration after which events are flushed to disk
 var flushTime time.Duration
 
 // Initialize reads configuration and sets up the JSON output directory

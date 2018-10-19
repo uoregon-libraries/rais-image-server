@@ -12,7 +12,7 @@ import (
 	"github.com/uoregon-libraries/gopkg/fileutil"
 )
 
-func writeTraces(list []trace) {
+func writeEvents(list []event) {
 	if len(list) == 0 {
 		return
 	}
@@ -28,7 +28,7 @@ func writeTraces(list []trace) {
 	var f = fileutil.NewSafeFile(fullpath)
 	var bytes, err = json.Marshal(list)
 	if err != nil {
-		l.Criticalf("Unrecoverable instrumentation failure: unable to marshal trace data: %s", err)
+		l.Criticalf("Unrecoverable instrumentation failure: unable to marshal event data: %s", err)
 		f.Cancel()
 		return
 	}
@@ -50,7 +50,7 @@ func tryWrite(f fileutil.WriteCancelCloser, bytes []byte) {
 		time.Sleep(time.Duration(backoff) * time.Second)
 	}
 
-	l.Criticalf("Unrecoverable instrumentation failure: unable to write trace data after many attempts")
+	l.Criticalf("Unrecoverable instrumentation failure: unable to write event data after many attempts")
 	f.Cancel()
 }
 
@@ -67,6 +67,6 @@ func tryClose(f fileutil.WriteCancelCloser) {
 		time.Sleep(time.Duration(backoff) * time.Second)
 	}
 
-	l.Criticalf("Unrecoverable instrumentation failure: unable to close trace data file after many attempts")
+	l.Criticalf("Unrecoverable instrumentation failure: unable to close event data file after many attempts")
 	f.Cancel()
 }

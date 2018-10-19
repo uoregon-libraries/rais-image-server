@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type trace struct {
+type event struct {
 	Path     string
 	Type     string
 	Start    time.Time
@@ -16,20 +16,20 @@ type trace struct {
 	Status   int
 }
 
-type traceList struct {
+type eventList struct {
 	createdAt time.Time
-	list      []trace
+	list      []event
 }
 
-func newTraceList() *traceList {
-	return &traceList{list: make([]trace, 0, 256)}
+func newEventList() *eventList {
+	return &eventList{list: make([]event, 0, 256)}
 }
 
 type tracer struct {
 	sync.Mutex
-	done      bool
-	handler   http.Handler
-	traceList *traceList
+	done    bool
+	handler http.Handler
+	events  *eventList
 }
 
 type statusRecorder struct {
@@ -52,7 +52,7 @@ func (t *tracer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if path == "" {
 		path = req.URL.Path
 	}
-	t.appendTrace(path, now, time.Since(now), sr.status)
+	t.appendEvent(path, now, time.Since(now), sr.status)
 }
 
 // getReqType is a bit ugly and hacky, but attempts to determine what kind of
@@ -92,14 +92,14 @@ func getReqType(path string) string {
 	return "Unknown"
 }
 
-func (t *tracer) appendTrace(path string, start time.Time, duration time.Duration, status int) {
+func (t *tracer) appendEvent(path string, start time.Time, duration time.Duration, status int) {
 	t.Lock()
 	defer t.Unlock()
 
-	if len(t.traceList.list) == 0 {
-		t.traceList.createdAt = time.Now()
+	if len(t.events.list) == 0 {
+		t.events.createdAt = time.Now()
 	}
-	t.traceList.list = append(t.traceList.list, trace{
+	t.events.list = append(t.events.list, event{
 		Path:     path,
 		Type:     getReqType(path),
 		Start:    start,
@@ -112,18 +112,18 @@ func (t *tracer) appendTrace(path string, start time.Time, duration time.Duratio
 // flush to disk again.  This must run in a background goroutine.
 func (t *tracer) loop() {
 	for {
-		var pending []trace
+		var pending []event
 		t.Lock()
-		var tlen = len(t.traceList.list)
-		if tlen > 0 && time.Since(t.traceList.createdAt) > flushTime {
-			pending = t.traceList.list
-			t.traceList = newTraceList()
+		var tlen = len(t.events.list)
+		if tlen > 0 && time.Since(t.events.createdAt) > flushTime {
+			pending = t.events.list
+			t.events = newEventList()
 		}
 		var done = t.done
 		t.Unlock()
 
 		if len(pending) > 0 {
-			writeTraces(pending)
+			writeEvents(pending)
 		}
 
 		if done {
@@ -136,7 +136,7 @@ func (t *tracer) loop() {
 
 func (t *tracer) shutdown(wg *sync.WaitGroup) {
 	t.Lock()
-	writeTraces(t.traceList.list)
+	writeEvents(t.events.list)
 	t.done = true
 	t.Unlock()
 	wg.Done()
@@ -148,7 +148,7 @@ type registry struct {
 }
 
 func (r *registry) new(h http.Handler) *tracer {
-	var t = &tracer{handler: h, traceList: newTraceList()}
+	var t = &tracer{handler: h, events: newEventList()}
 	go t.loop()
 	r.Lock()
 	r.list = append(r.list, t)
