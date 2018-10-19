@@ -22,7 +22,7 @@ type traceList struct {
 }
 
 func newTraceList() *traceList {
-	return &traceList{list: make([]trace, 0, maxTraces)}
+	return &traceList{list: make([]trace, 0, 256)}
 }
 
 type tracer struct {
@@ -108,15 +108,14 @@ func (t *tracer) appendTrace(path string, start time.Time, duration time.Duratio
 	})
 }
 
-// loop checks regularly for either the max trace value being met (or exceeded)
-// or the last flush having been long enough ago to flush to disk.  This must
-// run in a background goroutine.
+// loop checks regularly for the last flush having been long enough ago to
+// flush to disk again.  This must run in a background goroutine.
 func (t *tracer) loop() {
 	for {
 		var pending []trace
 		t.Lock()
 		var tlen = len(t.traceList.list)
-		if tlen > 0 && (tlen >= maxTraces || time.Since(t.traceList.createdAt) > flushTime) {
+		if tlen > 0 && time.Since(t.traceList.createdAt) > flushTime {
 			pending = t.traceList.list
 			t.traceList = newTraceList()
 		}

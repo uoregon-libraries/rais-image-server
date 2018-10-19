@@ -10,7 +10,6 @@
 // environment:
 //   - RAIS_TRACEROUTPUTDIRECTORY=/tmp/rais-traces
 //   - RAIS_TRACEFLUSHMINUTES=10
-//   - RAIS_MAXTRACES=10000
 
 package main
 
@@ -34,18 +33,12 @@ var Disabled = true
 // flushTime is the duration after which traces are flushed to disk
 var flushTime time.Duration
 
-// maxTraces is used to forcibly flush data at a certain point even if the
-// elapsed flushTime hasn't passed
-var maxTraces int
-
 // Initialize reads configuration and sets up the JSON output directory
 func Initialize() {
 	viper.SetDefault("TraceFlushMinutes", 10)
-	viper.SetDefault("MaxTraces", 10000)
 
 	jsonOutDir = viper.GetString("TracerOutputDirectory")
 	var flushMinutes = viper.GetInt("TraceFlushMinutes")
-	maxTraces = viper.GetInt("MaxTraces")
 	flushTime = time.Minute * time.Duration(flushMinutes)
 
 	if jsonOutDir == "" {
