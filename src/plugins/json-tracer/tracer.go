@@ -45,14 +45,19 @@ func (sr *statusRecorder) WriteHeader(code int) {
 // ServeHTTP implements http.Handler.  We call the underlying handler and store
 // timing data locally.
 func (t *tracer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	var now = time.Now()
 	var sr = statusRecorder{w, 200}
-	t.handler.ServeHTTP(&sr, req)
 	var path = req.URL.RawPath
 	if path == "" {
 		path = req.URL.Path
 	}
-	t.appendEvent(path, now, time.Since(now), sr.status)
+
+	var start = time.Now()
+	t.handler.ServeHTTP(&sr, req)
+	var finish = time.Now()
+
+	// To avoid blocking when the events are being processed, we send the event
+	// to the tracer's list asynchronously
+	go t.appendEvent(path, start, finish, sr.status)
 }
 
 // getReqType is a bit ugly and hacky, but attempts to determine what kind of
@@ -92,7 +97,7 @@ func getReqType(path string) string {
 	return "Unknown"
 }
 
-func (t *tracer) appendEvent(path string, start time.Time, duration time.Duration, status int) {
+func (t *tracer) appendEvent(path string, start, finish time.Time, status int) {
 	t.Lock()
 	defer t.Unlock()
 
@@ -103,7 +108,7 @@ func (t *tracer) appendEvent(path string, start time.Time, duration time.Duratio
 		Path:     path,
 		Type:     getReqType(path),
 		Start:    start,
-		Duration: duration.Seconds(),
+		Duration: finish.Sub(start).Seconds(),
 		Status:   status,
 	})
 }
