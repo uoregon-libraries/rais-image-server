@@ -49,6 +49,12 @@ RUN make
 # Allow building older versions of RAIS by not failing if the s3 plugin doesn't exist
 RUN go build -buildmode=plugin -o bin/plugins/s3-images.so rais/src/plugins/s3-images || true
 
+# Installing GraphicsMagick is wholly unnecessary, but helps when using the
+# build box for things like converting images.  Since opj2_encode doesn't
+# support all formats, "gm convert" is very handy.  As this is a multi-stage
+# dockerfile, this installation doesn't hurt the final production docker image.
+RUN dnf install -y GraphicsMagick
+
 # Production image just installs runtime deps and copies in the binaries
 FROM fedora:28 AS production
 LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
