@@ -38,11 +38,11 @@ ENV PATH /opt/go/bin:/usr/local/go/bin:$PATH
 RUN go get -u golang.org/x/lint/golint
 
 # Clone the RAIS repo
+ARG gittag=master
 RUN git clone https://github.com/uoregon-libraries/rais-image-server.git /opt/rais-src
 WORKDIR /opt/rais-src
 
 # Pull the latest RAIS master - that's always the stable release - unless an ENV var says otherwise
-ARG gittag=master
 RUN git checkout $gittag
 RUN make
 
