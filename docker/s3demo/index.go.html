@@ -1,0 +1,17 @@
+{{block "title" .}}RAIS: S3 Images Demo{{end}}
+
+{{block "content" .}}
+  <h1>RAIS: S3 Images Demo</h1>
+  {{.Bucket}} list:
+
+  <div>
+    {{range .Assets}}
+    <div style="display: inline-block; width: 30%; height: 240px; padding: 0.5em;">
+      <a href="/asset/{{.Key}}">
+        <img src="http://localhost:12415/iiif/{{.IIIFID}}/full/,240/0/default.jpg" alt="{{.Title}}" height="240px" border=0 />
+        <p>{{.Title}}</p>
+      </a>
+    </div>
+    {{end}}
+  </div>
+{{end}}
