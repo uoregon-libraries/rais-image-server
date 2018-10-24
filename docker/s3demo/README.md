@@ -13,7 +13,6 @@ export AWS_ACCESS_KEY_ID="<your aws access key id>"
 export AWS_SECRET_ACCESS_KEY="<your aws secret access key>"
 export RAIS_S3ZONE="<AWS region / availability zone>"
 export RAIS_S3BUCKET="<AWS S3 Bucket>"
-export URL=http://localhost:12415/iiif
 go build
 ./s3demo
 ```
