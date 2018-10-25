@@ -42,12 +42,12 @@ func findAssetKey(req *http.Request) string {
 		p = req.URL.Path
 	}
 	var parts = strings.Split(p, "/")
-	if len(parts) != 3 {
+	if len(parts) < 3 {
 		log.Printf("Invalid path parts %#v", parts)
 		return ""
 	}
 
-	return parts[2]
+	return strings.Join(parts[2:], "/")
 }
 
 func findAsset(key string) asset {
