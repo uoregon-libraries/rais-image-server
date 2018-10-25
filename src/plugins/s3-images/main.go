@@ -1,9 +1,11 @@
-// This file is an example of an S3-pulling plugin.  This is meant to be a more
-// real-world plugin that could actually be used in a production environment
-// (compared to the more general but dangerous "external-images" plugin).  This
-// requires you to put your access keys in $HOME/.aws/credentials (or
-// docker/s3credentials if you're using the docker-compose setup).  See
-// docker/s3credentials.example for an example credentials file.
+// This file is an example of an S3-pulling plugin.  This is a real-world
+// plugin that can actually be used in a production environment (compared to
+// the more general but dangerous "external-images" plugin).  This requires you
+// to put your AWS access key information into the environment per AWS's
+// standard credential management: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.
+// You may also put access keys in $HOME/.aws/credentials (or
+// docker/s3credentials if you're using the docker-compose example override
+// setup).  See docker/s3credentials.example for an example credentials file.
 //
 // When a resource is requested, if its IIIF id begins with "s3:", we treat the
 // rest of the id as an s3 id to be pulled from the configured zone and bucket.
@@ -15,16 +17,18 @@
 // return is the cached path so that RAIS can use the cached file immediately
 // after download.  The JP2 cache is configurable via `S3Cache` in the RAIS
 // toml file or by setting `RAIS_S3CACHE` in the environment, and defaults to
-// `/var/cache/rais-s3`.  Expiration of cached files must be managed externally
-// (to avoid over-complicating this plugin).  A simple approach could be a cron
-// job that wipes out all cached data if it hasn't been accessed in the past 24
-// hours:
+// `/var/cache/rais-s3`.
+//
+// Expiration of cached files must be managed externally (to avoid
+// over-complicating this plugin).  A simple approach could be a cron job that
+// wipes out all cached data if it hasn't been accessed in the past 24 hours:
 //
 //     find /var/cache/rais-s3 -type f -atime +1 -exec rm {} \;
 //
-// Depending how fast the cache grows, this may or may not be sufficient.  A
-// smarter plugin would auto-remove files as needed to keep the cache to a set
-// limit, but we don't currently need such careful control.
+// Depending how fast the cache grows, how much disk space you have available,
+// and how much variety you have in S3, you may want to monitor the cache
+// closely and tweak this cron job example as needed, or come up with something
+// more sophisticated.
 
 package main
 

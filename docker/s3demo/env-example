@@ -1,0 +1,25 @@
+##### REQUIRED
+
+# This must be the public URL you're using, or localhost if you aren't doing a
+# public demo.  It **must** have a path of "/iiif" for this demo to work.
+RAIS_IIIFURL=http://localhost/iiif
+
+# S3 configuration - this stuff must be specific to your setup!
+RAIS_S3ZONE=<region / zone>
+RAIS_S3BUCKET=<bucket-name>
+AWS_ACCESS_KEY_ID=<access key>
+AWS_SECRET_ACCESS_KEY=<secret access key>
+
+##### OPTIONAL
+
+# JSON Tracer: /tmp because we mount that into the container.  We want to get at this data easily.
+RAIS_TRACEROUT=/tmp/rais-traces.json
+RAIS_TRACERFLUSHSECONDS=1
+
+# In-memory caching is disabled here to help test timing, but can be enabled to
+# provide a smoother demo
+RAIS_TILECACHELEN=0
+RAIS_INFOCACHELEN=0
+
+# DEBUG logs by default because I love watching lines scroll by in my terminal
+RAIS_LOGLEVEL=DEBUG

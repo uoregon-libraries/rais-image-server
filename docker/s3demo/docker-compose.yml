@@ -1,0 +1,39 @@
+version: "3.4"
+
+services:
+  rais:
+    image: uolibraries/rais
+    environment:
+      - RAIS_S3CACHE=/var/tmp/rais/s3
+      - RAIS_IIIFURL
+      - RAIS_S3ZONE
+      - RAIS_S3BUCKET
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - RAIS_INFOCACHELEN
+      - RAIS_TILECACHELEN
+    volumes:
+      - ../../bin/rais-server:/opt/rais/rais-server:ro
+      - ../../bin/plugins:/opt/rais/plugins:ro
+      - /tmp:/tmp
+
+  s3demo:
+    build:
+      context: ..
+      dockerfile: ./s3demo/Dockerfile
+    environment:
+      - RAIS_S3ZONE
+      - RAIS_S3BUCKET
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+
+  web:
+    image: nginx:1.15
+    volumes:
+      - ../../:/opt/rais-image-server:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - rais
+      - s3demo
+    ports:
+      - 80:80

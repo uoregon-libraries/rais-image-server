@@ -21,6 +21,18 @@ services:
   rais:
     build:
       context: ./docker
+    environment:
+      # These next lines would allow you to pass the various S3 configuration
+      # options through from the host's environment (or the local .env file)
+      - RAIS_S3CACHE
+      - RAIS_S3ZONE
+      - RAIS_S3BUCKET
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_SESSION_TOKEN
+      # If you wanted to use a configured AWS credentials file for s3, do this
+      # and then see the volume config below
+      - AWS_SHARED_CREDENTIALS_FILE=/etc/aws.credentials
     volumes:
       # Mount in binaries
       - ./bin/rais-server:/opt/rais/rais-server:ro
@@ -28,6 +40,8 @@ services:
       # in production - you will want to be more selective to ensure you never
       # accidentally mount the external images plugin!
       - ./bin/plugins:/opt/rais/plugins:ro
+      # Volume config (modify source) for using an AWS credentials file
+      - /home/myuser/.aws/credentials:/etc/aws.credentials
     entrypoint: /entrypoint.sh
     ports:
       - 12415:12415
