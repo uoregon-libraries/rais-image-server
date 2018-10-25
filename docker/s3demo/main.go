@@ -11,7 +11,6 @@ import (
 	"net/url"
 	"os"
 	"strings"
-	tt "text/template"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -49,13 +48,13 @@ func main() {
 
 	if zone == "" || bucket == "" || keyID == "" || secretKey == "" {
 		fmt.Println("You must set env vars RAIS_S3BUCKET, RAIS_S3ZONE, AWS_ACCESS_KEY_ID, and")
-		fmt.Println("AWS_SECRET_ACCESS_KEY before running the demo")
+		fmt.Println("AWS_SECRET_ACCESS_KEY before running the demo.  You can export these directly")
+		fmt.Println(`or use a the docker-compose ".env" file.`)
 		os.Exit(1)
 	}
 
 	readAssets()
 	preptemplates()
-	writeDockerCompose()
 	serve()
 }
 
@@ -105,33 +104,4 @@ type Data struct {
 	Bucket    string
 	KeyID     string
 	SecretKey string
-}
-
-func writeDockerCompose() {
-	var t = tt.Must(tt.ParseFiles("./docker-compose.template.yml"))
-	var data = Data{
-		Zone:      zone,
-		Bucket:    bucket,
-		KeyID:     keyID,
-		SecretKey: secretKey,
-	}
-
-	var f, err = os.Create("./docker-compose.yml")
-	if err != nil {
-		log.Printf("Unable to create docker-compose.yml: %s", err)
-		os.Exit(1)
-	}
-
-	f.WriteString("# This is a generated file: **do not modify**\n")
-	f.WriteString("#\n")
-	f.WriteString("# If you wish to alter this RAIS S3 demo at the docker level, build a\n")
-	f.WriteString("# docker-compose.override.yml file.\n")
-	err = t.Execute(f, data)
-	if err != nil {
-		log.Printf("Unable to build docker-compose.yml file: %s", err)
-		f.Close()
-		os.Exit(1)
-	}
-
-	f.Close()
 }

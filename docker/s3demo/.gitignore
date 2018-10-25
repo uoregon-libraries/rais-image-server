@@ -1,2 +1,2 @@
-/docker-compose.yml
-/s3demo
+/.env
+/docker-compose.override.yml

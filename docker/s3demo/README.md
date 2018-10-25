@@ -1,51 +1,51 @@
 s3demo for RAIS
 ===
 
+Setup
+---
+
 Run a simple, ugly "exhibit" of an entire S3 bucket!
 
-Open two terminal windows.  In terminal 1:
+Grab the RAIS codebase and go to this directory:
 
 ```bash
-docker pull uolibraries/rais
 git clone https://github.com/uoregon-libraries/rais-image-server.git
 cd rais-image-server/docker/s3demo
+```
+
+2. Set up your environment for the docker stack
+
+You can copy env-example to .env, and modify the required values **or** export
+the necessary environment variables:
+
+```bash
 export AWS_ACCESS_KEY_ID="<your aws access key id>"
 export AWS_SECRET_ACCESS_KEY="<your aws secret access key>"
 export RAIS_S3ZONE="<AWS region / availability zone>"
 export RAIS_S3BUCKET="<AWS S3 Bucket>"
-go build
-./s3demo
+export RAIS_IIIFURL="http://localhost/iiif"
 ```
 
-In terminal 2, make sure to be in the same directory as above
-(`rais-image-server/docker/s3demo`) and run compose:
+Start the stack (`docker-compose up`) and visit `http://localhost`.  Gaze upon
+your glorious images, lovingly served up by RAIS.
 
-```bash
-docker-compose up
-```
-
-Visit `http://localhost:8080` and gaze upon your glorious images, lovingly
-served up by RAIS.
+---
 
 This is a pretty weak demo, so be advised it's really just for testing, not
 production use.  Some caveats:
 
-- You won't be able to access this from anywhere but your local machine
-- All caching is disabled in order to get realistic first-hit costs
+- In-memory caching is disabled in order to get realistic first-hit costs
 - The images pulled from S3 live in ephemeral storage and will be deleted after
   you delete the RAIS container, again, to make it simple to get at realistic
   first-hit costs
 - If you have non-images in your S3 bucket, behavior is undefined
-- If you're running anything else on your server at port 8080 or 12415, this
-  demo won't work as-is.  You may have to customize your setup (e.g., with a
+- If you're running anything else on your server at port 80, this demo won't
+  work as-is.  You may have to customize your setup (e.g., with a
   `docker-compose.override.yml` file)
-- You must expose your AWS secrets to the environment for this to work with
-  both the app and the dockerized RAIS container.  If this makes you
-  uncomfortable, you can always dig into the setup manually.
-- You must run `s3demo` in order to generate the `docker-compose.yml` file with
-  the proper environment variables.  Running compose without first running the
-  demo will result in either not having a compose file or using an old version
-  of the compose file.
-- The compose file is completely replaced each time `s3demo` is run.  Don't
-  modify that file.  Use `docker-compose.override.yml` if you want to make the
-  demo do anything "clever".
+
+Development
+---
+
+Don't hack up the demo unless you want pain.  It's a mess just to get a demo
+working.  If you are a masochist, however, make sure you re-run "docker-compose
+build" anytime you change the codebase or the go templates.
