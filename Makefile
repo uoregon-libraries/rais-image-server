@@ -1,7 +1,7 @@
 # Makefile directory
 MakefileDir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: all generate binaries test format lint clean distclean docker s3-images external-images datadog
+.PHONY: all generate binaries test format lint clean distclean docker plugins
 
 # Default target builds binaries
 all: binaries
@@ -42,14 +42,8 @@ docker:
 	docker-compose build rais-build
 	docker build --rm -t uolibraries/rais:latest-indev $(MakefileDir)/docker
 
-s3-images:
+plugins:
 	go build -ldflags="-s -w" -buildmode=plugin -o bin/plugins/s3-images.so rais/src/plugins/s3-images
-external-images:
-	@echo -e "\033[1;31mWarning\033[0m: the external images plugin is not secure!  It should be used as an example only!"
 	go build -ldflags="-s -w" -buildmode=plugin -o bin/plugins/external-images.so rais/src/plugins/external-images
-datadog:
 	go build -ldflags="-s -w" -buildmode=plugin -o bin/plugins/datadog.so rais/src/plugins/datadog
-json-tracer:
 	go build -ldflags="-s -w" -buildmode=plugin -o bin/plugins/json-tracer.so rais/src/plugins/json-tracer
-
-plugins: s3-images external-images datadog json-tracer

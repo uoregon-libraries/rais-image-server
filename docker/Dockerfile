@@ -46,8 +46,8 @@ WORKDIR /opt/rais-src
 RUN git checkout $gittag
 RUN make
 
-# Allow building older versions of RAIS by not failing if the s3 plugin doesn't exist
-RUN go build -buildmode=plugin -o bin/plugins/s3-images.so rais/src/plugins/s3-images || true
+# Allow building older versions of RAIS by not failing if plugins don't exist
+RUN make plugins || true
 
 # Installing GraphicsMagick is wholly unnecessary, but helps when using the
 # build box for things like converting images.  Since opj2_encode doesn't
