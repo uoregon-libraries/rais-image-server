@@ -6,7 +6,7 @@ Setup
 
 Run a simple, ugly "exhibit" of an entire S3 bucket!
 
-Grab the RAIS codebase and go to this directory:
+1. Grab the RAIS codebase and go to this directory:
 
 ```bash
 git clone https://github.com/uoregon-libraries/rais-image-server.git
@@ -26,7 +26,7 @@ export RAIS_S3BUCKET="<AWS S3 Bucket>"
 export RAIS_IIIFURL="http://localhost/iiif"
 ```
 
-Start the stack (`docker-compose up`) and visit `http://localhost`.  Gaze upon
+3. Start the stack (`docker-compose up`) and visit `http://localhost`.  Gaze upon
 your glorious images, lovingly served up by RAIS.
 
 ---
