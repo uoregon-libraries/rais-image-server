@@ -13,8 +13,6 @@ services:
       - RAIS_INFOCACHELEN
       - RAIS_TILECACHELEN
     volumes:
-      - ../../bin/rais-server:/opt/rais/rais-server:ro
-      - ../../bin/plugins:/opt/rais/plugins:ro
       - /tmp:/tmp
 
   s3demo:
