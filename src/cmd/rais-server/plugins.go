@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io/ioutil"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -21,41 +21,55 @@ var idToPathPlugins []plugIDToPath
 var wrapHandlerPlugins []plugWrapHandler
 var teardownPlugins []plugGeneric
 
-// LoadPlugins searches for any plugins in the binary's directory + /plugins
-func LoadPlugins(l *logger.Logger) {
-	var dir = filepath.Dir(os.Args[0])
-	var plugdir = filepath.Join(dir, "plugins")
-	l.Debugf("Looking for plugins in %q", plugdir)
-
-	var _, err = os.Stat(plugdir)
-	if os.IsNotExist(err) {
-		// If there's no plugin dir, we just keep chugging along normally
-		l.Debugf("Plugin directory not found; skipping plugin loading")
-		return
+// pluginsFor returns a list of all plugin files which matched the given
+// pattern.  Files are sorted by name.
+func pluginsFor(pattern string) ([]string, error) {
+	if !filepath.IsAbs(pattern) {
+		var dir = filepath.Join(filepath.Dir(os.Args[0]), "plugins")
+		pattern = filepath.Join(dir, pattern)
 	}
+
+	var files, err = filepath.Glob(pattern)
 	if err != nil {
-		l.Fatalf("Unable to stat %q: %s", plugdir, err)
+		return nil, fmt.Errorf("invalid plugin file pattern %q", pattern)
+	}
+	if len(files) == 0 {
+		return nil, fmt.Errorf("plugin pattern %q doesn't match any files", pattern)
 	}
 
-	var infos []os.FileInfo
-	infos, err = ioutil.ReadDir(plugdir)
-	if err != nil {
-		l.Fatalf("Unable to read plugin directory %q: %s", plugdir, err)
-	}
+	sort.Strings(files)
+	return files, nil
+}
 
-	sort.Slice(infos, func(i, j int) bool { return infos[i].Name() < infos[j].Name() })
-	for _, info := range infos {
-		var fullpath = filepath.Join(plugdir, info.Name())
-		if info.IsDir() {
-			l.Warnf("Skipping unknown subdirectory %q (plugin subdirectories are not supported)", fullpath)
+// LoadPlugins searches for any plugins matching the pattern given.  If the
+// pattern is not an absolute URL, it is treated as a pattern under the
+// binary's dir/plugins.
+func LoadPlugins(l *logger.Logger, patterns []string) {
+	var plugFiles []string
+	var seen = make(map[string]bool)
+	for _, pattern := range patterns {
+		var matches, err = pluginsFor(pattern)
+		if err != nil {
+			l.Fatalf("Cannot process pattern %q: %s", pattern, err)
 		}
 
-		if filepath.Ext(fullpath) != ".so" {
-			l.Warnf("Skipping unknown file %q (plugins must be compiled .so files)", fullpath)
+		// We do a sanity check before actually processing any plugins
+		for _, file := range matches {
+			if filepath.Ext(file) != ".so" {
+				l.Fatalf("Cannot load unknown file %q (plugins must be compiled .so files)", file)
+			}
+			if seen[file] {
+				l.Fatalf("Cannot load the same plugin twice (%q)", file)
+			}
+			seen[file] = true
 		}
 
-		l.Infof("Loading plugin %q", fullpath)
-		loadPlugin(fullpath, l)
+		plugFiles = append(plugFiles, matches...)
+	}
+
+	for _, file := range plugFiles {
+		l.Infof("Loading plugin %q", file)
+		loadPlugin(file, l)
 	}
 }
 

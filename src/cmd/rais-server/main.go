@@ -11,6 +11,7 @@ import (
 	"rais/src/openjpeg"
 	"rais/src/plugins"
 	"rais/src/version"
+	"strings"
 	"sync"
 	"time"
 
@@ -36,12 +37,14 @@ const defaultInfoCacheLen = 10000
 var cacheHits, cacheMisses int64
 
 var defaultLogLevel = logger.Debug.String()
+var defaultPlugins = "s3-images.so,json-tracer.so"
 
 func main() {
 	// Defaults
 	viper.SetDefault("Address", defaultAddress)
 	viper.SetDefault("InfoCacheLen", defaultInfoCacheLen)
 	viper.SetDefault("LogLevel", defaultLogLevel)
+	viper.SetDefault("Plugins", defaultPlugins)
 
 	// Allow all configuration to be in environment variables
 	viper.SetEnvPrefix("RAIS")
@@ -73,6 +76,9 @@ func main() {
 	viper.BindPFlag("ImageMaxWidth", pflag.CommandLine.Lookup("image-max-width"))
 	pflag.Int("image-max-height", math.MaxInt32, "Maximum height of images to be served")
 	viper.BindPFlag("ImageMaxHeight", pflag.CommandLine.Lookup("image-max-height"))
+	pflag.String("plugins", defaultPlugins, "comma-separated plugin pattern list, e.g., "+
+		`"s3-images.so,datadog.so,json-tracer.so,/opt/rais/plugins/*.so"`)
+	viper.BindPFlag("Plugins", pflag.CommandLine.Lookup("plugins"))
 
 	pflag.Parse()
 
@@ -94,7 +100,8 @@ func main() {
 	openjpeg.Logger = Logger
 	magick.Logger = Logger
 
-	LoadPlugins(Logger)
+	var plugPatterns = strings.Split(viper.GetString("Plugins"), ",")
+	LoadPlugins(Logger, plugPatterns)
 
 	// Pull all values we need for all cases
 	tilePath = viper.GetString("TilePath")

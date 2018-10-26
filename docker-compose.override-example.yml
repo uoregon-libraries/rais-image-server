@@ -34,11 +34,8 @@ services:
       # and then see the volume config below
       - AWS_SHARED_CREDENTIALS_FILE=/etc/aws.credentials
     volumes:
-      # Mount in binaries
+      # Mount in all binaries so you aren't rebuilding the image to test quick changes
       - ./bin/rais-server:/opt/rais/rais-server:ro
-      # Mount in all plugins.  Note that this is probably *not* what you want
-      # in production - you will want to be more selective to ensure you never
-      # accidentally mount the external images plugin!
       - ./bin/plugins:/opt/rais/plugins:ro
       # Volume config (modify source) for using an AWS credentials file
       - /home/myuser/.aws/credentials:/etc/aws.credentials

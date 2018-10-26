@@ -59,6 +59,27 @@ CapabilitiesFile = "/etc/rais-capabilities.toml"
 # Env: RAIS_TILECACHELEN
 TileCacheLen = 0
 
+# Plugins: Optional, defaults to "s3-images.so,json-tracer.so".
+#
+# Comma-separated list of which plugins should be loaded.
+#
+# Items in the list which don't specify an absolute path must be in a "plugins"
+# subdirectory the lives alongside the rais-server binary.
+#
+# This list can include wildcards, such as "s3*.so,foo.so", as well as absolute
+# paths, such as "/usr/local/rais/plugins/*.so".  It can also explicitly
+# specify individual plugins to avoid accidentally loading plugins you don't
+# want in production, even if they are compiled into the plugins/ subdirectory.
+#
+# The example s3-images and json-trace plugins are considered production-ready.
+#
+# A value of "*.so" replicates the 3.0.x behavior of loading everything in
+# plugins/.
+#
+# Env: RAIS_PLUGINS
+# CLI: --plugins
+Plugins = "*.so"
+
 ####
 # If you wanted to globally limit request size, use the below values.  By
 # default, the server doesn't try to limit request size simply because it's
