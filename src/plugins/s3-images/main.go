@@ -97,6 +97,10 @@ func SetLogger(raisLogger *logger.Logger) {
 // starts with "s3:"
 func IDToPath(id iiif.ID) (path string, err error) {
 	var ids = string(id)
+	if len(ids) < 4 {
+		return "", plugins.ErrSkipped
+	}
+
 	if ids[:3] != "s3:" {
 		return "", plugins.ErrSkipped
 	}
