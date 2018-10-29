@@ -23,6 +23,12 @@ RUN dnf install -y gcc
 RUN dnf install -y make
 RUN dnf install -y tar
 
+# Installing GraphicsMagick is wholly unnecessary, but helps when using the
+# build box for things like converting images.  Since opj2_encode doesn't
+# support all formats, "gm convert" is very handy.  As this is a multi-stage
+# dockerfile, this installation doesn't hurt the final production docker image.
+RUN dnf install -y GraphicsMagick
+
 # Go comes after other installs to avoid re-pulling the more expensive
 # dependencies when changing Go versions
 RUN curl -L https://dl.google.com/go/go1.11.linux-amd64.tar.gz > /tmp/go.tgz
@@ -48,12 +54,6 @@ RUN make
 
 # Allow building older versions of RAIS by not failing if plugins don't exist
 RUN make plugins || true
-
-# Installing GraphicsMagick is wholly unnecessary, but helps when using the
-# build box for things like converting images.  Since opj2_encode doesn't
-# support all formats, "gm convert" is very handy.  As this is a multi-stage
-# dockerfile, this installation doesn't hurt the final production docker image.
-RUN dnf install -y GraphicsMagick
 
 # Production image just installs runtime deps and copies in the binaries
 FROM fedora:28 AS production
