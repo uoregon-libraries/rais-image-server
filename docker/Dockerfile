@@ -25,8 +25,9 @@ RUN dnf install -y tar
 
 # Installing GraphicsMagick is wholly unnecessary, but helps when using the
 # build box for things like converting images.  Since opj2_encode doesn't
-# support all formats, "gm convert" is very handy.  As this is a multi-stage
-# dockerfile, this installation doesn't hurt the final production docker image.
+# support all formats, and ImageMagick has been iffy with some conversions for
+# us, "gm convert" is a handy fallback.  As this is a multi-stage dockerfile,
+# this installation doesn't hurt the final production docker image.
 RUN dnf install -y GraphicsMagick
 
 # Go comes after other installs to avoid re-pulling the more expensive
