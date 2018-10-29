@@ -34,9 +34,11 @@ package main
 
 import (
 	"errors"
+	"hash/fnv"
 	"path/filepath"
 	"rais/src/iiif"
 	"rais/src/plugins"
+	"strconv"
 	"sync"
 	"time"
 
@@ -93,6 +95,13 @@ func SetLogger(raisLogger *logger.Logger) {
 	l = raisLogger
 }
 
+func buckets(s3ID string) (string, string) {
+	var h = fnv.New32()
+	h.Write([]byte(s3ID))
+	var val = h.Sum32()
+	return strconv.Atoi(val % 100), strconv.Atoi((val / 100) % 100)
+}
+
 // IDToPath implements the auto-download logic when a IIIF ID
 // starts with "s3:"
 func IDToPath(id iiif.ID) (path string, err error) {
@@ -107,7 +116,8 @@ func IDToPath(id iiif.ID) (path string, err error) {
 
 	// Check cache - don't re-download
 	var s3ID = ids[3:]
-	path = filepath.Join(s3cache, s3ID)
+	var bucket1, bucket2 = buckets(s3ID)
+	path = filepath.Join(s3cache, bucket1, bucket2, s3ID)
 
 	// See if this file is currently being downloaded; if so we need to wait
 	var timeout = time.Now().Add(time.Second * 10)
