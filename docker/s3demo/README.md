@@ -45,6 +45,9 @@ production use.  Some caveats:
 Development
 ---
 
-Don't hack up the demo unless you want pain.  It's a mess just to get a demo
-working.  If you are a masochist, however, make sure you re-run "docker-compose
-build" anytime you change the codebase or the go templates.
+Don't hack up the demo unless you want pain.  The demo server is a mess, and
+the setup is a little hacky.  It's here to provide a quick demo, not showcase
+elegant solutions to a problem.
+
+If you are a masochist, however, make sure you re-run "docker-compose build"
+anytime you change the codebase or the go templates.
