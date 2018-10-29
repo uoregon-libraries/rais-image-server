@@ -128,11 +128,9 @@ func IDToPath(id iiif.ID) (path string, err error) {
 		}
 	}
 
-	l.Debugf("s3-images plugin: Checking for cached file at %q", path)
 	if fileutil.MustNotExist(path) {
+		l.Debugf("s3-images plugin: no cached file at %q; downloading from S3", path)
 		err = pullImage(s3ID, path)
-	} else {
-		l.Debugf("s3-images plugin: cached file found")
 	}
 
 	return path, err
