@@ -98,8 +98,8 @@ func SetLogger(raisLogger *logger.Logger) {
 func buckets(s3ID string) (string, string) {
 	var h = fnv.New32()
 	h.Write([]byte(s3ID))
-	var val = h.Sum32()
-	return strconv.Atoi(val % 100), strconv.Atoi((val / 100) % 100)
+	var val = int(h.Sum32() / 10000)
+	return strconv.Itoa(val % 100), strconv.Itoa((val / 100) % 100)
 }
 
 // IDToPath implements the auto-download logic when a IIIF ID
