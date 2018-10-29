@@ -34,9 +34,8 @@ your glorious images, lovingly served up by RAIS.
 This is a pretty weak demo, so be advised it's really just for testing, not
 production use.  Some caveats:
 
-- In-memory caching is disabled in order to get realistic first-hit costs
 - The images pulled from S3 live in ephemeral storage and will be deleted after
-  you delete the RAIS container, again, to make it simple to get at realistic
+  you delete the RAIS container.  This makes it simple to get at realistic
   first-hit costs
 - If you have non-images in your S3 bucket, behavior is undefined
 - If you're running anything else on your server at port 80, this demo won't
