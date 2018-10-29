@@ -53,6 +53,7 @@ var m sync.RWMutex
 var l *logger.Logger
 
 var s3cache, s3zone, s3bucket string
+var cacheLifetime time.Duration
 
 // Disabled lets the plugin manager know not to add this plugin's functions to
 // the global list unless sanity checks in Initialize() pass
@@ -76,9 +77,23 @@ func Initialize() {
 		return
 	}
 
+	// This is an undocumented feature: it's a bit experimental, and really not
+	// something that should be relied upon until it gets some testing.
+	viper.SetDefault("S3CacheLifetime", "0")
+	var lifetimeString = viper.GetString("S3CacheLifetime")
+	var err error
+	cacheLifetime, err = time.ParseDuration(lifetimeString)
+	if err != nil {
+		l.Fatalf("S3 plugin failure: malformed S3CacheLifetime (%q): %s", lifetimeString, err)
+	}
+
 	l.Debugf("Setting S3 cache location to %q", s3cache)
 	l.Debugf("Setting S3 zone to %q", s3zone)
 	l.Debugf("Setting S3 bucket to %q", s3bucket)
+	if cacheLifetime > time.Duration(0) {
+		l.Debugf("Setting S3 cache expiration to %s", cacheLifetime)
+		go purgeLoop()
+	}
 	Disabled = false
 
 	if fileutil.IsDir(s3cache) {
@@ -131,6 +146,12 @@ func IDToPath(id iiif.ID) (path string, err error) {
 	if fileutil.MustNotExist(path) {
 		l.Debugf("s3-images plugin: no cached file at %q; downloading from S3", path)
 		err = pullImage(s3ID, path)
+	}
+
+	// We reset purge time whether we downloaded it just now or not - this
+	// ensures files aren't getting purged while in use
+	if err == nil {
+		setPurgeTime(path)
 	}
 
 	return path, err
