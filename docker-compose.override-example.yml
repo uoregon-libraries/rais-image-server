@@ -3,10 +3,6 @@
 #
 # - All binaries are mounted into the container so you can test out local changes
 # - RAIS directly exposes its port to the host machine for quick debugging
-# - The rais container describes how to build itself so you can change the
-#   internals (docker/Dockerfile) during development.  You may have to wait a
-#   bit for it to build on first run.  You can also run `docker-compose build`
-#   or `make docker` to rebuild the build and server images at any time.
 #
 # Note that docker-compose.override.yml is only automatically used if you
 # *don't* specify a compose file.  e.g., `docker-compose up` will use
@@ -19,8 +15,6 @@
 version: "3.4"
 services:
   rais:
-    build:
-      context: ./docker
     environment:
       # These next lines would allow you to pass the various S3 configuration
       # options through from the host's environment (or the local .env file)
@@ -35,10 +29,8 @@ services:
       - AWS_SHARED_CREDENTIALS_FILE=/etc/aws.credentials
     volumes:
       # Mount in all binaries so you aren't rebuilding the image to test quick changes
-      - ./bin/rais-server:/opt/rais/rais-server:ro
-      - ./bin/plugins:/opt/rais/plugins:ro
+      - ./bin:/opt/rais:ro
       # Volume config (modify source) for using an AWS credentials file
       - /home/myuser/.aws/credentials:/etc/aws.credentials
-    entrypoint: /entrypoint.sh
     ports:
       - 12415:12415
