@@ -44,17 +44,18 @@ ENV PATH /opt/go/bin:/usr/local/go/bin:$PATH
 # Make sure the build box can lint code
 RUN go get -u golang.org/x/lint/golint
 
-# Clone the RAIS repo
-ARG gittag=master
-RUN git clone https://github.com/uoregon-libraries/rais-image-server.git /opt/rais-src
+# Add the go mod stuff first so we aren't re-downloading dependencies except
+# when they actually change
 WORKDIR /opt/rais-src
+ADD ./go.mod /opt/rais-src/go.mod
+ADD ./go.sum /opt/rais-src/go.sum
+RUN go mod download
 
-# Pull the latest RAIS master - that's always the stable release - unless an ENV var says otherwise
-RUN git checkout $gittag
-RUN make
-
-# Allow building older versions of RAIS by not failing if plugins don't exist
-RUN make plugins || true
+# Make sure we don't just add every little thing, otherwise unimportant changes
+# trigger a rebuild
+ADD ./Makefile /opt/rais-src/Makefile
+ADD ./src /opt/rais-src/src
+RUN make binaries plugins
 
 # Production image just installs runtime deps and copies in the binaries
 FROM fedora:28 AS production

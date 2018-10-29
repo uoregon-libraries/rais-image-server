@@ -21,7 +21,8 @@ volumes:
 services:
   rais-build:
     build:
-      context: ./docker
+      context: .
+      dockerfile: ./docker/Dockerfile
       target: build
     volumes:
       - ./:/opt/rais-src:rw
