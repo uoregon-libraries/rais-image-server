@@ -55,7 +55,8 @@ func main() {
 	viper.AddConfigPath("/etc")
 	viper.AddConfigPath(".")
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("ERROR: Unable to read RAIS config: %s", err)
+		fmt.Printf("ERROR: Invalid RAIS config file (/etc/rais.toml or ./rais.toml): %s\n", err)
+		os.Exit(1)
 	}
 
 	// CLI flags
