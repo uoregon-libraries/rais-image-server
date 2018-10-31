@@ -1,3 +1,4 @@
+.*.swp
 /Dockerfile
 /docker/images/
 /.git

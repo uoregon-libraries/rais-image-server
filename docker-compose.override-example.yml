@@ -3,10 +3,6 @@
 #
 # - All binaries are mounted into the container so you can test out local changes
 # - RAIS directly exposes its port to the host machine for quick debugging
-# - The rais container describes how to build itself so you can change the
-#   internals (docker/Dockerfile) during development.  You may have to wait a
-#   bit for it to build on first run.  You can also run `docker-compose build`
-#   or `make docker` to rebuild the build and server images at any time.
 #
 # Note that docker-compose.override.yml is only automatically used if you
 # *don't* specify a compose file.  e.g., `docker-compose up` will use
@@ -19,15 +15,22 @@
 version: "3.4"
 services:
   rais:
-    build:
-      context: ./docker
+    environment:
+      # These next lines would allow you to pass the various S3 configuration
+      # options through from the host's environment (or the local .env file)
+      - RAIS_S3CACHE
+      - RAIS_S3ZONE
+      - RAIS_S3BUCKET
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_SESSION_TOKEN
+      # If you wanted to use a configured AWS credentials file for s3, do this
+      # and then see the volume config below
+      - AWS_SHARED_CREDENTIALS_FILE=/etc/aws.credentials
     volumes:
-      # Mount in binaries
-      - ./bin/rais-server:/opt/rais/rais-server:ro
-      # Mount in all plugins.  Note that this is probably *not* what you want
-      # in production - you will want to be more selective to ensure you never
-      # accidentally mount the external images plugin!
-      - ./bin/plugins:/opt/rais/plugins:ro
-    entrypoint: /entrypoint.sh
+      # Mount in all binaries so you aren't rebuilding the image to test quick changes
+      - ./bin:/opt/rais:ro
+      # Volume config (modify source) for using an AWS credentials file
+      - /home/myuser/.aws/credentials:/etc/aws.credentials
     ports:
       - 12415:12415

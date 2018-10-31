@@ -6,30 +6,9 @@
 #
 # Put JP2s into docker/images and the apache entrypoint script will add them to
 # the images served by from RAIS.
-#
-# Note that the "rais-build" container may seem entirely unnecessary here, and
-# takes a few minutes to initially build.  However, it is very helpful when any
-# kind of custom building needs to happen, such as using the datadog plugin or
-# doing local development.  It's simply easier to know it'll be available than
-# to have commands that fail in potentially confusing ways.
 version: "3.4"
 
-volumes:
-  gopath: {}
-  gocache: {}
-
 services:
-  rais-build:
-    build:
-      context: ./docker
-      target: build
-    volumes:
-      - ./:/opt/rais-src:rw
-      - ./docker/images:/var/local/images:ro
-      - gopath:/usr/local/go
-      - gocache:/root/.cache/go-build
-    command: make
-
   rais:
     image: uolibraries/rais
     environment:
@@ -43,6 +22,7 @@ services:
       - RAIS_IMAGEMAXAREA
       - RAIS_IMAGEMAXWIDTH
       - RAIS_IMAGEMAXHEIGHT
+      - RAIS_PLUGINS
     volumes:
       - ./docker/images:/var/local/images:ro
       - ./rais-example.toml:/etc/rais-template.toml:ro

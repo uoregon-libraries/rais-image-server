@@ -11,6 +11,8 @@ import (
 	"rais/src/openjpeg"
 	"rais/src/plugins"
 	"rais/src/version"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -35,12 +37,14 @@ const defaultInfoCacheLen = 10000
 var cacheHits, cacheMisses int64
 
 var defaultLogLevel = logger.Debug.String()
+var defaultPlugins = "s3-images.so,json-tracer.so"
 
 func main() {
 	// Defaults
 	viper.SetDefault("Address", defaultAddress)
 	viper.SetDefault("InfoCacheLen", defaultInfoCacheLen)
 	viper.SetDefault("LogLevel", defaultLogLevel)
+	viper.SetDefault("Plugins", defaultPlugins)
 
 	// Allow all configuration to be in environment variables
 	viper.SetEnvPrefix("RAIS")
@@ -50,7 +54,10 @@ func main() {
 	viper.SetConfigName("rais")
 	viper.AddConfigPath("/etc")
 	viper.AddConfigPath(".")
-	viper.ReadInConfig()
+	if err := viper.ReadInConfig(); err != nil {
+		fmt.Printf("ERROR: Invalid RAIS config file (/etc/rais.toml or ./rais.toml): %s\n", err)
+		os.Exit(1)
+	}
 
 	// CLI flags
 	pflag.String("iiif-url", "", `Base URL for serving IIIF requests, e.g., "http://example.com/images/iiif"`)
@@ -72,6 +79,9 @@ func main() {
 	viper.BindPFlag("ImageMaxWidth", pflag.CommandLine.Lookup("image-max-width"))
 	pflag.Int("image-max-height", math.MaxInt32, "Maximum height of images to be served")
 	viper.BindPFlag("ImageMaxHeight", pflag.CommandLine.Lookup("image-max-height"))
+	pflag.String("plugins", defaultPlugins, "comma-separated plugin pattern list, e.g., "+
+		`"s3-images.so,datadog.so,json-tracer.so,/opt/rais/plugins/*.so"`)
+	viper.BindPFlag("Plugins", pflag.CommandLine.Lookup("plugins"))
 
 	pflag.Parse()
 
@@ -93,7 +103,8 @@ func main() {
 	openjpeg.Logger = Logger
 	magick.Logger = Logger
 
-	LoadPlugins(Logger)
+	var plugPatterns = strings.Split(viper.GetString("Plugins"), ",")
+	LoadPlugins(Logger, plugPatterns)
 
 	// Pull all values we need for all cases
 	tilePath = viper.GetString("TilePath")
@@ -177,7 +188,10 @@ func main() {
 		Addr:         address,
 	}
 
+	var wait sync.WaitGroup
+
 	interrupts.TrapIntTerm(func() {
+		wait.Add(1)
 		Logger.Infof("Stopping RAIS...")
 		srv.Shutdown(nil)
 
@@ -190,6 +204,7 @@ func main() {
 		}
 
 		Logger.Infof("Stopped")
+		wait.Done()
 	})
 
 	if err := srv.ListenAndServe(); err != nil {
@@ -198,6 +213,7 @@ func main() {
 			Logger.Fatalf("Error starting listener: %s", err)
 		}
 	}
+	wait.Wait()
 }
 
 // handle sends the pattern and raw handler to plugins, and sets up routing on

@@ -1,7 +1,7 @@
 # Makefile directory
 MakefileDir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: all generate binaries test format lint clean distclean docker s3-images external-images datadog
+.PHONY: all generate binaries test format lint clean distclean docker plugins
 
 # Default target builds binaries
 all: binaries
@@ -15,8 +15,8 @@ src/transform/rotation.go: src/transform/generator.go src/transform/template.txt
 
 # Binary building rules
 binaries: src/transform/rotation.go
-	go build -o ./bin/rais-server rais/src/cmd/rais-server
-	go build -o ./bin/jp2info rais/src/cmd/jp2info
+	go build -ldflags="-s -w" -o ./bin/rais-server rais/src/cmd/rais-server
+	go build -ldflags="-s -w" -o ./bin/jp2info rais/src/cmd/jp2info
 
 # Testing
 test:
@@ -30,6 +30,7 @@ format:
 
 lint:
 	golint src/...
+	go vet rais/src/...
 
 # Cleanup
 clean:
@@ -38,20 +39,11 @@ clean:
 
 # Generate the docker build container
 docker:
-	docker-compose build rais-build
-	docker build --rm -t uolibraries/rais:latest-indev $(MakefileDir)/docker
+	docker build --rm --target build -f $(MakefileDir)/docker/Dockerfile -t uolibraries/rais:build $(MakefileDir)
+	docker build --rm -f $(MakefileDir)/docker/Dockerfile -t uolibraries/rais:latest-indev $(MakefileDir)
 
-bin/plugins/datadog.so:
-	go build -buildmode=plugin -o bin/plugins/datadog.so rais/src/plugins/datadog
-
-bin/plugins/external-images.so: src/plugins/external-images/*
-	@echo -e "\033[1;31mWarning\033[0m: the external images plugin is not secure!  It should be used as an example only!"
-	go build -buildmode=plugin -o bin/plugins/external-images.so rais/src/plugins/external-images
-
-bin/plugins/s3-images.so: src/plugins/s3-images/*
-	go build -buildmode=plugin -o bin/plugins/s3-images.so rais/src/plugins/s3-images
-
-s3-images: bin/plugins/s3-images.so
-external-images: bin/plugins/external-images.so
-datadog: bin/plugins/datadog.so
-plugins: s3-images external-images datadog
+plugins:
+	go build -ldflags="-s -w" -buildmode=plugin -o bin/plugins/s3-images.so rais/src/plugins/s3-images
+	go build -ldflags="-s -w" -buildmode=plugin -o bin/plugins/external-images.so rais/src/plugins/external-images
+	go build -ldflags="-s -w" -buildmode=plugin -o bin/plugins/datadog.so rais/src/plugins/datadog
+	go build -ldflags="-s -w" -buildmode=plugin -o bin/plugins/json-tracer.so rais/src/plugins/json-tracer

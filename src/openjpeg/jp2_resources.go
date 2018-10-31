@@ -45,9 +45,6 @@ func (i *JP2Image) rawDecode() (jp2 *C.opj_image_t, err error) {
 		return jp2, fmt.Errorf("failed to read the header")
 	}
 
-	Logger.Debugf("num comps: %d", jp2.numcomps)
-	Logger.Debugf("x0: %d, x1: %d, y0: %d, y1: %d", jp2.x0, jp2.x1, jp2.y0, jp2.y1)
-
 	// Set the decode area if it isn't the full image
 	if i.decodeArea != i.srcRect {
 		r := i.decodeArea

@@ -21,8 +21,6 @@ services:
   rais:
     environment:
       - RAIS_DATADOGADDRESS=dd-agent:8126
-    volumes:
-      - ./bin/plugins/datadog.so:/opt/rais/plugins/datadog.so:ro
     depends_on:
       - dd-agent
 

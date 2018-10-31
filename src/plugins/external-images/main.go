@@ -8,6 +8,12 @@
 // it has never been downloaded, convert it to a tiled, multi-resolution JP2,
 // and return the path to said JP2.
 //
+// Note that for this example to work as-is, you must have the openjpeg
+// compress tool in `/usr/bin/opj2_compress`.  This is not meant to be a
+// real-world plugin with complex, configurable settings, so if you want to
+// test it out, either run RAIS on a server where you can put the openjpeg
+// binary there, or else run it using the RAIS dockerized "build box".
+//
 // This technique is extremely slow and error-prone, not to mention could
 // easily burn an absurd amount of disk space.  But with some tweaks, a proper
 // cache expiration setup, and some hostname limits, could allow for an image

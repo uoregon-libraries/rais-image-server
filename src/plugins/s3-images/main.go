@@ -1,9 +1,11 @@
-// This file is an example of an S3-pulling plugin.  This is meant to be a more
-// real-world plugin that could actually be used in a production environment
-// (compared to the more general but dangerous "external-images" plugin).  This
-// requires you to put your access keys in $HOME/.aws/credentials (or
-// docker/s3credentials if you're using the docker-compose setup).  See
-// docker/s3credentials.example for an example credentials file.
+// This file is an example of an S3-pulling plugin.  This is a real-world
+// plugin that can actually be used in a production environment (compared to
+// the more general but dangerous "external-images" plugin).  This requires you
+// to put your AWS access key information into the environment per AWS's
+// standard credential management: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.
+// You may also put access keys in $HOME/.aws/credentials (or
+// docker/s3credentials if you're using the docker-compose example override
+// setup).  See docker/s3credentials.example for an example credentials file.
 //
 // When a resource is requested, if its IIIF id begins with "s3:", we treat the
 // rest of the id as an s3 id to be pulled from the configured zone and bucket.
@@ -15,24 +17,28 @@
 // return is the cached path so that RAIS can use the cached file immediately
 // after download.  The JP2 cache is configurable via `S3Cache` in the RAIS
 // toml file or by setting `RAIS_S3CACHE` in the environment, and defaults to
-// `/var/cache/rais-s3`.  Expiration of cached files must be managed externally
-// (to avoid over-complicating this plugin).  A simple approach could be a cron
-// job that wipes out all cached data if it hasn't been accessed in the past 24
-// hours:
+// `/var/cache/rais-s3`.
+//
+// Expiration of cached files must be managed externally (to avoid
+// over-complicating this plugin).  A simple approach could be a cron job that
+// wipes out all cached data if it hasn't been accessed in the past 24 hours:
 //
 //     find /var/cache/rais-s3 -type f -atime +1 -exec rm {} \;
 //
-// Depending how fast the cache grows, this may or may not be sufficient.  A
-// smarter plugin would auto-remove files as needed to keep the cache to a set
-// limit, but we don't currently need such careful control.
+// Depending how fast the cache grows, how much disk space you have available,
+// and how much variety you have in S3, you may want to monitor the cache
+// closely and tweak this cron job example as needed, or come up with something
+// more sophisticated.
 
 package main
 
 import (
 	"errors"
+	"hash/fnv"
 	"path/filepath"
 	"rais/src/iiif"
 	"rais/src/plugins"
+	"strconv"
 	"sync"
 	"time"
 
@@ -46,9 +52,15 @@ var m sync.RWMutex
 
 var l *logger.Logger
 
-var enabled bool
 var s3cache, s3zone, s3bucket string
+var cacheLifetime time.Duration
 
+// Disabled lets the plugin manager know not to add this plugin's functions to
+// the global list unless sanity checks in Initialize() pass
+var Disabled = true
+
+// Initialize sets up package variables for the s3 pulls and verifies sanity of
+// some of the configuration
 func Initialize() {
 	viper.SetDefault("S3Cache", "/var/local/rais-s3")
 	s3cache = viper.GetString("S3Cache")
@@ -65,10 +77,24 @@ func Initialize() {
 		return
 	}
 
+	// This is an undocumented feature: it's a bit experimental, and really not
+	// something that should be relied upon until it gets some testing.
+	viper.SetDefault("S3CacheLifetime", "0")
+	var lifetimeString = viper.GetString("S3CacheLifetime")
+	var err error
+	cacheLifetime, err = time.ParseDuration(lifetimeString)
+	if err != nil {
+		l.Fatalf("S3 plugin failure: malformed S3CacheLifetime (%q): %s", lifetimeString, err)
+	}
+
 	l.Debugf("Setting S3 cache location to %q", s3cache)
 	l.Debugf("Setting S3 zone to %q", s3zone)
 	l.Debugf("Setting S3 bucket to %q", s3bucket)
-	enabled = true
+	if cacheLifetime > time.Duration(0) {
+		l.Debugf("Setting S3 cache expiration to %s", cacheLifetime)
+		go purgeLoop()
+	}
+	Disabled = false
 
 	if fileutil.IsDir(s3cache) {
 		return
@@ -84,21 +110,29 @@ func SetLogger(raisLogger *logger.Logger) {
 	l = raisLogger
 }
 
+func buckets(s3ID string) (string, string) {
+	var h = fnv.New32()
+	h.Write([]byte(s3ID))
+	var val = int(h.Sum32() / 10000)
+	return strconv.Itoa(val % 100), strconv.Itoa((val / 100) % 100)
+}
+
 // IDToPath implements the auto-download logic when a IIIF ID
 // starts with "s3:"
 func IDToPath(id iiif.ID) (path string, err error) {
-	if !enabled {
+	var ids = string(id)
+	if len(ids) < 4 {
 		return "", plugins.ErrSkipped
 	}
 
-	var ids = string(id)
 	if ids[:3] != "s3:" {
 		return "", plugins.ErrSkipped
 	}
 
 	// Check cache - don't re-download
 	var s3ID = ids[3:]
-	path = filepath.Join(s3cache, s3ID)
+	var bucket1, bucket2 = buckets(s3ID)
+	path = filepath.Join(s3cache, bucket1, bucket2, s3ID)
 
 	// See if this file is currently being downloaded; if so we need to wait
 	var timeout = time.Now().Add(time.Second * 10)
@@ -109,11 +143,15 @@ func IDToPath(id iiif.ID) (path string, err error) {
 		}
 	}
 
-	l.Debugf("s3-images plugin: Checking for cached file at %q", path)
 	if fileutil.MustNotExist(path) {
+		l.Debugf("s3-images plugin: no cached file at %q; downloading from S3", path)
 		err = pullImage(s3ID, path)
-	} else {
-		l.Debugf("s3-images plugin: cached file found")
+	}
+
+	// We reset purge time whether we downloaded it just now or not - this
+	// ensures files aren't getting purged while in use
+	if err == nil {
+		setPurgeTime(path)
 	}
 
 	return path, err
