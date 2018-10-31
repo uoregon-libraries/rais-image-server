@@ -23,9 +23,16 @@ RUN dnf install -y gcc
 RUN dnf install -y make
 RUN dnf install -y tar
 
+# Installing GraphicsMagick is wholly unnecessary, but helps when using the
+# build box for things like converting images.  Since opj2_encode doesn't
+# support all formats, and ImageMagick has been iffy with some conversions for
+# us, "gm convert" is a handy fallback.  As this is a multi-stage dockerfile,
+# this installation doesn't hurt the final production docker image.
+RUN dnf install -y GraphicsMagick
+
 # Go comes after other installs to avoid re-pulling the more expensive
 # dependencies when changing Go versions
-RUN curl -L https://dl.google.com/go/go1.11.linux-amd64.tar.gz > /tmp/go.tgz
+RUN curl -L https://dl.google.com/go/go1.11.1.linux-amd64.tar.gz > /tmp/go.tgz
 RUN cd /opt && tar -xzf /tmp/go.tgz
 
 # "Install" Go
@@ -37,23 +44,18 @@ ENV PATH /opt/go/bin:/usr/local/go/bin:$PATH
 # Make sure the build box can lint code
 RUN go get -u golang.org/x/lint/golint
 
-# Clone the RAIS repo
-ARG gittag=master
-RUN git clone https://github.com/uoregon-libraries/rais-image-server.git /opt/rais-src
+# Add the go mod stuff first so we aren't re-downloading dependencies except
+# when they actually change
 WORKDIR /opt/rais-src
+ADD ./go.mod /opt/rais-src/go.mod
+ADD ./go.sum /opt/rais-src/go.sum
+RUN go mod download
 
-# Pull the latest RAIS master - that's always the stable release - unless an ENV var says otherwise
-RUN git checkout $gittag
-RUN make
-
-# Allow building older versions of RAIS by not failing if plugins don't exist
-RUN make plugins || true
-
-# Installing GraphicsMagick is wholly unnecessary, but helps when using the
-# build box for things like converting images.  Since opj2_encode doesn't
-# support all formats, "gm convert" is very handy.  As this is a multi-stage
-# dockerfile, this installation doesn't hurt the final production docker image.
-RUN dnf install -y GraphicsMagick
+# Make sure we don't just add every little thing, otherwise unimportant changes
+# trigger a rebuild
+ADD ./Makefile /opt/rais-src/Makefile
+ADD ./src /opt/rais-src/src
+RUN make binaries plugins
 
 # Production image just installs runtime deps and copies in the binaries
 FROM fedora:28 AS production

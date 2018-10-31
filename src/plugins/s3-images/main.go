@@ -34,9 +34,11 @@ package main
 
 import (
 	"errors"
+	"hash/fnv"
 	"path/filepath"
 	"rais/src/iiif"
 	"rais/src/plugins"
+	"strconv"
 	"sync"
 	"time"
 
@@ -51,6 +53,7 @@ var m sync.RWMutex
 var l *logger.Logger
 
 var s3cache, s3zone, s3bucket string
+var cacheLifetime time.Duration
 
 // Disabled lets the plugin manager know not to add this plugin's functions to
 // the global list unless sanity checks in Initialize() pass
@@ -74,9 +77,23 @@ func Initialize() {
 		return
 	}
 
+	// This is an undocumented feature: it's a bit experimental, and really not
+	// something that should be relied upon until it gets some testing.
+	viper.SetDefault("S3CacheLifetime", "0")
+	var lifetimeString = viper.GetString("S3CacheLifetime")
+	var err error
+	cacheLifetime, err = time.ParseDuration(lifetimeString)
+	if err != nil {
+		l.Fatalf("S3 plugin failure: malformed S3CacheLifetime (%q): %s", lifetimeString, err)
+	}
+
 	l.Debugf("Setting S3 cache location to %q", s3cache)
 	l.Debugf("Setting S3 zone to %q", s3zone)
 	l.Debugf("Setting S3 bucket to %q", s3bucket)
+	if cacheLifetime > time.Duration(0) {
+		l.Debugf("Setting S3 cache expiration to %s", cacheLifetime)
+		go purgeLoop()
+	}
 	Disabled = false
 
 	if fileutil.IsDir(s3cache) {
@@ -93,17 +110,29 @@ func SetLogger(raisLogger *logger.Logger) {
 	l = raisLogger
 }
 
+func buckets(s3ID string) (string, string) {
+	var h = fnv.New32()
+	h.Write([]byte(s3ID))
+	var val = int(h.Sum32() / 10000)
+	return strconv.Itoa(val % 100), strconv.Itoa((val / 100) % 100)
+}
+
 // IDToPath implements the auto-download logic when a IIIF ID
 // starts with "s3:"
 func IDToPath(id iiif.ID) (path string, err error) {
 	var ids = string(id)
+	if len(ids) < 4 {
+		return "", plugins.ErrSkipped
+	}
+
 	if ids[:3] != "s3:" {
 		return "", plugins.ErrSkipped
 	}
 
 	// Check cache - don't re-download
 	var s3ID = ids[3:]
-	path = filepath.Join(s3cache, s3ID)
+	var bucket1, bucket2 = buckets(s3ID)
+	path = filepath.Join(s3cache, bucket1, bucket2, s3ID)
 
 	// See if this file is currently being downloaded; if so we need to wait
 	var timeout = time.Now().Add(time.Second * 10)
@@ -114,11 +143,15 @@ func IDToPath(id iiif.ID) (path string, err error) {
 		}
 	}
 
-	l.Debugf("s3-images plugin: Checking for cached file at %q", path)
 	if fileutil.MustNotExist(path) {
+		l.Debugf("s3-images plugin: no cached file at %q; downloading from S3", path)
 		err = pullImage(s3ID, path)
-	} else {
-		l.Debugf("s3-images plugin: cached file found")
+	}
+
+	// We reset purge time whether we downloaded it just now or not - this
+	// ensures files aren't getting purged while in use
+	if err == nil {
+		setPurgeTime(path)
 	}
 
 	return path, err

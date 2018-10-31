@@ -1,0 +1,21 @@
+# This file is used to run builds on systems where installing the RAIS
+# dependencies is too cumbersome or simply undesirable.  This is most easily
+# used via the `scripts/buildrun.sh` command.
+version: "3.4"
+
+volumes:
+  gopkg: {}
+  gocache: {}
+
+services:
+  rais-build:
+    build: 
+      context: .
+      dockerfile: ./docker/Dockerfile
+      target: build
+    volumes:
+      - ./:/opt/rais-src:rw
+      - ./docker/images:/var/local/images:ro
+      - gocache:/root/.cache/go-build
+      - gopkg:/usr/local/go/pkg
+    command: make

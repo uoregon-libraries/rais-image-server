@@ -54,7 +54,10 @@ func main() {
 	viper.SetConfigName("rais")
 	viper.AddConfigPath("/etc")
 	viper.AddConfigPath(".")
-	viper.ReadInConfig()
+	if err := viper.ReadInConfig(); err != nil {
+		fmt.Printf("ERROR: Invalid RAIS config file (/etc/rais.toml or ./rais.toml): %s\n", err)
+		os.Exit(1)
+	}
 
 	// CLI flags
 	pflag.String("iiif-url", "", `Base URL for serving IIIF requests, e.g., "http://example.com/images/iiif"`)

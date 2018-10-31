@@ -34,9 +34,8 @@ your glorious images, lovingly served up by RAIS.
 This is a pretty weak demo, so be advised it's really just for testing, not
 production use.  Some caveats:
 
-- In-memory caching is disabled in order to get realistic first-hit costs
 - The images pulled from S3 live in ephemeral storage and will be deleted after
-  you delete the RAIS container, again, to make it simple to get at realistic
+  you delete the RAIS container.  This makes it simple to get at realistic
   first-hit costs
 - If you have non-images in your S3 bucket, behavior is undefined
 - If you're running anything else on your server at port 80, this demo won't
@@ -46,6 +45,9 @@ production use.  Some caveats:
 Development
 ---
 
-Don't hack up the demo unless you want pain.  It's a mess just to get a demo
-working.  If you are a masochist, however, make sure you re-run "docker-compose
-build" anytime you change the codebase or the go templates.
+Don't hack up the demo unless you want pain.  The demo server is a mess, and
+the setup is a little hacky.  It's here to provide a quick demo, not showcase
+elegant solutions to a problem.
+
+If you are a masochist, however, make sure you re-run "docker-compose build"
+anytime you change the codebase or the go templates.
