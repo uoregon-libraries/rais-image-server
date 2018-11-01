@@ -64,23 +64,14 @@ func main() {
 	stats.ServerStart = time.Now()
 	stats.RAISVersion = version.Version
 
-	var pubMux = http.NewServeMux()
-	handle(pubMux, ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
-	handle(pubMux, "/images/dzi/", http.HandlerFunc(ih.DZIRoute))
-
-	var srv = &http.Server{
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		Addr:         address,
-		Handler:      pubMux,
-	}
-
+	// Set up handlers / listeners
+	var pubSrv = publicServer(address, ih)
 	var wait sync.WaitGroup
 
 	interrupts.TrapIntTerm(func() {
 		wait.Add(1)
 		Logger.Infof("Stopping RAIS...")
-		srv.Shutdown(nil)
+		pubSrv.Shutdown(nil)
 
 		if len(teardownPlugins) > 0 {
 			Logger.Infof("Tearing down plugins")
@@ -95,8 +86,21 @@ func main() {
 	})
 
 	Logger.Infof("RAIS v%s starting...", version.Version)
-	serveAsync(&wait, srv)
+	serveAsync(&wait, pubSrv)
 	wait.Wait()
+}
+
+func publicServer(addr string, ih *ImageHandler) *http.Server {
+	var sm = http.NewServeMux()
+	handle(sm, ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
+	handle(sm, "/images/dzi/", http.HandlerFunc(ih.DZIRoute))
+
+	return &http.Server{
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		Addr:         addr,
+		Handler:      sm,
+	}
 }
 
 func serveAsync(wait *sync.WaitGroup, srv *http.Server) {
