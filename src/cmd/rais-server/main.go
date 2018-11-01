@@ -62,7 +62,6 @@ func main() {
 
 	handle(ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
 	handle("/images/dzi/", http.HandlerFunc(ih.DZIRoute))
-	handle("/version", http.HandlerFunc(VersionHandler))
 
 	Logger.Infof("RAIS v%s starting...", version.Version)
 	var srv = &http.Server{
@@ -133,9 +132,4 @@ func handle(pattern string, handler http.Handler) {
 		}
 	}
 	http.Handle(pattern, handler)
-}
-
-// VersionHandler spits out the raw version string to the browser
-func VersionHandler(w http.ResponseWriter, req *http.Request) {
-	w.Write([]byte(version.Version))
 }
