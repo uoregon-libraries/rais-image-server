@@ -64,14 +64,15 @@ func main() {
 	stats.ServerStart = time.Now()
 	stats.RAISVersion = version.Version
 
-	handle(ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
-	handle("/images/dzi/", http.HandlerFunc(ih.DZIRoute))
+	var pubMux = http.NewServeMux()
+	handle(pubMux, ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
+	handle(pubMux, "/images/dzi/", http.HandlerFunc(ih.DZIRoute))
 
-	Logger.Infof("RAIS v%s starting...", version.Version)
 	var srv = &http.Server{
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		Addr:         address,
+		Handler:      pubMux,
 	}
 
 	var wait sync.WaitGroup
@@ -93,6 +94,7 @@ func main() {
 		wait.Done()
 	})
 
+	Logger.Infof("RAIS v%s starting...", version.Version)
 	if err := srv.ListenAndServe(); err != nil {
 		// Don't report a fatal error when we close the server
 		if err != http.ErrServerClosed {
@@ -128,7 +130,7 @@ func setupCaches() {
 // whatever is returned (if anything).  All plugins which wrap handlers are
 // allowed to run, but the behavior could definitely get weird depending on
 // what a given plugin does.  Ye be warned.
-func handle(pattern string, handler http.Handler) {
+func handle(mux *http.ServeMux, pattern string, handler http.Handler) {
 	for _, plug := range wrapHandlerPlugins {
 		var h2, err = plug(pattern, handler)
 		if err == nil {
@@ -137,5 +139,5 @@ func handle(pattern string, handler http.Handler) {
 			logger.Fatalf("Error trying to wrap handler %q: %s", pattern, err)
 		}
 	}
-	http.Handle(pattern, handler)
+	mux.Handle(pattern, handler)
 }
