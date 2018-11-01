@@ -25,8 +25,8 @@ var tileCache *lru.TwoQueueCache
 // Logger is the server's central logger.Logger instance
 var Logger *logger.Logger
 
-// cacheHits and cacheMisses allow some rudimentary tracking of cache value
-var cacheHits, cacheMisses int64
+// Global server stats for admin information gathering
+var stats = new(serverStats)
 
 func main() {
 	parseConf()
@@ -59,6 +59,10 @@ func main() {
 		}
 		Logger.Debugf("Setting IIIF capabilities from file '%s'", capfile)
 	}
+
+	// Setup server info in our stats structure
+	stats.ServerStart = time.Now()
+	stats.RAISVersion = version.Version
 
 	handle(ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
 	handle("/images/dzi/", http.HandlerFunc(ih.DZIRoute))
@@ -106,6 +110,7 @@ func setupCaches() {
 		if err != nil {
 			Logger.Fatalf("Unable to start info cache: %s", err)
 		}
+		stats.InfoCache.Enabled = true
 	}
 
 	tcl := viper.GetInt("TileCacheLen")
@@ -115,6 +120,7 @@ func setupCaches() {
 		if err != nil {
 			Logger.Fatalf("Unable to start info cache: %s", err)
 		}
+		stats.TileCache.Enabled = true
 	}
 }
 
