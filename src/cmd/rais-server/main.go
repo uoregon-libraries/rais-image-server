@@ -1,10 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"rais/src/iiif"
 	"rais/src/magick"
 	"rais/src/openjpeg"
@@ -16,7 +14,6 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/hashicorp/golang-lru"
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/uoregon-libraries/gopkg/interrupts"
 	"github.com/uoregon-libraries/gopkg/logger"
@@ -41,28 +38,13 @@ var defaultPlugins = "s3-images.so,json-tracer.so"
 func main() {
 	parseConf()
 
-	// Make sure required values exist
-	if !viper.IsSet("TilePath") {
-		fmt.Println("ERROR: --tile-path is required")
-		pflag.Usage()
-		os.Exit(1)
-	}
-
-	// Make sure we have a valid log level
-	var level = logger.LogLevelFromString(viper.GetString("LogLevel"))
-	if level == logger.Invalid {
-		fmt.Println("ERROR: --log-level must be DEBUG, INFO, WARN, ERROR, or CRIT")
-		pflag.Usage()
-		os.Exit(1)
-	}
-	Logger = logger.New(level)
+	Logger = logger.New(logger.LogLevelFromString(viper.GetString("LogLevel")))
 	openjpeg.Logger = Logger
 	magick.Logger = Logger
 
 	var plugPatterns = strings.Split(viper.GetString("Plugins"), ",")
 	LoadPlugins(Logger, plugPatterns)
 
-	// Pull all values we need for all cases
 	tilePath = viper.GetString("TilePath")
 	address := viper.GetString("Address")
 
@@ -71,28 +53,7 @@ func main() {
 	ih.Maximums.Width = viper.GetInt("ImageMaxWidth")
 	ih.Maximums.Height = viper.GetInt("ImageMaxHeight")
 
-	// Handle IIIF data only if we have a IIIF URL
-	iiifURL := viper.GetString("IIIFURL")
-	if iiifURL == "" {
-		fmt.Println("ERROR: --iiif-url must be set to the server's public URL")
-		pflag.Usage()
-		os.Exit(1)
-	}
-
-	Logger.Debugf("Attempting to start up IIIF at %s", viper.GetString("IIIFURL"))
-	iiifBase, err := url.Parse(iiifURL)
-	if err == nil && iiifBase.Scheme == "" {
-		err = fmt.Errorf("empty scheme")
-	}
-	if err == nil && iiifBase.Host == "" {
-		err = fmt.Errorf("empty host")
-	}
-	if err == nil && iiifBase.Path == "" {
-		err = fmt.Errorf("empty path")
-	}
-	if err != nil {
-		Logger.Fatalf("Invalid IIIF URL (%s) specified: %s", iiifURL, err)
-	}
+	iiifBase, _ := url.Parse(viper.GetString("IIIFURL"))
 
 	icl := viper.GetInt("InfoCacheLen")
 	if icl > 0 {

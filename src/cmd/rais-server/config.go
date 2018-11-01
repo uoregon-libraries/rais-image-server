@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"math"
+	"net/url"
 	"os"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"github.com/uoregon-libraries/gopkg/logger"
 )
 
 // parseConf centralizes all config reading and validating for the core RAIS options
@@ -55,4 +57,38 @@ func parseConf() {
 	viper.BindPFlag("Plugins", pflag.CommandLine.Lookup("plugins"))
 
 	pflag.Parse()
+
+	// Make sure required values exist
+	if !viper.IsSet("TilePath") {
+		fmt.Println("ERROR: --tile-path is required")
+		pflag.Usage()
+		os.Exit(1)
+	}
+
+	var level = logger.LogLevelFromString(viper.GetString("LogLevel"))
+	if level == logger.Invalid {
+		fmt.Println("ERROR: --log-level must be DEBUG, INFO, WARN, ERROR, or CRIT")
+		pflag.Usage()
+		os.Exit(1)
+	}
+
+	var iiifURL = viper.GetString("IIIFURL")
+	if iiifURL == "" {
+		fmt.Println("ERROR: --iiif-url must be set to the server's public URL")
+		pflag.Usage()
+		os.Exit(1)
+	}
+	var u, err = url.Parse(iiifURL)
+	if err == nil && u.Scheme == "" {
+		err = fmt.Errorf("empty scheme")
+	}
+	if err == nil && u.Host == "" {
+		err = fmt.Errorf("empty host")
+	}
+	if err == nil && u.Path == "" {
+		err = fmt.Errorf("empty path")
+	}
+	if err != nil {
+		fmt.Println("ERROR: invalid IIIF URL (%s) specified: %s", iiifURL, err)
+	}
 }
