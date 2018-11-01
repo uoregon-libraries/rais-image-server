@@ -19,7 +19,6 @@ import (
 	"github.com/uoregon-libraries/gopkg/logger"
 )
 
-var tilePath string
 var infoCache *lru.Cache
 var tileCache *lru.TwoQueueCache
 
@@ -44,7 +43,7 @@ func main() {
 	setupCaches()
 	LoadPlugins(Logger, strings.Split(viper.GetString("Plugins"), ","))
 
-	tilePath = viper.GetString("TilePath")
+	tilePath := viper.GetString("TilePath")
 	address := viper.GetString("Address")
 
 	ih := NewImageHandler(tilePath)
