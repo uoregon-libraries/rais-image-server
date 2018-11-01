@@ -25,14 +25,8 @@ var tileCache *lru.TwoQueueCache
 // Logger is the server's central logger.Logger instance
 var Logger *logger.Logger
 
-const defaultAddress = ":12415"
-const defaultInfoCacheLen = 10000
-
 // cacheHits and cacheMisses allow some rudimentary tracking of cache value
 var cacheHits, cacheMisses int64
-
-var defaultLogLevel = logger.Debug.String()
-var defaultPlugins = "s3-images.so,json-tracer.so"
 
 func main() {
 	parseConf()

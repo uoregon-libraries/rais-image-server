@@ -13,6 +13,12 @@ import (
 
 // parseConf centralizes all config reading and validating for the core RAIS options
 func parseConf() {
+	// Default configuration values
+	var defaultAddress = ":12415"
+	var defaultInfoCacheLen = 10000
+	var defaultLogLevel = logger.Debug.String()
+	var defaultPlugins = "s3-images.so,json-tracer.so"
+
 	// Defaults
 	viper.SetDefault("Address", defaultAddress)
 	viper.SetDefault("InfoCacheLen", defaultInfoCacheLen)
