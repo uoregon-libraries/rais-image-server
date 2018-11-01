@@ -37,13 +37,12 @@ var defaultPlugins = "s3-images.so,json-tracer.so"
 
 func main() {
 	parseConf()
-
 	Logger = logger.New(logger.LogLevelFromString(viper.GetString("LogLevel")))
 	openjpeg.Logger = Logger
 	magick.Logger = Logger
 
-	var plugPatterns = strings.Split(viper.GetString("Plugins"), ",")
-	LoadPlugins(Logger, plugPatterns)
+	setupCaches()
+	LoadPlugins(Logger, strings.Split(viper.GetString("Plugins"), ","))
 
 	tilePath = viper.GetString("TilePath")
 	address := viper.GetString("Address")
@@ -54,23 +53,6 @@ func main() {
 	ih.Maximums.Height = viper.GetInt("ImageMaxHeight")
 
 	iiifBase, _ := url.Parse(viper.GetString("IIIFURL"))
-
-	icl := viper.GetInt("InfoCacheLen")
-	if icl > 0 {
-		infoCache, err = lru.New(icl)
-		if err != nil {
-			Logger.Fatalf("Unable to start info cache: %s", err)
-		}
-	}
-
-	tcl := viper.GetInt("TileCacheLen")
-	if tcl > 0 {
-		Logger.Debugf("Creating a tile cache to hold up to %d tiles", tcl)
-		tileCache, err = lru.New2Q(tcl)
-		if err != nil {
-			Logger.Fatalf("Unable to start info cache: %s", err)
-		}
-	}
 
 	Logger.Infof("IIIF enabled at %s", iiifBase.String())
 	ih.EnableIIIF(iiifBase)
@@ -122,6 +104,26 @@ func main() {
 		}
 	}
 	wait.Wait()
+}
+
+func setupCaches() {
+	var err error
+	icl := viper.GetInt("InfoCacheLen")
+	if icl > 0 {
+		infoCache, err = lru.New(icl)
+		if err != nil {
+			Logger.Fatalf("Unable to start info cache: %s", err)
+		}
+	}
+
+	tcl := viper.GetInt("TileCacheLen")
+	if tcl > 0 {
+		Logger.Debugf("Creating a tile cache to hold up to %d tiles", tcl)
+		tileCache, err = lru.New2Q(tcl)
+		if err != nil {
+			Logger.Fatalf("Unable to start info cache: %s", err)
+		}
+	}
 }
 
 // handle sends the pattern and raw handler to plugins, and sets up routing on
