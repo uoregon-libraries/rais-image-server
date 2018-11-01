@@ -95,13 +95,21 @@ func main() {
 	})
 
 	Logger.Infof("RAIS v%s starting...", version.Version)
-	if err := srv.ListenAndServe(); err != nil {
-		// Don't report a fatal error when we close the server
-		if err != http.ErrServerClosed {
-			Logger.Fatalf("Error starting listener: %s", err)
-		}
-	}
+	serveAsync(&wait, srv)
 	wait.Wait()
+}
+
+func serveAsync(wait *sync.WaitGroup, srv *http.Server) {
+	wait.Add(1)
+	go func() {
+		if err := srv.ListenAndServe(); err != nil {
+			// Don't report a fatal error when we close the server
+			if err != http.ErrServerClosed {
+				Logger.Fatalf("Error starting listener: %s", err)
+			}
+		}
+	wait.Done()
+	}()
 }
 
 func setupCaches() {
