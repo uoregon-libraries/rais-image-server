@@ -172,14 +172,6 @@ func main() {
 	handle("/images/dzi/", http.HandlerFunc(ih.DZIRoute))
 	handle("/version", http.HandlerFunc(VersionHandler))
 
-	if tileCache != nil {
-		go func() {
-			for {
-				time.Sleep(time.Minute * 10)
-				Logger.Infof("Cache hits: %d; cache misses: %d", cacheHits, cacheMisses)
-			}
-		}()
-	}
 
 	Logger.Infof("RAIS v%s starting...", version.Version)
 	var srv = &http.Server{
