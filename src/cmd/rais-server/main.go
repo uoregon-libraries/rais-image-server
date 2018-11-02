@@ -29,6 +29,9 @@ var Logger *logger.Logger
 // Global server stats for admin information gathering
 var stats = new(serverStats)
 
+// wait ensures main() doesn't exit until the server(s) are all shutdown
+var wait sync.WaitGroup
+
 func main() {
 	parseConf()
 	Logger = logger.New(logger.LogLevelFromString(viper.GetString("LogLevel")))
@@ -73,27 +76,12 @@ func main() {
 	var admSrv = servers.New("RAIS Admin", adminAddress)
 	admSrv.Handle("/admin/stats.json", stats)
 
-	var wait sync.WaitGroup
-	interrupts.TrapIntTerm(func() {
-		wait.Add(1)
-		Logger.Infof("Stopping RAIS...")
-		servers.Shutdown(nil)
-
-		if len(teardownPlugins) > 0 {
-			Logger.Infof("Tearing down plugins")
-			for _, plug := range teardownPlugins {
-				plug()
-			}
-			Logger.Infof("Plugin teardown complete")
-		}
-
-		Logger.Infof("RAIS Stopped")
-		wait.Done()
-	})
+	interrupts.TrapIntTerm(shutdown)
 
 	Logger.Infof("RAIS v%s starting...", version.Version)
 	servers.ListenAndServe(func(srv *servers.Server, err error) {
 		Logger.Errorf("Error running %q server: %s", srv.Name, err)
+		shutdown()
 	})
 	wait.Wait()
 }
@@ -134,4 +122,21 @@ func handle(srv *servers.Server, pattern string, handler http.Handler) {
 		}
 	}
 	srv.Handle(pattern, handler)
+}
+
+func shutdown() {
+	wait.Add(1)
+	Logger.Infof("Stopping RAIS...")
+	servers.Shutdown(nil)
+
+	if len(teardownPlugins) > 0 {
+		Logger.Infof("Tearing down plugins")
+		for _, plug := range teardownPlugins {
+			plug()
+		}
+		Logger.Infof("Plugin teardown complete")
+	}
+
+	Logger.Infof("RAIS Stopped")
+	wait.Done()
 }
