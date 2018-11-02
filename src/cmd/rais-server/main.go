@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"net/url"
+	"rais/src/cmd/rais-server/internal/servers"
 	"rais/src/iiif"
 	"rais/src/magick"
 	"rais/src/openjpeg"
@@ -65,13 +66,15 @@ func main() {
 	stats.RAISVersion = version.Version
 
 	// Set up handlers / listeners
-	var pubSrv = publicServer(address, ih)
-	var wait sync.WaitGroup
+	var pubSrv = servers.New("RAIS", address)
+	handle(pubSrv, ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
+	handle(pubSrv, "/images/dzi/", http.HandlerFunc(ih.DZIRoute))
 
+	var wait sync.WaitGroup
 	interrupts.TrapIntTerm(func() {
 		wait.Add(1)
 		Logger.Infof("Stopping RAIS...")
-		pubSrv.Shutdown(nil)
+		servers.Shutdown(nil)
 
 		if len(teardownPlugins) > 0 {
 			Logger.Infof("Tearing down plugins")
@@ -86,34 +89,10 @@ func main() {
 	})
 
 	Logger.Infof("RAIS v%s starting...", version.Version)
-	serveAsync(&wait, pubSrv)
+	servers.ListenAndServe(func(srv *servers.Server, err error) {
+		Logger.Errorf("Error running %q server: %s", srv.Name, err)
+	})
 	wait.Wait()
-}
-
-func publicServer(addr string, ih *ImageHandler) *http.Server {
-	var sm = http.NewServeMux()
-	handle(sm, ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
-	handle(sm, "/images/dzi/", http.HandlerFunc(ih.DZIRoute))
-
-	return &http.Server{
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		Addr:         addr,
-		Handler:      sm,
-	}
-}
-
-func serveAsync(wait *sync.WaitGroup, srv *http.Server) {
-	wait.Add(1)
-	go func() {
-		if err := srv.ListenAndServe(); err != nil {
-			// Don't report a fatal error when we close the server
-			if err != http.ErrServerClosed {
-				Logger.Fatalf("Error starting listener: %s", err)
-			}
-		}
-	wait.Done()
-	}()
 }
 
 func setupCaches() {
@@ -142,7 +121,7 @@ func setupCaches() {
 // whatever is returned (if anything).  All plugins which wrap handlers are
 // allowed to run, but the behavior could definitely get weird depending on
 // what a given plugin does.  Ye be warned.
-func handle(mux *http.ServeMux, pattern string, handler http.Handler) {
+func handle(srv *servers.Server, pattern string, handler http.Handler) {
 	for _, plug := range wrapHandlerPlugins {
 		var h2, err = plug(pattern, handler)
 		if err == nil {
@@ -151,5 +130,5 @@ func handle(mux *http.ServeMux, pattern string, handler http.Handler) {
 			logger.Fatalf("Error trying to wrap handler %q: %s", pattern, err)
 		}
 	}
-	mux.Handle(pattern, handler)
+	srv.Handle(pattern, handler)
 }
