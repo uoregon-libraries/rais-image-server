@@ -33,11 +33,11 @@ type serverStats struct {
 	Plugins     []plugStats
 	RAISVersion string
 	ServerStart time.Time
-	Uptime      time.Duration
+	Uptime      string
 }
 
 func (s *serverStats) setUptime() {
-	s.Uptime = time.Now().Sub(s.ServerStart)
+	s.Uptime = time.Since(s.ServerStart).Round(time.Second).String()
 }
 
 // Serialize writes the stats data to w in JSON format
