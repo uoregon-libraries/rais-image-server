@@ -85,7 +85,7 @@ func main() {
 			Logger.Infof("Plugin teardown complete")
 		}
 
-		Logger.Infof("Stopped")
+		Logger.Infof("RAIS Stopped")
 		wait.Done()
 	})
 
