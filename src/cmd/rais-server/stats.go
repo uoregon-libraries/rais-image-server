@@ -20,6 +20,10 @@ type cacheStats struct {
 }
 
 func (cs *cacheStats) setHitPercent() {
+	if cs.GetCount == 0 {
+		cs.HitPercent = 0
+		return
+	}
 	cs.HitPercent = float64(cs.GetHits) / float64(cs.GetCount)
 }
 
