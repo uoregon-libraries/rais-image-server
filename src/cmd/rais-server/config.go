@@ -66,21 +66,21 @@ func parseConf() {
 
 	// Make sure required values exist
 	if !viper.IsSet("TilePath") {
-		fmt.Println("ERROR: --tile-path is required")
+		fmt.Println("ERROR: tile path is required")
 		pflag.Usage()
 		os.Exit(1)
 	}
 
 	var level = logger.LogLevelFromString(viper.GetString("LogLevel"))
 	if level == logger.Invalid {
-		fmt.Println("ERROR: --log-level must be DEBUG, INFO, WARN, ERROR, or CRIT")
+		fmt.Println("ERROR: Invalid log level (must be DEBUG, INFO, WARN, ERROR, or CRIT)")
 		pflag.Usage()
 		os.Exit(1)
 	}
 
 	var iiifURL = viper.GetString("IIIFURL")
 	if iiifURL == "" {
-		fmt.Println("ERROR: --iiif-url must be set to the server's public URL")
+		fmt.Println("ERROR: IIIF URL may not be blank")
 		pflag.Usage()
 		os.Exit(1)
 	}
