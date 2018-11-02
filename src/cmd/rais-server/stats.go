@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"io"
+	"net/http"
 	"time"
 )
 
@@ -37,17 +37,22 @@ func (s *serverStats) setUptime() {
 }
 
 // Serialize writes the stats data to w in JSON format
-func (s *serverStats) Serialize(w io.Writer) error {
+func (s *serverStats) Serialize() ([]byte, error) {
 	// Calculate derived stats only on serializations
 	s.setUptime()
 	s.InfoCache.setHitPercent()
 	s.TileCache.setHitPercent()
 
-	var b, err = json.Marshal(s)
+	return json.Marshal(s)
+}
+
+func (s *serverStats) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	var json, err = s.Serialize()
 	if err != nil {
-		return err
+		http.Error(w, "error generating json: "+err.Error(), 500)
+		return
 	}
 
-	_, err = w.Write(b)
-	return err
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(json)
 }

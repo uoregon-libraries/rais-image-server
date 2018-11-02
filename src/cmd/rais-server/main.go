@@ -40,6 +40,7 @@ func main() {
 
 	tilePath := viper.GetString("TilePath")
 	address := viper.GetString("Address")
+	adminAddress := viper.GetString("AdminAddress")
 
 	ih := NewImageHandler(tilePath)
 	ih.Maximums.Area = viper.GetInt64("ImageMaxArea")
@@ -69,6 +70,8 @@ func main() {
 	var pubSrv = servers.New("RAIS", address)
 	handle(pubSrv, ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
 	handle(pubSrv, "/images/dzi/", http.HandlerFunc(ih.DZIRoute))
+	var admSrv = servers.New("RAIS Admin", adminAddress)
+	admSrv.Handle("/admin/stats.json", stats)
 
 	var wait sync.WaitGroup
 	interrupts.TrapIntTerm(func() {
