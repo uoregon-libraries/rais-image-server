@@ -15,7 +15,7 @@ func main() {
 	var out []byte
 	out, err = cmd.CombinedOutput()
 	if err != nil {
-		panic(err)
+		panic("Unable to run `git describe`: " + err.Error())
 	}
 	var build = string(out)
 	build = strings.TrimSpace(build)
