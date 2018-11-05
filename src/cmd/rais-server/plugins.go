@@ -174,5 +174,11 @@ func loadPlugin(fullpath string, l *logger.Logger) error {
 		wrapHandlerPlugins = append(wrapHandlerPlugins, wrapHandler)
 	}
 
+	// Add info to stats
+	stats.Plugins = append(stats.Plugins, plugStats{
+		Path:      fullpath,
+		Functions: pw.functions,
+	})
+
 	return nil
 }
