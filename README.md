@@ -1,6 +1,6 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/uoregon-libraries/rais-image-server)](https://goreportcard.com/report/github.com/uoregon-libraries/rais-image-server)
 
-RAIS Image Server
+Rodent-Assimilated Image Server
 =======
 
 RAIS was originally built by [eikeon](https://github.com/eikeon) as a 100% open
