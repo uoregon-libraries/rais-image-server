@@ -3,6 +3,8 @@
 Rodent-Assimilated Image Server
 =======
 
+![Gocutus](gocutus.png?raw=true "Gocutus")
+
 RAIS was originally built by [eikeon](https://github.com/eikeon) as a 100% open
 source, no-commercial-products-required, proof-of-concept tile server for JP2
 images within [chronam](https://github.com/LibraryOfCongress/chronam).
