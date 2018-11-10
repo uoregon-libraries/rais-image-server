@@ -15,12 +15,14 @@ import (
 func parseConf() {
 	// Default configuration values
 	var defaultAddress = ":12415"
+	var defaultAdminAddress = ":12416"
 	var defaultInfoCacheLen = 10000
 	var defaultLogLevel = logger.Debug.String()
 	var defaultPlugins = "s3-images.so,json-tracer.so"
 
 	// Defaults
 	viper.SetDefault("Address", defaultAddress)
+	viper.SetDefault("AdminAddress", defaultAdminAddress)
 	viper.SetDefault("InfoCacheLen", defaultInfoCacheLen)
 	viper.SetDefault("LogLevel", defaultLogLevel)
 	viper.SetDefault("Plugins", defaultPlugins)
@@ -43,6 +45,8 @@ func parseConf() {
 	viper.BindPFlag("IIIFURL", pflag.CommandLine.Lookup("iiif-url"))
 	pflag.String("address", defaultAddress, "http service address")
 	viper.BindPFlag("Address", pflag.CommandLine.Lookup("address"))
+	pflag.String("admin-address", defaultAdminAddress, "http service for administrative endpoints")
+	viper.BindPFlag("AdminAddress", pflag.CommandLine.Lookup("admin-address"))
 	pflag.String("tile-path", "", "Base path for images")
 	viper.BindPFlag("TilePath", pflag.CommandLine.Lookup("tile-path"))
 	pflag.Int("iiif-info-cache-size", defaultInfoCacheLen, "Maximum cached image info entries (IIIF only)")

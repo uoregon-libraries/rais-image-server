@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"net/url"
+	"rais/src/cmd/rais-server/internal/servers"
 	"rais/src/iiif"
 	"rais/src/magick"
 	"rais/src/openjpeg"
@@ -25,8 +26,11 @@ var tileCache *lru.TwoQueueCache
 // Logger is the server's central logger.Logger instance
 var Logger *logger.Logger
 
-// cacheHits and cacheMisses allow some rudimentary tracking of cache value
-var cacheHits, cacheMisses int64
+// Global server stats for admin information gathering
+var stats = new(serverStats)
+
+// wait ensures main() doesn't exit until the server(s) are all shutdown
+var wait sync.WaitGroup
 
 func main() {
 	parseConf()
@@ -39,6 +43,7 @@ func main() {
 
 	tilePath := viper.GetString("TilePath")
 	address := viper.GetString("Address")
+	adminAddress := viper.GetString("AdminAddress")
 
 	ih := NewImageHandler(tilePath)
 	ih.Maximums.Area = viper.GetInt64("ImageMaxArea")
@@ -60,41 +65,25 @@ func main() {
 		Logger.Debugf("Setting IIIF capabilities from file '%s'", capfile)
 	}
 
-	handle(ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
-	handle("/images/dzi/", http.HandlerFunc(ih.DZIRoute))
+	// Setup server info in our stats structure
+	stats.ServerStart = time.Now()
+	stats.RAISVersion = version.Version
+	stats.RAISBuild = version.Build
+
+	// Set up handlers / listeners
+	var pubSrv = servers.New("RAIS", address)
+	handle(pubSrv, ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
+	handle(pubSrv, "/images/dzi/", http.HandlerFunc(ih.DZIRoute))
+	var admSrv = servers.New("RAIS Admin", adminAddress)
+	admSrv.Handle("/admin/stats.json", stats)
+
+	interrupts.TrapIntTerm(shutdown)
 
 	Logger.Infof("RAIS v%s starting...", version.Version)
-	var srv = &http.Server{
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		Addr:         address,
-	}
-
-	var wait sync.WaitGroup
-
-	interrupts.TrapIntTerm(func() {
-		wait.Add(1)
-		Logger.Infof("Stopping RAIS...")
-		srv.Shutdown(nil)
-
-		if len(teardownPlugins) > 0 {
-			Logger.Infof("Tearing down plugins")
-			for _, plug := range teardownPlugins {
-				plug()
-			}
-			Logger.Infof("Plugin teardown complete")
-		}
-
-		Logger.Infof("RAIS Stopped")
-		wait.Done()
+	servers.ListenAndServe(func(srv *servers.Server, err error) {
+		Logger.Errorf("Error running %q server: %s", srv.Name, err)
+		shutdown()
 	})
-
-	if err := srv.ListenAndServe(); err != nil {
-		// Don't report a fatal error when we close the server
-		if err != http.ErrServerClosed {
-			Logger.Fatalf("Error starting listener: %s", err)
-		}
-	}
 	wait.Wait()
 }
 
@@ -106,6 +95,7 @@ func setupCaches() {
 		if err != nil {
 			Logger.Fatalf("Unable to start info cache: %s", err)
 		}
+		stats.InfoCache.Enabled = true
 	}
 
 	tcl := viper.GetInt("TileCacheLen")
@@ -115,6 +105,7 @@ func setupCaches() {
 		if err != nil {
 			Logger.Fatalf("Unable to start info cache: %s", err)
 		}
+		stats.TileCache.Enabled = true
 	}
 }
 
@@ -122,7 +113,7 @@ func setupCaches() {
 // whatever is returned (if anything).  All plugins which wrap handlers are
 // allowed to run, but the behavior could definitely get weird depending on
 // what a given plugin does.  Ye be warned.
-func handle(pattern string, handler http.Handler) {
+func handle(srv *servers.Server, pattern string, handler http.Handler) {
 	for _, plug := range wrapHandlerPlugins {
 		var h2, err = plug(pattern, handler)
 		if err == nil {
@@ -131,5 +122,22 @@ func handle(pattern string, handler http.Handler) {
 			logger.Fatalf("Error trying to wrap handler %q: %s", pattern, err)
 		}
 	}
-	http.Handle(pattern, handler)
+	srv.Handle(pattern, handler)
+}
+
+func shutdown() {
+	wait.Add(1)
+	Logger.Infof("Stopping RAIS...")
+	servers.Shutdown(nil)
+
+	if len(teardownPlugins) > 0 {
+		Logger.Infof("Tearing down plugins")
+		for _, plug := range teardownPlugins {
+			plug()
+		}
+		Logger.Infof("Plugin teardown complete")
+	}
+
+	Logger.Infof("RAIS Stopped")
+	wait.Done()
 }
