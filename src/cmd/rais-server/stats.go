@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -12,6 +14,7 @@ type plugStats struct {
 }
 
 type cacheStats struct {
+	m          sync.Mutex
 	Enabled    bool
 	GetCount   uint64
 	GetHits    uint64
@@ -20,6 +23,8 @@ type cacheStats struct {
 }
 
 func (cs *cacheStats) setHitPercent() {
+	cs.m.Lock()
+	defer cs.m.Unlock()
 	if cs.GetCount == 0 {
 		cs.HitPercent = 0
 		return
@@ -27,7 +32,27 @@ func (cs *cacheStats) setHitPercent() {
 	cs.HitPercent = float64(cs.GetHits) / float64(cs.GetCount)
 }
 
+// Get increments GetCount safely
+func (cs *cacheStats) Get() {
+	atomic.AddUint64(&cs.GetCount, 1)
+}
+
+// Hit increments GetHits safely
+func (cs *cacheStats) Hit() {
+	atomic.AddUint64(&cs.GetHits, 1)
+}
+
+// Set increments SetCount safely
+func (cs *cacheStats) Set() {
+	atomic.AddUint64(&cs.SetCount, 1)
+}
+
+// serverStats holds a bunch of global data.  This is only threadsafe when
+// calling functions, so don't directly manipulate anything except when you
+// know only one thread can possibly exist!  (e.g., when first setting up the
+// object)
 type serverStats struct {
+	m           sync.Mutex
 	InfoCache   cacheStats
 	TileCache   cacheStats
 	Plugins     []plugStats
@@ -38,7 +63,9 @@ type serverStats struct {
 }
 
 func (s *serverStats) setUptime() {
+	s.m.Lock()
 	s.Uptime = time.Since(s.ServerStart).Round(time.Second).String()
+	s.m.Unlock()
 }
 
 // Serialize writes the stats data to w in JSON format
