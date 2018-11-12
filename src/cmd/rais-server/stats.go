@@ -19,6 +19,7 @@ type cacheStats struct {
 	GetHits    uint64
 	HitPercent float64
 	SetCount   uint64
+	Length     int
 }
 
 func (cs *cacheStats) setHitPercent() {
@@ -61,18 +62,26 @@ type serverStats struct {
 	Uptime      string
 }
 
-func (s *serverStats) setUptime() {
-	s.m.Lock()
-	s.Uptime = time.Since(s.ServerStart).Round(time.Second).String()
-	s.m.Unlock()
-}
-
 // Serialize writes the stats data to w in JSON format
 func (s *serverStats) Serialize() ([]byte, error) {
-	// Calculate derived stats only on serializations
-	s.setUptime()
-	s.InfoCache.setHitPercent()
-	s.TileCache.setHitPercent()
-
+	s.calculateDerivedStats()
 	return json.Marshal(s)
+}
+
+// calculateDerivedStats computes things we don't need to store real-time, such
+// as cache hit percent, uptime, etc.
+func (s *serverStats) calculateDerivedStats() {
+	s.m.Lock()
+
+	s.Uptime = time.Since(s.ServerStart).Round(time.Second).String()
+	if infoCache != nil {
+		s.InfoCache.setHitPercent()
+		s.InfoCache.Length = infoCache.Len()
+	}
+	if tileCache != nil {
+		s.TileCache.setHitPercent()
+		s.TileCache.Length = tileCache.Len()
+	}
+
+	s.m.Unlock()
 }
