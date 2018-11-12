@@ -74,8 +74,10 @@ func main() {
 	var pubSrv = servers.New("RAIS", address)
 	handle(pubSrv, ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
 	handle(pubSrv, "/images/dzi/", http.HandlerFunc(ih.DZIRoute))
+
 	var admSrv = servers.New("RAIS Admin", adminAddress)
 	admSrv.Handle("/admin/stats.json", stats)
+	admSrv.Handle("/admin/cache/purge", http.HandlerFunc(adminPurgeCache))
 
 	interrupts.TrapIntTerm(shutdown)
 
