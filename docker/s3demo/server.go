@@ -27,6 +27,11 @@ type indexData struct {
 }
 
 func renderIndex(w http.ResponseWriter, req *http.Request) {
+	var path = req.URL.Path
+	if path != "/" {
+		http.NotFound(w, req)
+		return
+	}
 	var data = indexData{Assets: s3assets, Bucket: bucket}
 	var err = indexT.Execute(w, data)
 	if err != nil {
