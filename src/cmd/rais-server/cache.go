@@ -14,7 +14,9 @@ var infoCache *lru.Cache
 var tileCache *lru.TwoQueueCache
 
 // setupCaches looks for config for caching and sets up the tile/info caches
-// appropriately.
+// appropriately.  If they exist, we put their cache expiration functions into
+// the appropriate plugin lists so we can eventually transition all cache logic
+// to plugins.
 func setupCaches() {
 	var err error
 	icl := viper.GetInt("InfoCacheLen")
@@ -24,6 +26,8 @@ func setupCaches() {
 			Logger.Fatalf("Unable to start info cache: %s", err)
 		}
 		stats.InfoCache.Enabled = true
+		purgeCachePlugins = append(purgeCachePlugins, infoCache.Purge)
+		expireCachedImagePlugins = append(expireCachedImagePlugins, func(id iiif.ID) { infoCache.Remove(id) })
 	}
 
 	tcl := viper.GetInt("TileCacheLen")
@@ -34,29 +38,24 @@ func setupCaches() {
 			Logger.Fatalf("Unable to start info cache: %s", err)
 		}
 		stats.TileCache.Enabled = true
+		purgeCachePlugins = append(purgeCachePlugins, tileCache.Purge)
+		// Unfortunately, the tile cache is keyed by the entire IIIF request, not the
+		// ID (obviously).  Since we can't get a list of all cached tiles for a given
+		// image, we have to purge the whole cache.
+		expireCachedImagePlugins = append(expireCachedImagePlugins, func(id iiif.ID) { tileCache.Purge() })
 	}
 }
 
 // purgeCaches removes all cached data
 func purgeCaches() {
-	if tileCache != nil {
-		tileCache.Purge()
-	}
-	if infoCache != nil {
-		infoCache.Purge()
+	for _, plug := range purgeCachePlugins {
+		plug()
 	}
 }
 
-// expireCachedImage removes cached data for a single IIIF ID.  Unfortunately,
-// the tile cache is keyed by the entire IIIF request, not the ID (obviously).
-// Since we can't get a list of all cached tiles for a given image, we have to
-// purge the whole cache.
+// expireCachedImage removes cached data for a single IIIF ID
 func expireCachedImage(id iiif.ID) {
-	if tileCache != nil {
-		tileCache.Purge()
-	}
-
-	if infoCache != nil {
-		infoCache.Remove(id)
+	for _, plug := range expireCachedImagePlugins {
+		plug(id)
 	}
 }
