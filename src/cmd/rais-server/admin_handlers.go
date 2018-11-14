@@ -32,27 +32,3 @@ func adminPurgeCache(w http.ResponseWriter, req *http.Request) {
 
 	w.Write([]byte("OK"))
 }
-
-// purgeCaches removes all cached data
-func purgeCaches() {
-	if tileCache != nil {
-		tileCache.Purge()
-	}
-	if infoCache != nil {
-		infoCache.Purge()
-	}
-}
-
-// expireCachedImage removes cached data for a single IIIF ID.  Unfortunately,
-// the tile cache is keyed by the entire IIIF request, not the ID (obviously).
-// Since we can't get a list of all cached tiles for a given image, we have to
-// purge the whole cache.
-func expireCachedImage(id iiif.ID) {
-	if tileCache != nil {
-		tileCache.Purge()
-	}
-
-	if infoCache != nil {
-		infoCache.Remove(id)
-	}
-}

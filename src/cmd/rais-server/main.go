@@ -14,14 +14,10 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
-	"github.com/hashicorp/golang-lru"
 	"github.com/spf13/viper"
 	"github.com/uoregon-libraries/gopkg/interrupts"
 	"github.com/uoregon-libraries/gopkg/logger"
 )
-
-var infoCache *lru.Cache
-var tileCache *lru.TwoQueueCache
 
 // Logger is the server's central logger.Logger instance
 var Logger *logger.Logger
@@ -87,28 +83,6 @@ func main() {
 		shutdown()
 	})
 	wait.Wait()
-}
-
-func setupCaches() {
-	var err error
-	icl := viper.GetInt("InfoCacheLen")
-	if icl > 0 {
-		infoCache, err = lru.New(icl)
-		if err != nil {
-			Logger.Fatalf("Unable to start info cache: %s", err)
-		}
-		stats.InfoCache.Enabled = true
-	}
-
-	tcl := viper.GetInt("TileCacheLen")
-	if tcl > 0 {
-		Logger.Debugf("Creating a tile cache to hold up to %d tiles", tcl)
-		tileCache, err = lru.New2Q(tcl)
-		if err != nil {
-			Logger.Fatalf("Unable to start info cache: %s", err)
-		}
-		stats.TileCache.Enabled = true
-	}
 }
 
 // handle sends the pattern and raw handler to plugins, and sets up routing on
