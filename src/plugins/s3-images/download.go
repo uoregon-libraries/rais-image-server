@@ -19,15 +19,15 @@ var s3download = func(s3ID, path string) error {
 	os.MkdirAll(filepath.Dir(path), 0700)
 	var tmpfile = fileutil.NewSafeFile(path)
 
-	var conf = &aws.Config{Region: &s3zone}
+	var conf = &aws.Config{Region: aws.String(s3zone)}
 	var sess, err = session.NewSession(conf)
 	if err != nil {
 		return fmt.Errorf("unable to set up AWS session: %s", err)
 	}
 
 	var obj = &s3.GetObjectInput{
-		Bucket: &s3bucket,
-		Key:    &s3ID,
+		Bucket: aws.String(s3bucket),
+		Key:    aws.String(s3ID),
 	}
 
 	var dl = s3manager.NewDownloader(sess)
