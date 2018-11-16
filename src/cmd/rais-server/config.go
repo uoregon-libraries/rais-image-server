@@ -99,6 +99,6 @@ func parseConf() {
 		err = fmt.Errorf("empty path")
 	}
 	if err != nil {
-		fmt.Println("ERROR: invalid IIIF URL (%s) specified: %s", iiifURL, err)
+		fmt.Printf("ERROR: invalid IIIF URL (%s) specified: %s\n", iiifURL, err)
 	}
 }
