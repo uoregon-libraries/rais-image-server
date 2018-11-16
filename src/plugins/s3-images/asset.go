@@ -5,7 +5,11 @@ import (
 	"path/filepath"
 	"rais/src/iiif"
 	"strconv"
+	"sync"
 )
+
+var assets = make(map[iiif.ID]*asset)
+var assetMutex sync.Mutex
 
 func makeKey(id iiif.ID) string {
 	var s = string(id)
@@ -34,7 +38,14 @@ type asset struct {
 }
 
 func lookupAsset(id iiif.ID) *asset {
-	var a = &asset{id: id, key: makeKey(id)}
-	a.path = makePath(a.key)
+	assetMutex.Lock()
+	var a = assets[id]
+	if a == nil {
+		a = &asset{id: id, key: makeKey(id)}
+		a.path = makePath(a.key)
+		assets[id] = a
+	}
+	assetMutex.Unlock()
+
 	return a
 }
