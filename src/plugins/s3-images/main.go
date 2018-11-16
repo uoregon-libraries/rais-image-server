@@ -34,11 +34,8 @@ package main
 
 import (
 	"errors"
-	"hash/fnv"
-	"path/filepath"
 	"rais/src/iiif"
 	"rais/src/plugins"
-	"strconv"
 	"sync"
 	"time"
 
@@ -110,51 +107,36 @@ func SetLogger(raisLogger *logger.Logger) {
 	l = raisLogger
 }
 
-func buckets(s3ID string) (string, string) {
-	var h = fnv.New32()
-	h.Write([]byte(s3ID))
-	var val = int(h.Sum32() / 10000)
-	return strconv.Itoa(val % 100), strconv.Itoa((val / 100) % 100)
-}
-
 // IDToPath implements the auto-download logic when a IIIF ID
 // starts with "s3:"
 func IDToPath(id iiif.ID) (path string, err error) {
-	var ids = string(id)
-	if len(ids) < 4 {
+	var a = lookupAsset(id)
+	if a.key == "" {
 		return "", plugins.ErrSkipped
 	}
-
-	if ids[:3] != "s3:" {
-		return "", plugins.ErrSkipped
-	}
-
-	// Check cache - don't re-download
-	var s3ID = ids[3:]
-	var bucket1, bucket2 = buckets(s3ID)
-	path = filepath.Join(s3cache, bucket1, bucket2, s3ID)
 
 	// See if this file is currently being downloaded; if so we need to wait
 	var timeout = time.Now().Add(time.Second * 10)
-	for isDownloading(s3ID) {
+	for isDownloading(a.key) {
 		time.Sleep(time.Millisecond * 250)
 		if time.Now().After(timeout) {
 			return "", errors.New("timed out waiting for s3 download")
 		}
 	}
 
-	if fileutil.MustNotExist(path) {
+	// Check cache - don't re-download
+	if fileutil.MustNotExist(a.path) {
 		l.Debugf("s3-images plugin: no cached file at %q; downloading from S3", path)
-		err = pullImage(s3ID, path)
+		err = pullImage(a.key, a.path)
 	}
 
 	// We reset purge time whether we downloaded it just now or not - this
 	// ensures files aren't getting purged while in use
 	if err == nil {
-		setPurgeTime(path)
+		setPurgeTime(a.path)
 	}
 
-	return path, err
+	return a.path, err
 }
 
 func pullImage(s3ID, path string) error {
