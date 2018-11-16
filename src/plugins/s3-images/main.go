@@ -36,16 +36,12 @@ import (
 	"errors"
 	"rais/src/iiif"
 	"rais/src/plugins"
-	"sync"
 	"time"
 
 	"github.com/spf13/viper"
 	"github.com/uoregon-libraries/gopkg/fileutil"
 	"github.com/uoregon-libraries/gopkg/logger"
 )
-
-var downloading = make(map[string]bool)
-var m sync.RWMutex
 
 var l *logger.Logger
 
@@ -117,50 +113,23 @@ func IDToPath(id iiif.ID) (path string, err error) {
 
 	// See if this file is currently being downloaded; if so we need to wait
 	var timeout = time.Now().Add(time.Second * 10)
-	for isDownloading(a.key) {
+	for a.tryFLock() == false {
 		time.Sleep(time.Millisecond * 250)
 		if time.Now().After(timeout) {
-			return "", errors.New("timed out waiting for s3 download")
+			return "", errors.New("timed out waiting for locked asset (probably very slow download)")
 		}
 	}
 
-	// Check cache - don't re-download
-	if fileutil.MustNotExist(a.path) {
-		l.Debugf("s3-images plugin: no cached file at %q; downloading from S3", path)
-		err = pullImage(a.key, a.path)
-	}
-
-	// We reset purge time whether we downloaded it just now or not - this
-	// ensures files aren't getting purged while in use
+	// We reset purge time whether we download successfully, read from cache, or
+	// whatever happens - we're considering the file to be in use in one way or
+	// another and don't want it purged.
 	if err == nil {
 		setPurgeTime(a.path)
 	}
 
+	// Attempt to pull from S3
+	err = a.s3Get()
+	a.fUnlock()
+
 	return a.path, err
-}
-
-func pullImage(s3ID, path string) error {
-	setIsDownloading(s3ID)
-	var err = s3download(s3ID, path)
-	clearIsDownloading(s3ID)
-	return err
-}
-
-func isDownloading(s3ID string) bool {
-	m.RLock()
-	var isdl = downloading[s3ID]
-	m.RUnlock()
-	return isdl
-}
-
-func setIsDownloading(s3ID string) {
-	m.Lock()
-	downloading[s3ID] = true
-	m.Unlock()
-}
-
-func clearIsDownloading(s3ID string) {
-	m.Lock()
-	delete(downloading, s3ID)
-	m.Unlock()
 }
