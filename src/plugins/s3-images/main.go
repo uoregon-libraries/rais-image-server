@@ -159,24 +159,26 @@ func IDToPath(id iiif.ID) (path string, err error) {
 
 func pullImage(s3ID, path string) error {
 	setIsDownloading(s3ID)
-	defer clearIsDownloading(s3ID)
-	return s3download(s3ID, path)
+	var err = s3download(s3ID, path)
+	clearIsDownloading(s3ID)
+	return err
 }
 
 func isDownloading(s3ID string) bool {
 	m.RLock()
-	defer m.RUnlock()
-	return downloading[s3ID]
+	var isdl = downloading[s3ID]
+	m.RUnlock()
+	return isdl
 }
 
 func setIsDownloading(s3ID string) {
 	m.Lock()
-	defer m.Unlock()
 	downloading[s3ID] = true
+	m.Unlock()
 }
 
 func clearIsDownloading(s3ID string) {
 	m.Lock()
-	defer m.Unlock()
 	delete(downloading, s3ID)
+	m.Unlock()
 }
