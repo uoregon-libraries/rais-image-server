@@ -13,11 +13,9 @@ import (
 	"fmt"
 )
 
-// s3download is a variable so we can easily overwrite it if we need to for
-// testing or something
-var s3download = func(s3ID, path string) error {
-	os.MkdirAll(filepath.Dir(path), 0700)
-	var tmpfile = fileutil.NewSafeFile(path)
+func (a *asset) fetch() error {
+	os.MkdirAll(filepath.Dir(a.path), 0700)
+	var tmpfile = fileutil.NewSafeFile(a.path)
 
 	var conf = &aws.Config{Region: aws.String(s3zone)}
 	var sess, err = session.NewSession(conf)
@@ -27,13 +25,13 @@ var s3download = func(s3ID, path string) error {
 
 	var obj = &s3.GetObjectInput{
 		Bucket: aws.String(s3bucket),
-		Key:    aws.String(s3ID),
+		Key:    aws.String(a.key),
 	}
 
 	var dl = s3manager.NewDownloader(sess)
 	_, err = dl.Download(tmpfile, obj)
 	if err != nil {
-		return fmt.Errorf("unable to download item %q: %s", s3ID, err)
+		return fmt.Errorf("unable to download item %q: %s", a.key, err)
 	}
 
 	return tmpfile.Close()

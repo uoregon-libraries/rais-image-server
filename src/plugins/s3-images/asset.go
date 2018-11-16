@@ -63,7 +63,7 @@ func (a *asset) s3Get() error {
 	}
 
 	l.Debugf("s3-images plugin: no cached file at %q; downloading from S3", a.path)
-	return s3download(a.key, a.path)
+	return a.fetch()
 }
 
 // tryFLock attempts to lock for file writing in a non-blocking way.  If the
