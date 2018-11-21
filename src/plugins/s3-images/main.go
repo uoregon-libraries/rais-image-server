@@ -120,12 +120,8 @@ func IDToPath(id iiif.ID) (path string, err error) {
 		}
 	}
 
-	// We reset purge time whether we download successfully, read from cache, or
-	// whatever happens - we're considering the file to be in use in one way or
-	// another and don't want it purged.
-	if err == nil {
-		setPurgeTime(a.path)
-	}
+	// Let the asset know it's being read
+	a.read()
 
 	// Attempt to pull from S3
 	err = a.s3Get()

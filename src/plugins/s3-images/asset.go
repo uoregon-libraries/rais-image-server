@@ -7,6 +7,7 @@ import (
 	"rais/src/iiif"
 	"strconv"
 	"sync"
+	"time"
 )
 
 var assets = make(map[iiif.ID]*asset)
@@ -39,6 +40,7 @@ type asset struct {
 	inUse      bool
 	fs         sync.Mutex
 	lockreader sync.Mutex
+	lastAccess    time.Time
 }
 
 func lookupAsset(id iiif.ID) *asset {
@@ -79,9 +81,42 @@ func (a *asset) tryFLock() bool {
 	return !inUse
 }
 
+// For when master Yoda's around.  There is no try.
+func (a *asset) fLock() {
+	a.lockreader.Lock()
+	a.fs.Lock()
+	a.inUse = true
+	a.lockreader.Unlock()
+}
+
 func (a *asset) fUnlock() {
 	a.lockreader.Lock()
 	a.inUse = false
 	a.fs.Unlock()
 	a.lockreader.Unlock()
+}
+
+// read lets us track when an asset is being requested.  For the moment we just
+// track a timestamp, but we could also track other stats to improve how we
+// decide what to purge from the local filesystem.
+func (a *asset) read() {
+	a.lastAccess = time.Now().Add(cacheLifetime)
+}
+
+// purge locks the asset, deletes it from the filesystem, and untracks it from
+// the assets list.  This doesn't return an error, instead logging inline if
+// the asset can't be deleted, because we are calling this asynchronously to
+// avoid potentially long delays if the asset is mid-download right when it's
+// being purged.
+func (a *asset) purge() {
+	a.fLock()
+	defer a.fUnlock()
+
+	var err = os.Remove(a.path)
+	if err != nil && !os.IsNotExist(err) {
+		l.Errorf("s3-images plugin: Unable to purge cached file at %q: %s", a.path, err)
+		return
+	}
+
+	l.Infof("s3-images plugin: Purged %q", a.path)
 }
