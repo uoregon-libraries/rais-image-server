@@ -1,8 +1,12 @@
 package main
 
 import (
+	"math/rand"
 	"rais/src/iiif"
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/uoregon-libraries/gopkg/assert"
 )
@@ -29,8 +33,26 @@ func TestAssetLookup(t *testing.T) {
 }
 
 func TestFLock(t *testing.T) {
-	s3cache = "/tmp"
 	var a = lookupAsset(iiif.ID("s3:foo"))
-	assert.True(a.tryFLock(), "first tryFlock call succeeds", t)
-	assert.False(a.tryFLock(), "second tryFlock call fails", t)
+
+	// Set up intense concurrency to see if we can cause mayhem
+	var successes uint32
+	var wg sync.WaitGroup
+	var tryit = func() {
+		time.Sleep(time.Millisecond * time.Duration(100+rand.Intn(10)))
+		if a.tryFLock() {
+			atomic.AddUint32(&successes, 1)
+		}
+		wg.Done()
+	}
+	for x := 0; x < 100; x++ {
+		wg.Add(1)
+		go tryit()
+	}
+	wg.Wait()
+
+	assert.Equal(uint32(1), successes, "only one tryFLock call succeeds", t)
+	a.fUnlock()
+	assert.True(a.tryFLock(), "tryFLock call succeeds after fUnlock", t)
+	a.fUnlock()
 }
