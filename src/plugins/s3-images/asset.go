@@ -7,7 +7,6 @@ import (
 	"rais/src/iiif"
 	"strconv"
 	"sync"
-	"sync/atomic"
 )
 
 var assets = make(map[iiif.ID]*asset)
@@ -37,7 +36,7 @@ type asset struct {
 	id         iiif.ID
 	key        string
 	path       string
-	inUse      uint32
+	inUse      bool
 	fs         sync.Mutex
 	lockreader sync.Mutex
 }
@@ -70,10 +69,10 @@ func (a *asset) s3Get() error {
 // lock can be acquired, the return is true, otherwise false.
 func (a *asset) tryFLock() bool {
 	a.lockreader.Lock()
-	var inUse = atomic.LoadUint32(&a.inUse) == 1
+	var inUse = a.inUse
 	if !inUse {
 		a.fs.Lock()
-		atomic.StoreUint32(&a.inUse, 1)
+		a.inUse = true
 	}
 	a.lockreader.Unlock()
 
@@ -82,7 +81,7 @@ func (a *asset) tryFLock() bool {
 
 func (a *asset) fUnlock() {
 	a.lockreader.Lock()
-	atomic.StoreUint32(&a.inUse, 0)
+	a.inUse = false
 	a.fs.Unlock()
 	a.lockreader.Unlock()
 }
