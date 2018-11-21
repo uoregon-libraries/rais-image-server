@@ -14,7 +14,7 @@ import (
 )
 
 func (a *asset) fetch() error {
-	os.MkdirAll(filepath.Dir(a.path), 0700)
+	os.MkdirAll(filepath.Dir(a.path), 0755)
 	var tmpfile = fileutil.NewSafeFile(a.path)
 
 	var conf = &aws.Config{Region: aws.String(s3zone)}
