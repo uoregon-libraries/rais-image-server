@@ -129,3 +129,44 @@ func IDToPath(id iiif.ID) (path string, err error) {
 
 	return a.path, err
 }
+
+// PurgeCaches deletes all cached files RAIS is tracking
+//
+// TODO: this plugin should index files on the filesystem to see if there are
+// any it should be tracking (this happens if RAIS is ever shut down while
+// tracking files).  We don't want to delay startup, though.  Options:
+//     - On shutdown, write out the assets map - then on startup we can just
+//       read it in again and reset purge times
+//     - On startup fire up a background thread that just instantiates assets
+//       via lookupAsset(basename(file-".ext")).  If the filename is always the
+//       IIIF ID, this should work, and doesn't need to block since it'll only
+//       lock on the lookupAsset call.
+func PurgeCaches() {
+	// lock all assets while indexing them so we can index everything RAIS
+	// *currently* knows about without things getting weird if new stuff is being
+	// indexed during the process
+	assetMutex.Lock()
+	var alist []*asset
+	for _, a := range assets {
+		alist = append(alist, a)
+	}
+	assetMutex.Unlock()
+
+	// For all assets that we are tracking, we're going to delete them
+	// synchronously and with a slight delay between each.  This could take a
+	// while, but ensures we remove all the assets without disk IO killing all of
+	// RAIS.
+	for _, a := range alist {
+		doPurge(a)
+		time.Sleep(time.Millisecond * 250)
+	}
+}
+
+// ExpireCachedImage gets rid of any cached image for the given id, should it
+// exist.  We don't really care if it doesn't exist, though, as that can mean
+// it's already been purged, or RAIS was restarted and the whole cache removed,
+// etc.
+func ExpireCachedImage(id iiif.ID) {
+	var a = lookupAsset(id)
+	doPurge(a)
+}
