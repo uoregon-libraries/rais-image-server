@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -9,14 +10,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/uoregon-libraries/gopkg/fileutil"
-
-	"fmt"
 )
 
 func (a *asset) fetch() error {
-	os.MkdirAll(filepath.Dir(a.path), 0755)
-	var tmpfile = fileutil.NewSafeFile(a.path)
-
 	var conf = &aws.Config{Region: aws.String(s3zone)}
 	var sess, err = session.NewSession(conf)
 	if err != nil {
@@ -28,9 +24,17 @@ func (a *asset) fetch() error {
 		Key:    aws.String(a.key),
 	}
 
+	var fullpath = filepath.Dir(a.path)
+	err = os.MkdirAll(fullpath, 0755)
+	if err != nil {
+		return fmt.Errorf("unable to create cached file path %q: %s", fullpath, err)
+	}
+	var tmpfile = fileutil.NewSafeFile(a.path)
+
 	var dl = s3manager.NewDownloader(sess)
 	_, err = dl.Download(tmpfile, obj)
 	if err != nil {
+		tmpfile.Cancel()
 		return fmt.Errorf("unable to download item %q: %s", a.key, err)
 	}
 
