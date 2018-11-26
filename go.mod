@@ -18,7 +18,7 @@ require (
 	github.com/stretchr/testify v1.2.2 // indirect
 	github.com/tinylib/msgp v1.0.2 // indirect
 	github.com/uoregon-libraries/gopkg v0.2.4
-	golang.org/x/image v0.0.0-20180708004352-c73c2afc3b81
+	golang.org/x/image v0.0.0-20181116024801-cd38e8056d9b
 	golang.org/x/net v0.0.0-20181114220301-adae6a3d119a // indirect
 	gopkg.in/DataDog/dd-trace-go.v1 v1.3.0
 )
