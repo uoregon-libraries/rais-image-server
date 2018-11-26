@@ -26,6 +26,9 @@ func checkPurge() {
 }
 
 func doPurge(a *asset) {
+	a.fLock()
+	defer a.fUnlock()
+
 	a.purge()
 	assetMutex.Lock()
 	delete(assets, a.id)

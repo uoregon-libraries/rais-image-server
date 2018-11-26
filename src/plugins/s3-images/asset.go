@@ -109,9 +109,6 @@ func (a *asset) read() {
 // avoid potentially long delays if the asset is mid-download right when it's
 // being purged.
 func (a *asset) purge() {
-	a.fLock()
-	defer a.fUnlock()
-
 	var err = os.Remove(a.path)
 	if err != nil && !os.IsNotExist(err) {
 		l.Errorf("s3-images plugin: Unable to purge cached file at %q: %s", a.path, err)
