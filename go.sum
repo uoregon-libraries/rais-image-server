@@ -42,14 +42,8 @@ github.com/stretchr/testify v1.2.2 h1:bSDNvY7ZPG5RlJ8otE/7V6gMiyenm9RtJ7IUVIAoJ1
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/tinylib/msgp v1.0.2 h1:DfdQrzQa7Yh2es9SuLkixqxuXS2SxsdYn0KbdrOGWD8=
 github.com/tinylib/msgp v1.0.2/go.mod h1:+d+yLhGm8mzTaHzB+wgMYrodPfmZrzkirds8fDWklFE=
-github.com/uoregon-libraries/gopkg v0.1.1 h1:/82qngvGXehpHM68tTTbOPgk71bCan0aPm17ETIn0hg=
-github.com/uoregon-libraries/gopkg v0.1.1/go.mod h1:KatIECqGk8WQe3IvA7h8JcODrAyEwpEfhsxF2bYrKw8=
-github.com/uoregon-libraries/gopkg v0.2.0 h1:yokJ71/Mlluc1Q9bDpZ+BzXNMd2w55BP7wDTXE7o6Lo=
-github.com/uoregon-libraries/gopkg v0.2.0/go.mod h1:KatIECqGk8WQe3IvA7h8JcODrAyEwpEfhsxF2bYrKw8=
-github.com/uoregon-libraries/gopkg v0.2.1 h1:5JoFRvRr3pvLj+zLIWo75JiEtLvrGOAHHrKcJcHAG70=
-github.com/uoregon-libraries/gopkg v0.2.1/go.mod h1:KatIECqGk8WQe3IvA7h8JcODrAyEwpEfhsxF2bYrKw8=
-github.com/uoregon-libraries/gopkg v0.2.2 h1:DxrXLBd3oOrPuuujC8Ye5hfB/zWRawHiBMQlAvNEBqg=
-github.com/uoregon-libraries/gopkg v0.2.2/go.mod h1:KatIECqGk8WQe3IvA7h8JcODrAyEwpEfhsxF2bYrKw8=
+github.com/uoregon-libraries/gopkg v0.2.4 h1:+HRlRdXJhI0mBQUY8RYiq8JjIJVPFeY3yL2vVCC78oc=
+github.com/uoregon-libraries/gopkg v0.2.4/go.mod h1:KatIECqGk8WQe3IvA7h8JcODrAyEwpEfhsxF2bYrKw8=
 golang.org/x/image v0.0.0-20180708004352-c73c2afc3b81 h1:00VmoueYNlNz/aHIilyyQz/MHSqGoWJzpFv/HW8xpzI=
 golang.org/x/image v0.0.0-20180708004352-c73c2afc3b81/go.mod h1:ux5Hcp/YLpHSI86hEcLt0YII63i6oz57MZXIpbrjZUs=
 golang.org/x/sys v0.0.0-20180814072032-4e1fef560951 h1:VfGaXvV9wRnTJreeGDE0FWEDiQP1WWUDmutCjCThDz8=
