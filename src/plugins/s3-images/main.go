@@ -106,7 +106,7 @@ func SetLogger(raisLogger *logger.Logger) {
 // IDToPath implements the auto-download logic when a IIIF ID
 // starts with "s3:"
 func IDToPath(id iiif.ID) (path string, err error) {
-	var a = lookupAsset(id)
+	var a, _ = lookupAsset(id)
 	if a.key == "" {
 		return "", plugins.ErrSkipped
 	}
@@ -167,6 +167,6 @@ func PurgeCaches() {
 // it's already been purged, or RAIS was restarted and the whole cache removed,
 // etc.
 func ExpireCachedImage(id iiif.ID) {
-	var a = lookupAsset(id)
+	var a, _ = lookupAsset(id)
 	doPurge(a)
 }

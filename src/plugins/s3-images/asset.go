@@ -43,17 +43,17 @@ type asset struct {
 	lastAccess    time.Time
 }
 
-func lookupAsset(id iiif.ID) *asset {
+func lookupAsset(id iiif.ID) (a *asset, ok bool) {
 	assetMutex.Lock()
-	var a = assets[id]
-	if a == nil {
+	a, ok = assets[id]
+	if !ok {
 		a = &asset{id: id, key: makeKey(id)}
 		a.path = makePath(a.key)
 		assets[id] = a
 	}
 	assetMutex.Unlock()
 
-	return a
+	return a, ok
 }
 
 func (a *asset) s3Get() error {
