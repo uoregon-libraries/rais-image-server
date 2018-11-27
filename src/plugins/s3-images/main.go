@@ -130,7 +130,9 @@ func IDToPath(id iiif.ID) (path string, err error) {
 	return a.path, err
 }
 
-// PurgeCaches deletes all cached files RAIS is tracking
+// PurgeCaches deletes all cached files this plugin is tracking.  Deletion
+// happens in the background so the API isn't sitting for potentially many
+// minutes prior to responding to the caller.
 //
 // TODO: this plugin should index files on the filesystem to see if there are
 // any it should be tracking (this happens if RAIS is ever shut down while
@@ -146,20 +148,23 @@ func PurgeCaches() {
 	// *currently* knows about without things getting weird if new stuff is being
 	// indexed during the process
 	assetMutex.Lock()
-	var alist []*asset
+	var ids []iiif.ID
 	for _, a := range assets {
-		alist = append(alist, a)
+		ids = append(ids, a.id)
 	}
 	assetMutex.Unlock()
+	go purgeCaches(ids)
+}
 
-	// For all assets that we are tracking, we're going to delete them
-	// synchronously and with a slight delay between each.  This could take a
-	// while, but ensures we remove all the assets without disk IO killing all of
-	// RAIS.
-	for _, a := range alist {
-		doPurge(a)
+// purgeCaches synchronously purges a list of assets from the filesystem cache,
+// pausing briefly between each purge so this can run in the background without
+// hammering the disk.
+func purgeCaches(ids []iiif.ID) {
+	for _, id := range ids {
+		ExpireCachedImage(id)
 		time.Sleep(time.Millisecond * 250)
 	}
+	l.Infof("s3-images plugin: mass-purged %d assets", len(ids))
 }
 
 // ExpireCachedImage gets rid of any cached image for the given id, should it
