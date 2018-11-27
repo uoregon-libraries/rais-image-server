@@ -18,8 +18,9 @@ func purgeLoop() {
 }
 
 func checkPurge() {
+	var expireBefore = time.Now().Add(-cacheLifetime)
 	for _, a := range assets {
-		if time.Now().Add(-cacheLifetime).Before(a.lastAccess) {
+		if a.lastAccess.Before(expireBefore) {
 			go doPurge(a)
 		}
 	}
