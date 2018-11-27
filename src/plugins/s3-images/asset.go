@@ -114,6 +114,4 @@ func (a *asset) purge() {
 		l.Errorf("s3-images plugin: Unable to purge cached file at %q: %s", a.path, err)
 		return
 	}
-
-	l.Infof("s3-images plugin: Purged %q", a.path)
 }

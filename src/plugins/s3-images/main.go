@@ -167,6 +167,12 @@ func PurgeCaches() {
 // it's already been purged, or RAIS was restarted and the whole cache removed,
 // etc.
 func ExpireCachedImage(id iiif.ID) {
-	var a, _ = lookupAsset(id)
-	doPurge(a)
+	var a, ok = lookupAsset(id)
+	var infoMsgFmt = "s3-images plugin: purging %q: %s"
+	if ok {
+		doPurge(a)
+		l.Infof(infoMsgFmt, id, "success")
+	} else {
+		l.Infof(infoMsgFmt, id, "no local asset cached")
+	}
 }
