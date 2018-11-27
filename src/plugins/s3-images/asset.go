@@ -40,7 +40,7 @@ type asset struct {
 	inUse      bool
 	fs         sync.Mutex
 	lockreader sync.Mutex
-	lastAccess    time.Time
+	lastAccess time.Time
 }
 
 func lookupAsset(id iiif.ID) (a *asset, ok bool) {
