@@ -5,9 +5,6 @@
 #     # Simple case: just build the latest production image
 #     docker build --rm -t uolibraries/rais:latest ./docker
 #
-#     # Build an older version of RAIS
-#     docker build --rm -t uolibraries/rais:2.11.2 --build-arg gittag=v2.11.2 ./docker
-#
 #     # Generate the build image to simplify local development
 #     docker build --rm -t uolibraries/rais:build --target build ./docker
 FROM fedora:28 AS build
