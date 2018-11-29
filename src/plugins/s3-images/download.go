@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -9,16 +10,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/uoregon-libraries/gopkg/fileutil"
-
-	"fmt"
 )
 
-// s3download is a variable so we can easily overwrite it if we need to for
-// testing or something
-var s3download = func(s3ID, path string) error {
-	os.MkdirAll(filepath.Dir(path), 0700)
-	var tmpfile = fileutil.NewSafeFile(path)
-
+func (a *asset) fetch() error {
 	var conf = &aws.Config{Region: aws.String(s3zone)}
 	var sess, err = session.NewSession(conf)
 	if err != nil {
@@ -27,13 +21,21 @@ var s3download = func(s3ID, path string) error {
 
 	var obj = &s3.GetObjectInput{
 		Bucket: aws.String(s3bucket),
-		Key:    aws.String(s3ID),
+		Key:    aws.String(a.key),
 	}
+
+	var fullpath = filepath.Dir(a.path)
+	err = os.MkdirAll(fullpath, 0755)
+	if err != nil {
+		return fmt.Errorf("unable to create cached file path %q: %s", fullpath, err)
+	}
+	var tmpfile = fileutil.NewSafeFile(a.path)
 
 	var dl = s3manager.NewDownloader(sess)
 	_, err = dl.Download(tmpfile, obj)
 	if err != nil {
-		return fmt.Errorf("unable to download item %q: %s", s3ID, err)
+		tmpfile.Cancel()
+		return fmt.Errorf("unable to download item %q: %s", a.key, err)
 	}
 
 	return tmpfile.Close()

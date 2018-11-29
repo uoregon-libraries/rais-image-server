@@ -1,0 +1,35 @@
+  </body>
+</html>
+
+{{block "title" .}}RAIS: Administration{{end}}
+
+{{block "content" .}}
+  <h1>RAIS: Administration</h1>
+
+  <h2>Stats</h2>
+  <p><a href="/admin/stats.json">Stats JSON</a></p>
+
+  <h2>Purge Cache</h2>
+  <form action="/admin/cache/purge" method="POST">
+    <fieldset>
+      <legend>Type</legend>
+
+      <div>
+      <input type="radio" id="type_all" name="type" value="all">
+      <label for="type_all">All</label>
+      </div>
+
+      <div>
+      <input type="radio" id="type_single" name="type" value="single">
+      <label for="type_single">Single</label>
+      </div>
+
+      <div>
+      <label for="assetid">Asset ID (if single asset expiration is desired)</label>
+      <input type="text" id="assetid" name="id">
+      </div>
+    </fieldset>
+
+    <button type="submit">Purge</button>
+  </form>
+{{end}}

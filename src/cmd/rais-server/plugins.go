@@ -18,6 +18,8 @@ import (
 var idToPathPlugins []func(iiif.ID) (string, error)
 var wrapHandlerPlugins []func(string, http.Handler) (http.Handler, error)
 var teardownPlugins []func()
+var purgeCachePlugins []func()
+var expireCachedImagePlugins []func(iiif.ID)
 
 // pluginsFor returns a list of all plugin files which matched the given
 // pattern.  Files are sorted by name.
@@ -129,12 +131,16 @@ func loadPlugin(fullpath string, l *logger.Logger) error {
 	var idToPath func(iiif.ID) (string, error)
 	var teardown func()
 	var wrapHandler func(string, http.Handler) (http.Handler, error)
+	var prgCache func()
+	var expCachedImg func(iiif.ID)
 
 	pw.loadPluginFn("SetLogger", &log)
 	pw.loadPluginFn("IDToPath", &idToPath)
 	pw.loadPluginFn("Initialize", &initialize)
 	pw.loadPluginFn("Teardown", &teardown)
 	pw.loadPluginFn("WrapHandler", &wrapHandler)
+	pw.loadPluginFn("PurgeCaches", &prgCache)
+	pw.loadPluginFn("ExpireCachedImage", &expCachedImg)
 
 	if len(pw.errors) != 0 {
 		return errors.New(strings.Join(pw.errors, ", "))
@@ -172,6 +178,12 @@ func loadPlugin(fullpath string, l *logger.Logger) error {
 	}
 	if wrapHandler != nil {
 		wrapHandlerPlugins = append(wrapHandlerPlugins, wrapHandler)
+	}
+	if prgCache != nil {
+		purgeCachePlugins = append(purgeCachePlugins, prgCache)
+	}
+	if expCachedImg != nil {
+		expireCachedImagePlugins = append(expireCachedImagePlugins, expCachedImg)
 	}
 
 	// Add info to stats

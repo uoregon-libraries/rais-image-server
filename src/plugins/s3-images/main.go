@@ -34,21 +34,14 @@ package main
 
 import (
 	"errors"
-	"hash/fnv"
-	"path/filepath"
 	"rais/src/iiif"
 	"rais/src/plugins"
-	"strconv"
-	"sync"
 	"time"
 
 	"github.com/spf13/viper"
 	"github.com/uoregon-libraries/gopkg/fileutil"
 	"github.com/uoregon-libraries/gopkg/logger"
 )
-
-var downloading = make(map[string]bool)
-var m sync.RWMutex
 
 var l *logger.Logger
 
@@ -110,73 +103,84 @@ func SetLogger(raisLogger *logger.Logger) {
 	l = raisLogger
 }
 
-func buckets(s3ID string) (string, string) {
-	var h = fnv.New32()
-	h.Write([]byte(s3ID))
-	var val = int(h.Sum32() / 10000)
-	return strconv.Itoa(val % 100), strconv.Itoa((val / 100) % 100)
-}
-
 // IDToPath implements the auto-download logic when a IIIF ID
 // starts with "s3:"
 func IDToPath(id iiif.ID) (path string, err error) {
-	var ids = string(id)
-	if len(ids) < 4 {
+	var a, _ = lookupAsset(id)
+	if a.key == "" {
 		return "", plugins.ErrSkipped
 	}
-
-	if ids[:3] != "s3:" {
-		return "", plugins.ErrSkipped
-	}
-
-	// Check cache - don't re-download
-	var s3ID = ids[3:]
-	var bucket1, bucket2 = buckets(s3ID)
-	path = filepath.Join(s3cache, bucket1, bucket2, s3ID)
 
 	// See if this file is currently being downloaded; if so we need to wait
 	var timeout = time.Now().Add(time.Second * 10)
-	for isDownloading(s3ID) {
+	for a.tryFLock() == false {
 		time.Sleep(time.Millisecond * 250)
 		if time.Now().After(timeout) {
-			return "", errors.New("timed out waiting for s3 download")
+			return "", errors.New("timed out waiting for locked asset (probably very slow download)")
 		}
 	}
 
-	if fileutil.MustNotExist(path) {
-		l.Debugf("s3-images plugin: no cached file at %q; downloading from S3", path)
-		err = pullImage(s3ID, path)
+	// Let the asset know it's being read
+	a.read()
+
+	// Attempt to pull from S3
+	err = a.s3Get()
+	a.fUnlock()
+
+	return a.path, err
+}
+
+// PurgeCaches deletes all cached files this plugin is tracking.  Deletion
+// happens in the background so the API isn't sitting for potentially many
+// minutes prior to responding to the caller.
+//
+// TODO: this plugin should index files on the filesystem to see if there are
+// any it should be tracking (this happens if RAIS is ever shut down while
+// tracking files).  We don't want to delay startup, though.  Options:
+//     - On shutdown, write out the assets map - then on startup we can just
+//       read it in again and reset purge times
+//     - On startup fire up a background thread that just instantiates assets
+//       via lookupAsset(basename(file-".ext")).  If the filename is always the
+//       IIIF ID, this should work, and doesn't need to block since it'll only
+//       lock on the lookupAsset call.
+func PurgeCaches() {
+	// lock all assets while indexing them so we can index everything RAIS
+	// *currently* knows about without things getting weird if new stuff is being
+	// indexed during the process
+	assetMutex.Lock()
+	var ids []iiif.ID
+	for _, a := range assets {
+		ids = append(ids, a.id)
 	}
+	assetMutex.Unlock()
+	go purgeCaches(ids)
+}
 
-	// We reset purge time whether we downloaded it just now or not - this
-	// ensures files aren't getting purged while in use
-	if err == nil {
-		setPurgeTime(path)
+// purgeCaches synchronously purges a list of assets from the filesystem cache,
+// pausing briefly between each purge so this can run in the background without
+// hammering the disk.
+func purgeCaches(ids []iiif.ID) {
+	for _, id := range ids {
+		ExpireCachedImage(id)
+		time.Sleep(time.Millisecond * 250)
 	}
-
-	return path, err
+	l.Infof("s3-images plugin: mass-purged %d assets", len(ids))
 }
 
-func pullImage(s3ID, path string) error {
-	setIsDownloading(s3ID)
-	defer clearIsDownloading(s3ID)
-	return s3download(s3ID, path)
-}
-
-func isDownloading(s3ID string) bool {
-	m.RLock()
-	defer m.RUnlock()
-	return downloading[s3ID]
-}
-
-func setIsDownloading(s3ID string) {
-	m.Lock()
-	defer m.Unlock()
-	downloading[s3ID] = true
-}
-
-func clearIsDownloading(s3ID string) {
-	m.Lock()
-	defer m.Unlock()
-	delete(downloading, s3ID)
+// ExpireCachedImage gets rid of any cached image for the given id, should it
+// exist.  We don't really care if it doesn't exist, though, as that can mean
+// it's already been purged, or RAIS was restarted and the whole cache removed,
+// etc.
+func ExpireCachedImage(id iiif.ID) {
+	var a, ok = lookupAsset(id)
+	var infoMsgFmt = "s3-images plugin: purging %q: %s"
+	if ok {
+		doPurge(a)
+		l.Infof(infoMsgFmt, id, "success")
+	} else {
+		assetMutex.Lock()
+		delete(assets, a.id)
+		assetMutex.Unlock()
+		l.Infof(infoMsgFmt, id, "no local asset cached")
+	}
 }

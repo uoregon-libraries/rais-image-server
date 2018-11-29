@@ -26,7 +26,7 @@ type asset struct {
 var emptyAsset asset
 
 var s3assets []asset
-var indexT, assetT *template.Template
+var indexT, assetT, adminT *template.Template
 var zone, bucket string
 var keyID, secretKey string
 
@@ -97,6 +97,7 @@ func preptemplates() {
 	var layout = template.Must(root.ParseFiles("layout.go.html"))
 	indexT = template.Must(template.Must(layout.Clone()).ParseFiles("index.go.html"))
 	assetT = template.Must(template.Must(layout.Clone()).ParseFiles("asset.go.html"))
+	adminT = template.Must(template.Must(layout.Clone()).ParseFiles("admin.go.html"))
 }
 
 type Data struct {
