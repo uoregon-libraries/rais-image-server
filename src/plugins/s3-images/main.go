@@ -178,6 +178,9 @@ func ExpireCachedImage(id iiif.ID) {
 		doPurge(a)
 		l.Infof(infoMsgFmt, id, "success")
 	} else {
+		assetMutex.Lock()
+		delete(assets, a.id)
+		assetMutex.Unlock()
 		l.Infof(infoMsgFmt, id, "no local asset cached")
 	}
 }
