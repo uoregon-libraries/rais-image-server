@@ -6,20 +6,13 @@ import (
 	"path/filepath"
 	"rais/src/iiif"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
 
 var assets = make(map[iiif.ID]*asset)
 var assetMutex sync.Mutex
-
-func makeKey(id iiif.ID) string {
-	var s = string(id)
-	if len(s) < 4 || s[:3] != "s3:" {
-		return ""
-	}
-	return s[3:]
-}
 
 func buckets(s3ID string) (string, string) {
 	var h = fnv.New32()
@@ -41,22 +34,51 @@ type asset struct {
 	fs         sync.Mutex
 	lockreader sync.Mutex
 	lastAccess time.Time
+	downloader func(*asset) error
+}
+
+var badAsset = &asset{downloader: fetchNil}
+var dlers = map[string]func(*asset) error{
+	"s3":  fetchS3,
+	"nil": fetchNil,
+}
+
+func newAsset(id iiif.ID) *asset {
+	var s = string(id)
+	var parts = strings.SplitN(s, ":", 2)
+	if len(parts) != 2 {
+		return badAsset
+	}
+
+	var dlType, key = parts[0], parts[1]
+
+	return &asset{
+		id:         id,
+		key:        key,
+		path:       makePath(key),
+		downloader: dlers[dlType],
+	}
 }
 
 func lookupAsset(id iiif.ID) (a *asset, ok bool) {
 	assetMutex.Lock()
 	a, ok = assets[id]
 	if !ok {
-		a = &asset{id: id, key: makeKey(id)}
-		a.path = makePath(a.key)
-		assets[id] = a
+		a = newAsset(id)
+		if a.valid() {
+			assets[id] = a
+		}
 	}
 	assetMutex.Unlock()
 
 	return a, ok
 }
 
-func (a *asset) s3Get() error {
+func (a *asset) valid() bool {
+	return a.key != "" && a.downloader != nil
+}
+
+func (a *asset) download() error {
 	// If the file has already been cached, we can just return here
 	var _, err = os.Stat(a.path)
 	if err == nil {
@@ -64,7 +86,7 @@ func (a *asset) s3Get() error {
 	}
 
 	l.Debugf("s3-images plugin: no cached file at %q; downloading from S3", a.path)
-	return a.fetch()
+	return a.downloader(a)
 }
 
 // tryFLock attempts to lock for file writing in a non-blocking way.  If the

@@ -123,8 +123,8 @@ func IDToPath(id iiif.ID) (path string, err error) {
 	// Let the asset know it's being read
 	a.read()
 
-	// Attempt to pull from S3
-	err = a.s3Get()
+	// Attempt to download the asset content
+	err = a.download()
 	a.fUnlock()
 
 	return a.path, err

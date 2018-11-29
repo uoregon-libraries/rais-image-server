@@ -7,19 +7,22 @@ import (
 	"testing"
 
 	"github.com/uoregon-libraries/gopkg/assert"
+	"github.com/uoregon-libraries/gopkg/logger"
 )
 
 func TestIDToPath(t *testing.T) {
+	l = logger.DefaultLogger
+
 	// Set up an asset hard-coded to /dev/null so the fetch logic is skipped -
-	// s3Get will stat the file, be tricked into thnking it's cached, and return
-	var a = lookupAsset(iiif.ID("s3:foo"))
+	// download will stat the file, be tricked into thnking it's cached, and return
+	var a, _ = lookupAsset(iiif.ID("nil:foo"))
 	a.path = "/dev/null"
 
 	// Set up intense concurrency to see if we can cause mayhem
 	var wg sync.WaitGroup
 	var successes uint32
 	var tryit = func() {
-		var path, err = IDToPath("s3:foo")
+		var path, err = IDToPath("nil:foo")
 		if err != nil {
 			t.Errorf("Failed trying to get path from ID: %s", err)
 			t.FailNow()

@@ -18,10 +18,11 @@ func TestAssetLookup(t *testing.T) {
 		assert.Equal("foo", a.key, "key", t)
 		assert.Equal("/tmp/13/83/foo", a.path, "path", t)
 		assert.Equal(iiif.ID("s3:foo"), a.id, "id", t)
+		assert.True(a.valid(), "valid", t)
 	})
 	t.Run("non-S3 ID", func(t *testing.T) {
 		var a, _ = lookupAsset(iiif.ID("foo"))
-		assert.Equal("", a.key, "empty key", t)
+		assert.False(a.valid(), "invalid", t)
 	})
 	t.Run("existing ID", func(t *testing.T) {
 		var a, b *asset

@@ -12,7 +12,17 @@ import (
 	"github.com/uoregon-libraries/gopkg/fileutil"
 )
 
-func (a *asset) fetch() error {
+func (a *asset) setupTempFile() (*fileutil.SafeFile, error) {
+	var parentDir = filepath.Dir(a.path)
+	var err = os.MkdirAll(parentDir, 0755)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create cached file path %q: %s", parentDir, err)
+	}
+
+	return fileutil.NewSafeFile(a.path), nil
+}
+
+func fetchS3(a *asset) error {
 	var conf = &aws.Config{Region: aws.String(s3zone)}
 	var sess, err = session.NewSession(conf)
 	if err != nil {
@@ -24,12 +34,11 @@ func (a *asset) fetch() error {
 		Key:    aws.String(a.key),
 	}
 
-	var fullpath = filepath.Dir(a.path)
-	err = os.MkdirAll(fullpath, 0755)
+	var tmpfile *fileutil.SafeFile
+	tmpfile, err = a.setupTempFile()
 	if err != nil {
-		return fmt.Errorf("unable to create cached file path %q: %s", fullpath, err)
+		return err
 	}
-	var tmpfile = fileutil.NewSafeFile(a.path)
 
 	var dl = s3manager.NewDownloader(sess)
 	_, err = dl.Download(tmpfile, obj)
@@ -38,5 +47,13 @@ func (a *asset) fetch() error {
 		return fmt.Errorf("unable to download item %q: %s", a.key, err)
 	}
 
+	return tmpfile.Close()
+}
+
+func fetchNil(a *asset) error {
+	var tmpfile, err = a.setupTempFile()
+	if err != nil {
+		return err
+	}
 	return tmpfile.Close()
 }
