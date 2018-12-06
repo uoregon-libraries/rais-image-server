@@ -5,9 +5,6 @@
 #     # Simple case: just build the latest production image
 #     docker build --rm -t uolibraries/rais:latest ./docker
 #
-#     # Build an older version of RAIS
-#     docker build --rm -t uolibraries/rais:2.11.2 --build-arg gittag=v2.11.2 ./docker
-#
 #     # Generate the build image to simplify local development
 #     docker build --rm -t uolibraries/rais:build --target build ./docker
 FROM fedora:28 AS build
@@ -32,7 +29,7 @@ RUN dnf install -y GraphicsMagick
 
 # Go comes after other installs to avoid re-pulling the more expensive
 # dependencies when changing Go versions
-RUN curl -L https://dl.google.com/go/go1.11.1.linux-amd64.tar.gz > /tmp/go.tgz
+RUN curl -L https://dl.google.com/go/go1.11.2.linux-amd64.tar.gz > /tmp/go.tgz
 RUN cd /opt && tar -xzf /tmp/go.tgz
 
 # "Install" Go

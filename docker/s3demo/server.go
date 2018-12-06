@@ -10,6 +10,7 @@ import (
 func serve() {
 	http.HandleFunc("/", renderIndex)
 	http.HandleFunc("/asset/", renderAsset)
+	http.HandleFunc("/api/", renderAPIForm)
 
 	var fileServer = http.FileServer(http.Dir("."))
 	http.Handle("/osd/", fileServer)
@@ -27,6 +28,11 @@ type indexData struct {
 }
 
 func renderIndex(w http.ResponseWriter, req *http.Request) {
+	var path = req.URL.Path
+	if path != "/" {
+		http.NotFound(w, req)
+		return
+	}
 	var data = indexData{Assets: s3assets, Bucket: bucket}
 	var err = indexT.Execute(w, data)
 	if err != nil {
@@ -77,6 +83,15 @@ func renderAsset(w http.ResponseWriter, req *http.Request) {
 	var err = assetT.Execute(w, map[string]interface{}{"Asset": a})
 	if err != nil {
 		log.Printf("Unable to serve asset page: %s", err)
+		http.Error(w, "Server error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func renderAPIForm(w http.ResponseWriter, req *http.Request) {
+	var err = adminT.Execute(w, nil)
+	if err != nil {
+		log.Printf("Unable to serve admin page: %s", err)
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
 	}

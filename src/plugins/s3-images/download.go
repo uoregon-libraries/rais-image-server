@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -9,32 +10,50 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/uoregon-libraries/gopkg/fileutil"
-
-	"fmt"
 )
 
-// s3download is a variable so we can easily overwrite it if we need to for
-// testing or something
-var s3download = func(s3ID, path string) error {
-	os.MkdirAll(filepath.Dir(path), 0700)
-	var tmpfile = fileutil.NewSafeFile(path)
+func (a *asset) setupTempFile() (*fileutil.SafeFile, error) {
+	var parentDir = filepath.Dir(a.path)
+	var err = os.MkdirAll(parentDir, 0755)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create cached file path %q: %s", parentDir, err)
+	}
 
-	var conf = &aws.Config{Region: &s3zone}
+	return fileutil.NewSafeFile(a.path), nil
+}
+
+func fetchS3(a *asset) error {
+	var conf = &aws.Config{Region: aws.String(s3zone)}
 	var sess, err = session.NewSession(conf)
 	if err != nil {
 		return fmt.Errorf("unable to set up AWS session: %s", err)
 	}
 
 	var obj = &s3.GetObjectInput{
-		Bucket: &s3bucket,
-		Key:    &s3ID,
+		Bucket: aws.String(s3bucket),
+		Key:    aws.String(a.key),
+	}
+
+	var tmpfile *fileutil.SafeFile
+	tmpfile, err = a.setupTempFile()
+	if err != nil {
+		return err
 	}
 
 	var dl = s3manager.NewDownloader(sess)
 	_, err = dl.Download(tmpfile, obj)
 	if err != nil {
-		return fmt.Errorf("unable to download item %q: %s", s3ID, err)
+		tmpfile.Cancel()
+		return fmt.Errorf("unable to download item %q: %s", a.key, err)
 	}
 
+	return tmpfile.Close()
+}
+
+func fetchNil(a *asset) error {
+	var tmpfile, err = a.setupTempFile()
+	if err != nil {
+		return err
+	}
 	return tmpfile.Close()
 }

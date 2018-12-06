@@ -9,6 +9,15 @@
 # CLI: --address
 Address = ":12415"
 
+# AdminAddress: Optional, defaults to ":12416".  This is another web listener,
+# but exposes information which you may not want exposed publicly.  If you set
+# this to the same value as Address (above), admin endpoints will be exposed on
+# the same port as the public endpoints.
+#
+# Env: RAIS_ADMINADDRESS
+# CLI: --admin-address
+AdminAddress = ":12416"
+
 # LogLevel: Optional, defaults to "DEBUG".  Log messages below this severity
 # are ignored.
 #

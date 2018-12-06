@@ -1,25 +1,25 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"plugin"
 	"rais/src/iiif"
+	"reflect"
 	"sort"
+	"strings"
 
 	"github.com/uoregon-libraries/gopkg/logger"
 )
 
-type plugGeneric func()
-type plugIDToPath func(iiif.ID) (string, error)
-type plugLogger func(*logger.Logger)
-type plugWrapHandler func(string, http.Handler) (http.Handler, error)
-
-var idToPathPlugins []plugIDToPath
-var wrapHandlerPlugins []plugWrapHandler
-var teardownPlugins []plugGeneric
+var idToPathPlugins []func(iiif.ID) (string, error)
+var wrapHandlerPlugins []func(string, http.Handler) (http.Handler, error)
+var teardownPlugins []func()
+var purgeCachePlugins []func()
+var expireCachedImagePlugins []func(iiif.ID)
 
 // pluginsFor returns a list of all plugin files which matched the given
 // pattern.  Files are sorted by name.
@@ -69,124 +69,107 @@ func LoadPlugins(l *logger.Logger, patterns []string) {
 
 	for _, file := range plugFiles {
 		l.Infof("Loading plugin %q", file)
-		loadPlugin(file, l)
+		var err = loadPlugin(file, l)
+		if err != nil {
+			l.Errorf("Unable to load %q: %s", file, err)
+		}
 	}
+}
+
+type pluginWrapper struct {
+	*plugin.Plugin
+	path      string
+	functions []string
+	errors    []string
+}
+
+func newPluginWrapper(path string) (*pluginWrapper, error) {
+	var p, err = plugin.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load plugin %q: %s", path, err)
+	}
+	return &pluginWrapper{Plugin: p, path: path}, nil
+}
+
+// loadPluginFn loads the symbol by the given name and attempts to set it to
+// the given object via reflection.  If the two aren't the same type, an error
+// is added to the pluginWrapper's error list.
+func (pw *pluginWrapper) loadPluginFn(name string, obj interface{}) {
+	var sym, err = pw.Lookup(name)
+	if err != nil {
+		return
+	}
+
+	var objElem = reflect.ValueOf(obj).Elem()
+	var objType = objElem.Type()
+	var symV = reflect.ValueOf(sym)
+
+	if !symV.Type().AssignableTo(objType) {
+		pw.errors = append(pw.errors, fmt.Sprintf("invalid signature for %s (expecting %s)", name, objType))
+		return
+	}
+
+	objElem.Set(symV)
+	pw.functions = append(pw.functions, name)
 }
 
 // loadPlugin attempts to read the given plugin file and extract known symbols.
 // If a plugin exposes Initialize or SetLogger, they're called here once we're
 // sure the plugin is valid.  IDToPath functions are indexed globally for use
 // in the RAIS image serving handler.
-//
-// This function is unnecessarily complicated and needs refactoring.  Other
-// than the concrete type, the "index a function" blocks are all basically the
-// same.
-func loadPlugin(fullpath string, l *logger.Logger) {
-	var p, err = plugin.Open(fullpath)
+func loadPlugin(fullpath string, l *logger.Logger) error {
+	var pw, err = newPluginWrapper(fullpath)
 	if err != nil {
-		l.Errorf("Error loading plugin %q: %s", fullpath, err)
-		return
+		return err
 	}
 
-	var sym plugin.Symbol
-	var fnCount int
+	// Set up dummy / no-op functions so we can call these without risk
+	var log = func(*logger.Logger) {}
+	var initialize = func() {}
 
-	var log plugLogger
-	sym, err = p.Lookup("SetLogger")
-	if err == nil {
-		var f, ok = sym.(func(*logger.Logger))
-		if !ok {
-			l.Errorf("%q.SetLogger is invalid", fullpath)
-			return
-		}
-		l.Debugf("Found %q.SetLogger", fullpath)
-		log = plugLogger(f)
-		fnCount++
+	// Simply initialize those functions we only want indexed if they exist
+	var idToPath func(iiif.ID) (string, error)
+	var teardown func()
+	var wrapHandler func(string, http.Handler) (http.Handler, error)
+	var prgCache func()
+	var expCachedImg func(iiif.ID)
+
+	pw.loadPluginFn("SetLogger", &log)
+	pw.loadPluginFn("IDToPath", &idToPath)
+	pw.loadPluginFn("Initialize", &initialize)
+	pw.loadPluginFn("Teardown", &teardown)
+	pw.loadPluginFn("WrapHandler", &wrapHandler)
+	pw.loadPluginFn("PurgeCaches", &prgCache)
+	pw.loadPluginFn("ExpireCachedImage", &expCachedImg)
+
+	if len(pw.errors) != 0 {
+		return errors.New(strings.Join(pw.errors, ", "))
+	}
+	if len(pw.functions) == 0 {
+		return fmt.Errorf("no known functions exposed")
 	}
 
-	var idToPath plugIDToPath
-	sym, err = p.Lookup("IDToPath")
-	if err == nil {
-		var f, ok = sym.(func(iiif.ID) (string, error))
-		if !ok {
-			l.Errorf("%q.IDToPath is invalid", fullpath)
-			return
-		}
-		l.Debugf("Found %q.IDToPath", fullpath)
-		idToPath = plugIDToPath(f)
-		fnCount++
-	}
-
-	var init plugGeneric
-	sym, err = p.Lookup("Initialize")
-	if err == nil {
-		var f, ok = sym.(func())
-		if !ok {
-			l.Errorf("%q.Initialize is invalid", fullpath)
-			return
-		}
-		l.Debugf("Found %q.Initialize", fullpath)
-		init = plugGeneric(f)
-		fnCount++
-	}
-
-	var teardown plugGeneric
-	sym, err = p.Lookup("Teardown")
-	if err == nil {
-		var f, ok = sym.(func())
-		if !ok {
-			l.Errorf("%q.Teardown is invalid", fullpath)
-			return
-		}
-
-		l.Debugf("Found %q.Teardown", fullpath)
-		teardown = plugGeneric(f)
-		fnCount++
-	}
-
-	var wrapHandler plugWrapHandler
-	sym, err = p.Lookup("WrapHandler")
-	if err == nil {
-		var f, ok = sym.(func(string, http.Handler) (http.Handler, error))
-		if !ok {
-			l.Errorf("%q.WrapHandler is invalid", fullpath)
-			return
-		}
-
-		l.Debugf("Found %q.WrapHandler", fullpath)
-		wrapHandler = plugWrapHandler(f)
-		fnCount++
-	}
-
-	if fnCount == 0 {
-		l.Warnf("%q doesn't expose any known functions", fullpath)
-		return
-	}
-
-	// We can call SetLogger and Initialize immediately, as they're never called a second time
-	if log != nil {
-		log(l)
-	}
-	if init != nil {
-		init()
-	}
+	// We need to call SetLogger and Initialize immediately, as they're never
+	// called a second time and they tell us if the plugin is going to be used
+	log(l)
+	initialize()
 
 	// After initialization, we check if the plugin explicitly set itself to Disabled
-	sym, err = p.Lookup("Disabled")
+	var sym plugin.Symbol
+	sym, err = pw.Lookup("Disabled")
 	if err == nil {
 		var disabled, ok = sym.(*bool)
 		if !ok {
-			l.Errorf("%q.Disabled is not a boolean", fullpath)
-			return
+			return fmt.Errorf("non-boolean Disabled value exposed")
 		}
 		if *disabled {
 			l.Infof("%q is disabled", fullpath)
-			return
+			return nil
 		}
 		l.Debugf("%q is explicitly enabled", fullpath)
 	}
 
-	// Index other available functions
+	// Index remaining functions
 	if idToPath != nil {
 		idToPathPlugins = append(idToPathPlugins, idToPath)
 	}
@@ -196,4 +179,18 @@ func loadPlugin(fullpath string, l *logger.Logger) {
 	if wrapHandler != nil {
 		wrapHandlerPlugins = append(wrapHandlerPlugins, wrapHandler)
 	}
+	if prgCache != nil {
+		purgeCachePlugins = append(purgeCachePlugins, prgCache)
+	}
+	if expCachedImg != nil {
+		expireCachedImagePlugins = append(expireCachedImagePlugins, expCachedImg)
+	}
+
+	// Add info to stats
+	stats.Plugins = append(stats.Plugins, plugStats{
+		Path:      fullpath,
+		Functions: pw.functions,
+	})
+
+	return nil
 }

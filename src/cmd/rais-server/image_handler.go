@@ -134,14 +134,14 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 	// the cache is very limited to ensure only relatively small requests are
 	// actually cached.
 	if key := cacheKey(iiifURL); key != "" {
+		stats.TileCache.Get()
 		data, ok := tileCache.Get(key)
 		if ok {
-			cacheHits++
+			stats.TileCache.Hit()
 			w.Header().Set("Content-Type", mime.TypeByExtension("."+string(iiifURL.Format)))
 			w.Write(data.([]byte))
 			return
 		}
-		cacheMisses++
 	}
 
 	// No info path should mean a full command path - start reading the image
@@ -359,11 +359,13 @@ func (ih *ImageHandler) loadInfoFromCache(id iiif.ID) *iiif.Info {
 		return nil
 	}
 
+	stats.InfoCache.Get()
 	data, ok := infoCache.Get(id)
 	if !ok {
 		return nil
 	}
 
+	stats.InfoCache.Hit()
 	return ih.buildInfo(id, data.(ImageInfo))
 }
 
@@ -407,6 +409,7 @@ func (ih *ImageHandler) loadInfoFromImageResource(id iiif.ID, fp string) (*iiif.
 	}
 
 	if infoCache != nil {
+		stats.InfoCache.Set()
 		infoCache.Add(id, imageInfo)
 	}
 	return ih.buildInfo(id, imageInfo), nil
@@ -513,6 +516,7 @@ func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iii
 	}
 
 	if key := cacheKey(u); key != "" {
+		stats.TileCache.Set()
 		tileCache.Add(key, cacheBuf.Bytes())
 	}
 
