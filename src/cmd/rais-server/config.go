@@ -36,8 +36,10 @@ func parseConf() {
 	viper.AddConfigPath("/etc")
 	viper.AddConfigPath(".")
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("ERROR: Invalid RAIS config file (/etc/rais.toml or ./rais.toml): %s\n", err)
-		os.Exit(1)
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			fmt.Printf("ERROR: Invalid RAIS config file (/etc/rais.toml or ./rais.toml): %s\n", err)
+			os.Exit(1)
+		}
 	}
 
 	// CLI flags
