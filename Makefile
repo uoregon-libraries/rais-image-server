@@ -49,6 +49,7 @@ clean:
 docker: | clean generate
 	docker build --rm --target build -f $(MakefileDir)/docker/Dockerfile -t uolibraries/rais:build $(MakefileDir)
 	docker build --rm -f $(MakefileDir)/docker/Dockerfile -t uolibraries/rais:latest-indev $(MakefileDir)
+	docker build --rm -f $(MakefileDir)/docker/Dockerfile-alpine -t uolibraries/rais:latest-alpine $(MakefileDir)
 
 plugins: src/version/build.go
 	go build -ldflags="-s -w" -buildmode=plugin -o bin/plugins/s3-images.so rais/src/plugins/s3-images
