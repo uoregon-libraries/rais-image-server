@@ -47,6 +47,7 @@ FROM alpine:3.8 AS production
 LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 
 # Deps
+RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
 RUN apk add --no-cache openjpeg imagemagick6
 
 ENV RAIS_TILEPATH /var/local/images
