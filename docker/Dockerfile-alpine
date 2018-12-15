@@ -46,11 +46,15 @@ RUN make binaries plugins
 FROM alpine:3.8 AS production
 LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 
+# Add our user and group first to make sure their IDs get assigned consistently
+RUN addgroup -S rais && adduser -S rais -G rais
+
 # Deps
 RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
 RUN apk add --no-cache openjpeg imagemagick6
 
 ENV RAIS_TILEPATH /var/local/images
+RUN touch /etc/rais.toml && chown rais:rais /etc/rais.toml
 COPY --from=build /opt/rais-src/bin /opt/rais/
 
 #USER rais
