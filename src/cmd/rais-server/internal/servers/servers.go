@@ -17,6 +17,7 @@ type Server struct {
 	*http.Server
 	Name string
 	Mux  *http.ServeMux
+	middleware []func(http.Handler) http.Handler
 }
 
 // NewServer registers a named server at the given bind address.  If the
@@ -44,8 +45,19 @@ func New(name, addr string) *Server {
 	return s
 }
 
+// AddMiddleware appends to the list of middleware handlers - these wrap *all*
+// handlers in the given middleware
+//
+// Middleware is any function that takes a handler and returns another handler
+func (s *Server) AddMiddleware(mw func(http.Handler) http.Handler) {
+	s.middleware = append(s.middleware, mw)
+}
+
 // Handle wraps the server's ServeMux Handle method
 func (s *Server) Handle(pattern string, handler http.Handler) {
+	for _, m := range s.middleware {
+		handler = m(handler)
+	}
 	s.Mux.Handle(pattern, handler)
 }
 

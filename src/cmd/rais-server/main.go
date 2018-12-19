@@ -68,10 +68,13 @@ func main() {
 
 	// Set up handlers / listeners
 	var pubSrv = servers.New("RAIS", address)
+	pubSrv.AddMiddleware(logMiddleware)
 	handle(pubSrv, ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
 	handle(pubSrv, "/images/dzi/", http.HandlerFunc(ih.DZIRoute))
+	handle(pubSrv, "/", http.NotFoundHandler())
 
 	var admSrv = servers.New("RAIS Admin", adminAddress)
+	admSrv.AddMiddleware(logMiddleware)
 	admSrv.Handle("/admin/stats.json", stats)
 	admSrv.Handle("/admin/cache/purge", http.HandlerFunc(adminPurgeCache))
 
