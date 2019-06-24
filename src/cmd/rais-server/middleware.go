@@ -10,7 +10,6 @@ import (
 func logMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var ip = r.RemoteAddr
-		logger.Infof("%#v", r.Header)
 		var forwarded = r.Header.Get("X-Forwarded-For")
 		if forwarded != "" {
 			ip = ip + "," + forwarded
