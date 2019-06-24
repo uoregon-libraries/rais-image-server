@@ -50,7 +50,7 @@ func LoadPlugins(l *logger.Logger, patterns []string) {
 	for _, pattern := range patterns {
 		var matches, err = pluginsFor(pattern)
 		if err != nil {
-			l.Fatalf("Cannot process pattern %q: %s", pattern, err)
+			l.Warnf("Skipping invalid plugin pattern %q: %s", pattern, err)
 		}
 
 		// We do a sanity check before actually processing any plugins

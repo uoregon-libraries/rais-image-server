@@ -83,11 +83,11 @@ TileCacheLen = 0
 # The example s3-images and json-trace plugins are considered production-ready.
 #
 # A value of "*.so" replicates the 3.0.x behavior of loading everything in
-# plugins/.
+# plugins/, while a value of "" disabled plugins entirely.
 #
 # Env: RAIS_PLUGINS
 # CLI: --plugins
-Plugins = "*.so"
+Plugins = ""
 
 ####
 # If you wanted to globally limit request size, use the below values.  By
