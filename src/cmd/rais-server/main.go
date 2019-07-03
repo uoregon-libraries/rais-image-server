@@ -6,7 +6,6 @@ import (
 	"rais/src/cmd/rais-server/internal/servers"
 	"rais/src/iiif"
 	"rais/src/img"
-	"rais/src/magick"
 	"rais/src/openjpeg"
 	"rais/src/plugins"
 	"rais/src/version"
@@ -33,7 +32,6 @@ func main() {
 	parseConf()
 	Logger = logger.New(logger.LogLevelFromString(viper.GetString("LogLevel")))
 	openjpeg.Logger = Logger
-	magick.Logger = Logger
 
 	setupCaches()
 
@@ -50,11 +48,10 @@ func main() {
 		LoadPlugins(Logger, strings.Split(pluginList, ","))
 	}
 
-	// Register our decoders after plugins have been loaded to allow plugins to
-	// handle images - for instance, we might want a pyramidal tiff plugin or
+	// Register our JP2 decoder after plugins have been loaded to allow plugins
+	// to handle images - for instance, we might want a pyramidal tiff plugin or
 	// something one day
 	img.RegisterDecoder(decodeJP2)
-	img.RegisterDecoder(decodeCommonFile)
 
 	tilePath := viper.GetString("TilePath")
 	address := viper.GetString("Address")

@@ -14,7 +14,6 @@ LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 RUN dnf update -y
 RUN dnf upgrade -y
 RUN dnf install -y openjpeg2-devel
-RUN dnf install -y ImageMagick-devel
 RUN dnf install -y git
 RUN dnf install -y gcc
 RUN dnf install -y make
@@ -63,7 +62,7 @@ LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 RUN groupadd -r rais && useradd -r -g rais rais
 
 # Deps
-RUN dnf update -y && dnf upgrade -y && dnf install -y openjpeg2 ImageMagick
+RUN dnf update -y && dnf upgrade -y && dnf install -y openjpeg2
 
 ENV RAIS_TILEPATH /var/local/images
 RUN touch /etc/rais.toml && chown rais:rais /etc/rais.toml
