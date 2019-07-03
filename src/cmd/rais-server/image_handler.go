@@ -15,8 +15,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/uoregon-libraries/gopkg/logger"
 )
 
 func acceptsLD(req *http.Request) bool {
@@ -171,7 +169,7 @@ func (ih *ImageHandler) getIIIFPath(id iiif.ID) string {
 		if err == plugins.ErrSkipped {
 			continue
 		}
-		logger.Warnf("Error trying to use plugin to translate iiif.ID: %s", err)
+		Logger.Warnf("Error trying to use plugin to translate iiif.ID: %s", err)
 	}
 	return ih.TilePath + "/" + string(id)
 }
