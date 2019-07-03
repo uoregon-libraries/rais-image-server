@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"rais/src/iiif"
+	"rais/src/img"
 	"rais/src/plugins"
 	"regexp"
 	"strconv"
@@ -39,34 +40,20 @@ var (
 	DZITilePathRegex = regexp.MustCompile(`^/images/dzi/(.+)_files/(\d+)/(\d+)_(\d+).jpg$`)
 )
 
-type constraint struct {
-	Width  int
-	Height int
-	Area   int64
-}
-
-var unlimited = constraint{math.MaxInt32, math.MaxInt32, math.MaxInt64}
-
-// smallerThanAny returns true if the constraint's maximums are exceeded by the
-// given width and height
-func (c constraint) smallerThanAny(w, h int) bool {
-	return w > c.Width || h > c.Height || int64(w)*int64(h) > c.Area
-}
-
 // ImageHandler responds to a IIIF URL request and parses the requested
 // transformation within the limits of the handler's capabilities
 type ImageHandler struct {
 	IIIFBase   *url.URL
 	FeatureSet *iiif.FeatureSet
 	TilePath   string
-	Maximums   constraint
+	Maximums   img.Constraint
 }
 
 // NewImageHandler sets up a base ImageHandler with no features
 func NewImageHandler(tp string) *ImageHandler {
 	return &ImageHandler{
 		TilePath: tp,
-		Maximums: constraint{Width: math.MaxInt32, Height: math.MaxInt32, Area: math.MaxInt64},
+		Maximums: img.Constraint{Width: math.MaxInt32, Height: math.MaxInt32, Area: math.MaxInt64},
 	}
 }
 
@@ -146,9 +133,12 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// No info path should mean a full command path - start reading the image
-	res, err := NewImageResource(iiifURL.ID, fp)
+	res, err := img.NewResource(iiifURL.ID, fp)
 	if err != nil {
 		e := newImageResError(err)
+		if e.Code != 404 {
+			Logger.Errorf("Error initializing resource %s (path %s): %s", iiifURL.ID, fp, err)
+		}
 		http.Error(w, e.Message, e.Code)
 		return
 	}
@@ -197,13 +187,13 @@ func (ih *ImageHandler) DZIRoute(w http.ResponseWriter, req *http.Request) {
 
 	var id iiif.ID
 	var filePath string
-	var handler func(*ImageResource)
+	var handler func(*img.Resource)
 
 	parts := DZIInfoRegex.FindStringSubmatch(p)
 	if parts != nil {
 		id = iiif.URLToID(parts[1])
 		filePath = ih.TilePath + "/" + string(id)
-		handler = func(r *ImageResource) { ih.DZIInfo(w, r) }
+		handler = func(r *img.Resource) { ih.DZIInfo(w, r) }
 	}
 
 	parts = DZITilePathRegex.FindStringSubmatch(p)
@@ -217,7 +207,7 @@ func (ih *ImageHandler) DZIRoute(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		handler = func(r *ImageResource) { ih.DZITile(w, req, r, level, tileX, tileY) }
+		handler = func(r *img.Resource) { ih.DZITile(w, req, r, level, tileX, tileY) }
 	}
 
 	if handler == nil {
@@ -226,9 +216,12 @@ func (ih *ImageHandler) DZIRoute(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	res, err := NewImageResource(id, filePath)
+	res, err := img.NewResource(id, filePath)
 	if err != nil {
 		e := newImageResError(err)
+		if e.Code != 404 {
+			Logger.Errorf("Error initializing resource %s (path %s): %s", id, filePath, err)
+		}
 		http.Error(w, e.Message, e.Code)
 		return
 	}
@@ -240,7 +233,7 @@ func (ih *ImageHandler) DZIRoute(w http.ResponseWriter, req *http.Request) {
 // DZIInfo returns the info response for a deep-zoom request.  This is very
 // hard-coded because the XML is simple, and deep-zoom is really a minor
 // addition to RAIS.
-func (ih *ImageHandler) DZIInfo(w http.ResponseWriter, res *ImageResource) {
+func (ih *ImageHandler) DZIInfo(w http.ResponseWriter, res *img.Resource) {
 	format := `<?xml version="1.0" encoding="UTF-8"?>
 		<Image xmlns="http://schemas.microsoft.com/deepzoom/2008" TileSize="%d" Overlap="0" Format="jpg">
 			<Size Width="%d" Height="%d"/>
@@ -252,7 +245,7 @@ func (ih *ImageHandler) DZIInfo(w http.ResponseWriter, res *ImageResource) {
 
 // DZITile returns a tile by setting up the appropriate IIIF data structure
 // based on the deep-zoom request
-func (ih *ImageHandler) DZITile(w http.ResponseWriter, req *http.Request, res *ImageResource, l, tX, tY int) {
+func (ih *ImageHandler) DZITile(w http.ResponseWriter, req *http.Request, res *img.Resource, l, tX, tY int) {
 	// We always return 256x256 or bigger
 	if l < 8 {
 		l = 8
@@ -331,7 +324,9 @@ func (ih *ImageHandler) Info(w http.ResponseWriter, req *http.Request, info *iii
 
 func newImageResError(err error) *HandlerError {
 	switch err {
-	case ErrImageDoesNotExist:
+	case img.ErrDimensionsExceedLimits:
+		return NewError(err.Error(), 501)
+	case img.ErrDoesNotExist:
 		return NewError("image resource does not exist", 404)
 	default:
 		return NewError(err.Error(), 500)
@@ -395,7 +390,7 @@ func (ih *ImageHandler) loadInfoOverride(id iiif.ID, fp string) *iiif.Info {
 
 func (ih *ImageHandler) loadInfoFromImageResource(id iiif.ID, fp string) (*iiif.Info, *HandlerError) {
 	Logger.Debugf("Loading image data from image resource (id: %s)", id)
-	res, err := NewImageResource(id, fp)
+	res, err := img.NewResource(id, fp)
 	if err != nil {
 		return nil, newImageResError(err)
 	}
@@ -421,7 +416,7 @@ func (ih *ImageHandler) buildInfo(id iiif.ID, i ImageInfo) *iiif.Info {
 	info.Width = i.Width
 	info.Height = i.Height
 
-	if ih.Maximums.smallerThanAny(i.Width, i.Height) {
+	if ih.Maximums.SmallerThanAny(i.Width, i.Height) {
 		info.Profile.MaxArea = ih.Maximums.Area
 		info.Profile.MaxWidth = ih.Maximums.Width
 		info.Profile.MaxHeight = ih.Maximums.Height
@@ -469,7 +464,7 @@ func marshalInfo(info *iiif.Info) ([]byte, *HandlerError) {
 }
 
 // Command handles image processing operations
-func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL, res *ImageResource, info *iiif.Info) {
+func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL, res *img.Resource, info *iiif.Info) {
 	// Send last modified time
 	if err := sendHeaders(w, req, res.FilePath); err != nil {
 		return
@@ -486,7 +481,7 @@ func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iii
 	// If we have an info, we can make use of it for the constraints rather than
 	// using the global constraints; this is useful for overridden info.json files
 	if info != nil {
-		max = constraint{
+		max = img.Constraint{
 			Width:  info.Profile.MaxWidth,
 			Height: info.Profile.MaxHeight,
 			Area:   info.Profile.MaxArea,
@@ -503,7 +498,9 @@ func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iii
 	}
 	img, err := res.Apply(u, max)
 	if err != nil {
-		http.Error(w, err.Message, err.Code)
+		e := newImageResError(err)
+		Logger.Errorf("Error applying transorm: %s", err)
+		http.Error(w, e.Message, e.Code)
 		return
 	}
 

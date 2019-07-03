@@ -1,12 +1,24 @@
 package main
 
-// IIIFDecodeFn is a function which takes a filename and returns a IIIFImageDecoder
-type IIIFDecodeFn func(string) (IIIFImageDecoder, error)
+import (
+	"path/filepath"
+	"rais/src/img"
+	"rais/src/magick"
+	"rais/src/openjpeg"
+)
 
-// ExtDecoders is our list of registered decoders for given file extensions
-var ExtDecoders = make(map[string]IIIFDecodeFn)
+func decodeJP2(path string) (img.Decoder, error) {
+	if filepath.Ext(path) == ".jp2" {
+		return openjpeg.NewJP2Image(path)
+	}
+	return nil, img.ErrNotHandled
+}
 
-// RegisterDecoder assigns the given decode function to a file extension
-func RegisterDecoder(ext string, fn IIIFDecodeFn) {
-	ExtDecoders[ext] = fn
+func decodeCommonFile(path string) (img.Decoder, error) {
+	switch filepath.Ext(path) {
+	case ".tif", ".tiff", ".png", ".jpg", "jpeg", ".gif":
+		return magick.NewImage(path)
+	default:
+		return nil, img.ErrNotHandled
+	}
 }

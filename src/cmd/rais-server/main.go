@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"rais/src/cmd/rais-server/internal/servers"
 	"rais/src/iiif"
+	"rais/src/img"
 	"rais/src/magick"
 	"rais/src/openjpeg"
 	"rais/src/plugins"
@@ -48,6 +49,12 @@ func main() {
 	} else {
 		LoadPlugins(Logger, strings.Split(pluginList, ","))
 	}
+
+	// Register our decoders after plugins have been loaded to allow plugins to
+	// handle images - for instance, we might want a pyramidal tiff plugin or
+	// something one day
+	img.RegisterDecoder(decodeJP2)
+	img.RegisterDecoder(decodeCommonFile)
 
 	tilePath := viper.GetString("TilePath")
 	address := viper.GetString("Address")
