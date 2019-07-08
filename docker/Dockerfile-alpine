@@ -39,7 +39,7 @@ RUN go mod download
 ADD ./Makefile /opt/rais-src/Makefile
 ADD ./src /opt/rais-src/src
 ADD ./scripts /opt/rais-src/scripts
-RUN make binaries plugins
+RUN make
 
 # Production image just installs runtime deps and copies in the binaries
 FROM alpine:3.8 AS production

@@ -54,7 +54,7 @@ RUN go mod download
 ADD ./Makefile /opt/rais-src/Makefile
 ADD ./src /opt/rais-src/src
 ADD ./scripts /opt/rais-src/scripts
-RUN make binaries plugins
+RUN make
 RUN make bin/plugins/imagick-decoder.so
 
 # Production image just installs runtime deps and copies in the binaries
