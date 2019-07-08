@@ -56,6 +56,6 @@ ENV RAIS_TILEPATH /var/local/images
 RUN touch /etc/rais.toml && chown rais:rais /etc/rais.toml
 COPY --from=build /opt/rais-src/bin /opt/rais/
 
-#USER rais
+USER rais
 EXPOSE 12415
 ENTRYPOINT ["/opt/rais/rais-server"]
