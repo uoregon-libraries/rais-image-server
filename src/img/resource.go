@@ -1,4 +1,4 @@
-package main
+package img
 
 import (
 	"errors"
@@ -7,76 +7,54 @@ import (
 	"image/draw"
 	"math"
 	"os"
-	"path"
 	"rais/src/iiif"
 	"rais/src/transform"
-	"strings"
 )
 
-// Custom errors an image read/transform operation could return
-var (
-	ErrImageDoesNotExist = errors.New("image file does not exist")
-	ErrInvalidFiletype   = errors.New("invalid or unknown file type")
-	ErrDecodeImage       = NewError("unable to decode image", 500)
-	ErrBadImageFile      = errors.New("unable to read image")
-)
-
-// IIIFImageDecoder defines an interface for reading images in a generic way.  It's
-// heavily biased toward the way we've had to do our JP2 images since they're
-// the more unusual use-case.
-type IIIFImageDecoder interface {
-	DecodeImage() (image.Image, error)
-	GetWidth() int
-	GetHeight() int
-	GetTileWidth() int
-	GetTileHeight() int
-	GetLevels() int
-	SetCrop(image.Rectangle)
-	SetResizeWH(int, int)
-}
-
-// ImageResource wraps a decoder, IIIF ID, and the path to the image
-type ImageResource struct {
-	Decoder  IIIFImageDecoder
+// Resource wraps a decoder, IIIF ID, and the path to the image
+type Resource struct {
+	Decoder  Decoder
 	ID       iiif.ID
 	FilePath string
 }
 
-// NewImageResource initializes and returns an ImageResource for the given id
+// NewResource initializes and returns an Resource for the given id
 // and path.  If the path doesn't resolve to a valid file, or resolves to a
 // file type that isn't supported, an error is returned.  File type is
 // determined by extension, so images will need standard extensions in order to
 // work.
-func NewImageResource(id iiif.ID, filepath string) (*ImageResource, error) {
+func NewResource(id iiif.ID, filepath string) (*Resource, error) {
 	var err error
 
 	// First, does the file exist?
 	if _, err = os.Stat(filepath); err != nil {
-		Logger.Infof("Image does not exist: %#v", filepath)
-		return nil, ErrImageDoesNotExist
+		return nil, ErrDoesNotExist
 	}
 
-	// File exists - is its extension registered?
-	newDecoder, ok := ExtDecoders[strings.ToLower(path.Ext(filepath))]
-	if !ok {
-		Logger.Errorf("Image type unknown / invalid: %#v", filepath)
+	// File exists - is a decoder registered for it?
+	var d Decoder
+	for _, decodeFn := range fns {
+		d, err = decodeFn(filepath)
+		if err == nil && d != nil {
+			break
+		}
+		if err == ErrNotHandled {
+			continue
+		}
+		return nil, err
+	}
+
+	if d == nil {
 		return nil, ErrInvalidFiletype
 	}
 
-	// We have a decoder for the file type - attempt to instantiate it
-	d, err := newDecoder(filepath)
-	if err != nil {
-		Logger.Errorf("Unable to read image %#v: %s", filepath, err)
-		return nil, ErrBadImageFile
-	}
-
-	img := &ImageResource{ID: id, Decoder: d, FilePath: filepath}
+	img := &Resource{ID: id, Decoder: d, FilePath: filepath}
 	return img, nil
 }
 
 // getResizeWithConstraints returns a scaled rectangle, computing the best fit
 // for the given dimensions combined with our local constraints
-func getResizeWithConstraints(crop image.Rectangle, max constraint) image.Rectangle {
+func getResizeWithConstraints(crop image.Rectangle, max Constraint) image.Rectangle {
 	// First figure out the ideal width and height within our max width and height
 	cx := crop.Dx()
 	cy := crop.Dy()
@@ -109,7 +87,7 @@ func getResizeWithConstraints(crop image.Rectangle, max constraint) image.Rectan
 
 // Apply runs all image manipulation operations described by the IIIF URL, and
 // returns an image.Image ready for encoding to the client
-func (res *ImageResource) Apply(u *iiif.URL, max constraint) (image.Image, *HandlerError) {
+func (res *Resource) Apply(u *iiif.URL, max Constraint) (image.Image, error) {
 	// Crop and resize have to be prepared before we can decode
 	w, h := res.Decoder.GetWidth(), res.Decoder.GetHeight()
 	crop := u.Region.GetCrop(w, h)
@@ -128,8 +106,8 @@ func (res *ImageResource) Apply(u *iiif.URL, max constraint) (image.Image, *Hand
 	if u.Rotation.Degrees == 90 || u.Rotation.Degrees == 270 {
 		sw, sh = sh, sw
 	}
-	if max.smallerThanAny(sw, sh) {
-		return nil, NewError("requested image size exceeds server maximums", 501)
+	if max.SmallerThanAny(sw, sh) {
+		return nil, ErrDimensionsExceedLimits
 	}
 
 	res.Decoder.SetCrop(crop)
@@ -137,8 +115,7 @@ func (res *ImageResource) Apply(u *iiif.URL, max constraint) (image.Image, *Hand
 
 	img, err := res.Decoder.DecodeImage()
 	if err != nil {
-		Logger.Errorf("Unable to decode image: %s", err)
-		return nil, ErrDecodeImage
+		return nil, errors.New("unable to decode image: " + err.Error())
 	}
 
 	if u.Rotation.Mirror || u.Rotation.Degrees != 0 {

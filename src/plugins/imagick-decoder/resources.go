@@ -1,4 +1,4 @@
-package magick
+package main
 
 /*
 #cgo pkg-config: MagickCore

@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"rais/src/fakehttp"
 	"rais/src/iiif"
+	"rais/src/img"
 	"strings"
 	"testing"
 
@@ -18,8 +19,11 @@ import (
 	"github.com/uoregon-libraries/gopkg/logger"
 )
 
+var unlimited = img.Constraint{math.MaxInt32, math.MaxInt32, math.MaxInt64}
+
 func init() {
 	Logger = logger.New(logger.Warn)
+	img.RegisterDecoder(decodeJP2)
 }
 
 func rootDir() string {
@@ -29,7 +33,7 @@ func rootDir() string {
 }
 
 // Sets up everything necessary to test a IIIF request
-func dorequestGeneric(path string, acceptLD bool, max constraint, fs *iiif.FeatureSet, t *testing.T) *fakehttp.ResponseWriter {
+func dorequestGeneric(path string, acceptLD bool, max img.Constraint, fs *iiif.FeatureSet, t *testing.T) *fakehttp.ResponseWriter {
 	u, _ := url.Parse("http://example.com/foo/bar")
 	w := fakehttp.NewResponseWriter()
 	reqPath := fmt.Sprintf("/foo/bar/%s", path)
@@ -55,12 +59,12 @@ func dorequestGeneric(path string, acceptLD bool, max constraint, fs *iiif.Featu
 }
 
 // Sets up everything necessary to test a IIIF request using level 1 support
-func dorequest(path string, acceptLD bool, max constraint, t *testing.T) *fakehttp.ResponseWriter {
+func dorequest(path string, acceptLD bool, max img.Constraint, t *testing.T) *fakehttp.ResponseWriter {
 	return dorequestGeneric(path, acceptLD, max, iiif.FeatureSet1(), t)
 }
 
 // Sets up everything necessary to test a IIIF request using level 2 support
-func dorequestl2(path string, acceptLD bool, max constraint, t *testing.T) *fakehttp.ResponseWriter {
+func dorequestl2(path string, acceptLD bool, max img.Constraint, t *testing.T) *fakehttp.ResponseWriter {
 	return dorequestGeneric(path, acceptLD, max, iiif.FeatureSet2(), t)
 }
 
@@ -131,7 +135,7 @@ func TestInfoRedirect(t *testing.T) {
 // TestInfoMaxSize verifies that when the image is bigger than the handler's
 // maximums, values are present in the info profile
 func TestInfoMaxSize(t *testing.T) {
-	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, constraint{60, 80, 480}, t)
+	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, img.Constraint{60, 80, 480}, t)
 	var data iiif.Info
 	json.Unmarshal(w.Output, &data)
 	assert.Equal(60, data.Profile.MaxWidth, "JSON-decoded max width", t)
@@ -147,7 +151,7 @@ func TestInfoMaxSize(t *testing.T) {
 // TestInfoNoMaxSize verifies that when the image is smaller than the handler's
 // maximums, values are not present in the info profile
 func TestInfoNoMaxSize(t *testing.T) {
-	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, constraint{6000, 8000, 4800000}, t)
+	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, img.Constraint{6000, 8000, 4800000}, t)
 	var data iiif.Info
 	json.Unmarshal(w.Output, &data)
 	assert.Equal(0, data.Profile.MaxWidth, "JSON-decoded width", t)
@@ -186,21 +190,21 @@ func TestCommandHandler(t *testing.T) {
 }
 
 func TestCommandHandlerInvalidSize(t *testing.T) {
-	img := "docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/pct:10,10,80,80/full/0/default.jpg"
-	areaConstraint := constraint{math.MaxInt32, math.MaxInt32, 480}
-	wConstraint := constraint{20, math.MaxInt32, math.MaxInt64}
-	hConstraint := constraint{math.MaxInt32, 20, math.MaxInt64}
+	imgid := "docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/pct:10,10,80,80/full/0/default.jpg"
+	areaConstraint := img.Constraint{math.MaxInt32, math.MaxInt32, 480}
+	wConstraint := img.Constraint{20, math.MaxInt32, math.MaxInt64}
+	hConstraint := img.Constraint{math.MaxInt32, 20, math.MaxInt64}
 
 	// For sanity let's make sure the request has no errors when we don't specify
 	// any constraints
-	w := dorequestl2(img, false, unlimited, t)
+	w := dorequestl2(imgid, false, unlimited, t)
 	assert.Equal(-1, w.StatusCode, "Supported request with valid size doesn't set status code", t)
 
-	w = dorequestl2(img, false, wConstraint, t)
+	w = dorequestl2(imgid, false, wConstraint, t)
 	assert.Equal(501, w.StatusCode, "Status code when width is too large", t)
-	w = dorequestl2(img, false, hConstraint, t)
+	w = dorequestl2(imgid, false, hConstraint, t)
 	assert.Equal(501, w.StatusCode, "Status code when height is too large", t)
-	w = dorequestl2(img, false, areaConstraint, t)
+	w = dorequestl2(imgid, false, areaConstraint, t)
 	assert.Equal(501, w.StatusCode, "Status code when area is too large", t)
 }
 
