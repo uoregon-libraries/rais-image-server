@@ -18,6 +18,7 @@ RUN dnf install -y git
 RUN dnf install -y gcc
 RUN dnf install -y make
 RUN dnf install -y tar
+RUN dnf install -y findutils
 
 # Installing GraphicsMagick is wholly unnecessary, but helps when using the
 # build box for things like converting images.  Since opj2_encode doesn't
@@ -51,6 +52,7 @@ RUN go mod download
 # trigger a rebuild
 ADD ./Makefile /opt/rais-src/Makefile
 ADD ./src /opt/rais-src/src
+ADD ./scripts /opt/rais-src/scripts
 RUN make binaries plugins
 
 # Production image just installs runtime deps and copies in the binaries

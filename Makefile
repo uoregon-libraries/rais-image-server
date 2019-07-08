@@ -20,7 +20,7 @@ src/version/build.go:
 	@chmod a+w src/version/build.go 2>/dev/null || true
 
 # Binary building rules
-binaries: src/transform/rotation.go src/version/build.go
+binaries: src/transform/rotation.go src/version/build.go plugins
 	go build -ldflags="-s -w" -o ./bin/rais-server rais/src/cmd/rais-server
 	go build -ldflags="-s -w" -o ./bin/jp2info rais/src/cmd/jp2info
 	@chmod -R a+w bin/ 2>/dev/null || true
@@ -51,9 +51,11 @@ docker: | clean generate
 	docker build --rm -f $(MakefileDir)/docker/Dockerfile -t uolibraries/rais:latest-indev $(MakefileDir)
 	docker build --rm -f $(MakefileDir)/docker/Dockerfile-alpine -t uolibraries/rais:latest-alpine $(MakefileDir)
 
-plugins: src/version/build.go
-	go build -ldflags="-s -w" -buildmode=plugin -o bin/plugins/s3-images.so rais/src/plugins/s3-images
-	go build -ldflags="-s -w" -buildmode=plugin -o bin/plugins/external-images.so rais/src/plugins/external-images
-	go build -ldflags="-s -w" -buildmode=plugin -o bin/plugins/datadog.so rais/src/plugins/datadog
-	go build -ldflags="-s -w" -buildmode=plugin -o bin/plugins/json-tracer.so rais/src/plugins/json-tracer
+# Build plugins on any change to their directory or their go files
+bin/plugins/%.so : src/plugins/% src/version/build.go src/plugins/%/*.go
+	go build -ldflags="-s -w" -buildmode=plugin -o $@ rais/$<
+
+# Build all the plugins with horrible shell magic!
+PLUGS := $(shell ./scripts/pluglist.sh)
+plugins: $(PLUGS)
 	@chmod -R a+w bin/ || true
