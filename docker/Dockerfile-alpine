@@ -42,7 +42,7 @@ ADD ./scripts /opt/rais-src/scripts
 RUN make
 
 # Production image just installs runtime deps and copies in the binaries
-FROM alpine:3.8 AS production
+FROM alpine:3.10 AS production
 LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 
 # Add our user and group first to make sure their IDs get assigned consistently

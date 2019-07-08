@@ -7,7 +7,7 @@
 #
 #     # Generate the build image to simplify local development
 #     docker build --rm -t uolibraries/rais:build --target build ./docker
-FROM fedora:29 AS build
+FROM fedora:30 AS build
 LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 
 # Install all the build dependencies
@@ -58,7 +58,7 @@ RUN make
 RUN make bin/plugins/imagick-decoder.so
 
 # Production image just installs runtime deps and copies in the binaries
-FROM fedora:29 AS production
+FROM fedora:30 AS production
 LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 
 # Stolen from mariadb dockerfile: add our user and group first to make sure
