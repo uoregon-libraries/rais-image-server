@@ -35,7 +35,19 @@ func main() {
 	magick.Logger = Logger
 
 	setupCaches()
-	LoadPlugins(Logger, strings.Split(viper.GetString("Plugins"), ","))
+
+	var pluginList string
+
+	// Don't let the default plugin list be used if we have an explicit value of ""
+	if viper.IsSet("Plugins") {
+		pluginList = viper.GetString("Plugins")
+	}
+
+	if pluginList == "" {
+		Logger.Infof("No plugins will attempt to be loaded")
+	} else {
+		LoadPlugins(Logger, strings.Split(pluginList, ","))
+	}
 
 	tilePath := viper.GetString("TilePath")
 	address := viper.GetString("Address")
