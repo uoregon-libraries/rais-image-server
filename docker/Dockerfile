@@ -14,6 +14,7 @@ LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 RUN dnf update -y
 RUN dnf upgrade -y
 RUN dnf install -y openjpeg2-devel
+RUN dnf install -y ImageMagick-devel
 RUN dnf install -y git
 RUN dnf install -y gcc
 RUN dnf install -y make
@@ -54,6 +55,7 @@ ADD ./Makefile /opt/rais-src/Makefile
 ADD ./src /opt/rais-src/src
 ADD ./scripts /opt/rais-src/scripts
 RUN make binaries plugins
+RUN make bin/plugins/imagick-decoder.so
 
 # Production image just installs runtime deps and copies in the binaries
 FROM fedora:29 AS production
@@ -64,7 +66,7 @@ LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 RUN groupadd -r rais && useradd -r -g rais rais
 
 # Deps
-RUN dnf update -y && dnf upgrade -y && dnf install -y openjpeg2
+RUN dnf update -y && dnf upgrade -y && dnf install -y openjpeg2 ImageMagick
 
 ENV RAIS_TILEPATH /var/local/images
 RUN touch /etc/rais.toml && chown rais:rais /etc/rais.toml
