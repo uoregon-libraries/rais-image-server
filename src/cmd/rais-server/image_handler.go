@@ -119,6 +119,9 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 	fp := ih.getIIIFPath(iiifURL.ID)
 	info, e := ih.getInfo(iiifURL.ID, fp)
 	if e != nil {
+		if e.Code != 404 {
+			Logger.Errorf("Error getting IIIF info.json for resource %s (path %s): %s", iiifURL.ID, fp, e.Message)
+		}
 		http.Error(w, e.Message, e.Code)
 		return
 	}
