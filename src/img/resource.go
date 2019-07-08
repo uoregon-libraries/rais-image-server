@@ -35,13 +35,15 @@ func NewResource(id iiif.ID, filepath string) (*Resource, error) {
 	var d Decoder
 	for _, decodeFn := range fns {
 		d, err = decodeFn(filepath)
+		if err == nil && d != nil {
+			break
+		}
 		if err == ErrNotHandled {
 			continue
 		}
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
+
 	if d == nil {
 		return nil, ErrInvalidFiletype
 	}
