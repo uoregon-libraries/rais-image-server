@@ -22,8 +22,7 @@ RUN apk add --no-cache curl
 # this installation doesn't hurt the final production docker image.
 RUN apk add --no-cache graphicsmagick
 
-# Go comes after other installs to avoid re-pulling the more expensive
-# dependencies when changing Go versions
+# This is necessary for our openjp2 C bindings
 RUN apk add --no-cache musl-dev
 
 # Make sure the build box can lint code
@@ -57,6 +56,6 @@ ENV RAIS_TILEPATH /var/local/images
 RUN touch /etc/rais.toml && chown rais:rais /etc/rais.toml
 COPY --from=build /opt/rais-src/bin /opt/rais/
 
-#USER rais
+USER rais
 EXPOSE 12415
 ENTRYPOINT ["/opt/rais/rais-server"]
