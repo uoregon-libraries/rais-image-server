@@ -17,13 +17,11 @@ getbuild: src/version/build.go
 
 src/version/build.go:
 	go generate rais/src/version
-	@chmod a+w src/version/build.go 2>/dev/null || true
 
 # Binary building rules
 binaries: src/transform/rotation.go src/version/build.go plugins
 	go build -ldflags="-s -w" -o ./bin/rais-server rais/src/cmd/rais-server
 	go build -ldflags="-s -w" -o ./bin/jp2info rais/src/cmd/jp2info
-	@chmod -R a+w bin/ 2>/dev/null || true
 
 # Testing
 test: src/version/build.go
@@ -58,4 +56,3 @@ bin/plugins/%.so : src/plugins/% src/version/build.go src/plugins/%/*.go
 # Build all the plugins with horrible shell magic!
 PLUGS := $(shell ./scripts/pluglist.sh)
 plugins: $(PLUGS)
-	@chmod -R a+w bin/ || true
