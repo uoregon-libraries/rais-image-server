@@ -69,6 +69,7 @@ RUN groupadd -r rais && useradd -r -g rais rais
 RUN dnf update -y && dnf upgrade -y && dnf install -y openjpeg2 ImageMagick
 
 ENV RAIS_TILEPATH /var/local/images
+ENV RAIS_PLUGINS "*.so"
 RUN touch /etc/rais.toml && chown rais:rais /etc/rais.toml
 COPY --from=build /opt/rais-src/bin /opt/rais/
 
