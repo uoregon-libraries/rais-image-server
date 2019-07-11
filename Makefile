@@ -55,6 +55,6 @@ docker: | force-getbuild generate
 bin/plugins/%.so : src/plugins/% src/version/build.go src/plugins/%/*.go
 	go build -ldflags="-s -w" -buildmode=plugin -o $@ rais/$<
 
-# Build all the plugins with horrible shell magic!
+# Build the plugins that don't have external dependencies
 PLUGS := $(shell ./scripts/pluglist.sh)
 plugins: $(PLUGS)
