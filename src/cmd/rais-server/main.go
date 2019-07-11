@@ -42,7 +42,7 @@ func main() {
 		pluginList = viper.GetString("Plugins")
 	}
 
-	if pluginList == "" {
+	if pluginList == "" || pluginList == "-" {
 		Logger.Infof("No plugins will attempt to be loaded")
 	} else {
 		LoadPlugins(Logger, strings.Split(pluginList, ","))

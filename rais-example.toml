@@ -63,14 +63,16 @@ CapabilitiesFile = "/etc/rais-capabilities.toml"
 # a single page to have up to 200 unique 1024x1024 tiles.  Therefore a
 # 10,000-item cache could use as much as a gig of RAM, and still only hold 50
 # pages.  In practice, this is likely to only be useful for caching small
-# exhibits or else sites that have one or a few "featured" images.
+# exhibits or else sites that have one or a few "featured" images which receive
+# heavy traffic.
 #
 # Env: RAIS_TILECACHELEN
 TileCacheLen = 0
 
 # Plugins: Optional, defaults to "s3-images.so,json-tracer.so".
 #
-# Comma-separated list of which plugins should be loaded.
+# Comma-separated list of which plugins should be loaded.  A value of "" or "-"
+# will disable plugins entirely.
 #
 # Items in the list which don't specify an absolute path must be in a "plugins"
 # subdirectory the lives alongside the rais-server binary.
