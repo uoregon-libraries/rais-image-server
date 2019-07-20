@@ -55,6 +55,8 @@ ADD ./Makefile /opt/rais-src/Makefile
 ADD ./src /opt/rais-src/src
 ADD ./scripts /opt/rais-src/scripts
 RUN make
+
+# Manually build the ImageMagick plugin since we exclude it by default
 RUN make bin/plugins/imagick-decoder.so
 
 # Production image just installs runtime deps and copies in the binaries
@@ -69,6 +71,7 @@ RUN groupadd -r rais && useradd -r -g rais rais
 RUN dnf update -y && dnf upgrade -y && dnf install -y openjpeg2 ImageMagick
 
 ENV RAIS_TILEPATH /var/local/images
+ENV RAIS_PLUGINS "*.so"
 RUN touch /etc/rais.toml && chown rais:rais /etc/rais.toml
 COPY --from=build /opt/rais-src/bin /opt/rais/
 

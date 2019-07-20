@@ -39,3 +39,4 @@ services:
       - /home/myuser/.aws/credentials:/etc/aws.credentials
     ports:
       - 12415:12415
+      - 12416:12416

@@ -1,7 +1,7 @@
 # Makefile directory
 MakefileDir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: all generate getbuild binaries test format lint clean distclean docker plugins
+.PHONY: all generate force-getbuild binaries test format lint clean distclean docker plugins
 
 # Default target builds binaries
 all: binaries
@@ -13,17 +13,17 @@ src/transform/rotation.go: src/transform/generator.go src/transform/template.txt
 	go run src/transform/generator.go
 	gofmt -l -w -s src/transform/rotation.go
 
-getbuild: src/version/build.go
+force-getbuild:
+	rm src/version/build.go
+	make src/version/build.go
 
 src/version/build.go:
 	go generate rais/src/version
-	@chmod a+w src/version/build.go 2>/dev/null || true
 
 # Binary building rules
 binaries: src/transform/rotation.go src/version/build.go plugins
 	go build -ldflags="-s -w" -o ./bin/rais-server rais/src/cmd/rais-server
 	go build -ldflags="-s -w" -o ./bin/jp2info rais/src/cmd/jp2info
-	@chmod -R a+w bin/ 2>/dev/null || true
 
 # Testing
 test: src/version/build.go
@@ -46,7 +46,7 @@ clean:
 	rm -f src/version/build.go
 
 # Generate the docker images
-docker: | clean generate
+docker: | force-getbuild generate
 	docker build --rm --target build -f $(MakefileDir)/docker/Dockerfile -t uolibraries/rais:build $(MakefileDir)
 	docker build --rm -f $(MakefileDir)/docker/Dockerfile -t uolibraries/rais:latest-indev $(MakefileDir)
 	docker build --rm -f $(MakefileDir)/docker/Dockerfile-alpine -t uolibraries/rais:latest-alpine $(MakefileDir)
@@ -55,7 +55,6 @@ docker: | clean generate
 bin/plugins/%.so : src/plugins/% src/version/build.go src/plugins/%/*.go
 	go build -ldflags="-s -w" -buildmode=plugin -o $@ rais/$<
 
-# Build all the plugins with horrible shell magic!
+# Build the plugins that don't have external dependencies
 PLUGS := $(shell ./scripts/pluglist.sh)
 plugins: $(PLUGS)
-	@chmod -R a+w bin/ || true
