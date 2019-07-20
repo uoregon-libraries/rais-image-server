@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"rais/src/cmd/rais-server/internal/servers"
 	"rais/src/iiif"
-	"rais/src/magick"
+	"rais/src/img"
 	"rais/src/openjpeg"
 	"rais/src/plugins"
 	"rais/src/version"
@@ -32,10 +32,26 @@ func main() {
 	parseConf()
 	Logger = logger.New(logger.LogLevelFromString(viper.GetString("LogLevel")))
 	openjpeg.Logger = Logger
-	magick.Logger = Logger
 
 	setupCaches()
-	LoadPlugins(Logger, strings.Split(viper.GetString("Plugins"), ","))
+
+	var pluginList string
+
+	// Don't let the default plugin list be used if we have an explicit value of ""
+	if viper.IsSet("Plugins") {
+		pluginList = viper.GetString("Plugins")
+	}
+
+	if pluginList == "" || pluginList == "-" {
+		Logger.Infof("No plugins will attempt to be loaded")
+	} else {
+		LoadPlugins(Logger, strings.Split(pluginList, ","))
+	}
+
+	// Register our JP2 decoder after plugins have been loaded to allow plugins
+	// to handle images - for instance, we might want a pyramidal tiff plugin or
+	// something one day
+	img.RegisterDecoder(decodeJP2)
 
 	tilePath := viper.GetString("TilePath")
 	address := viper.GetString("Address")
@@ -68,10 +84,13 @@ func main() {
 
 	// Set up handlers / listeners
 	var pubSrv = servers.New("RAIS", address)
+	pubSrv.AddMiddleware(logMiddleware)
 	handle(pubSrv, ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
 	handle(pubSrv, "/images/dzi/", http.HandlerFunc(ih.DZIRoute))
+	handle(pubSrv, "/", http.NotFoundHandler())
 
 	var admSrv = servers.New("RAIS Admin", adminAddress)
+	admSrv.AddMiddleware(logMiddleware)
 	admSrv.Handle("/admin/stats.json", stats)
 	admSrv.Handle("/admin/cache/purge", http.HandlerFunc(adminPurgeCache))
 

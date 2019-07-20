@@ -15,6 +15,11 @@
 version: "3.4"
 services:
   rais:
+    # Uncomment this if you'd like to fire up an Alpine-based container - note
+    # that it doesn't have any configuration baked in, so you'll have to use
+    # environment vars for *all configuration*.  Good for production, but bad
+    # for a quick demo.
+    #image: uolibraries/rais:latest-alpine
     environment:
       # These next lines would allow you to pass the various S3 configuration
       # options through from the host's environment (or the local .env file)
@@ -34,3 +39,4 @@ services:
       - /home/myuser/.aws/credentials:/etc/aws.credentials
     ports:
       - 12415:12415
+      - 12416:12416

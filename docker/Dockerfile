@@ -7,7 +7,7 @@
 #
 #     # Generate the build image to simplify local development
 #     docker build --rm -t uolibraries/rais:build --target build ./docker
-FROM fedora:29 AS build
+FROM fedora:30 AS build
 LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 
 # Install all the build dependencies
@@ -19,6 +19,7 @@ RUN dnf install -y git
 RUN dnf install -y gcc
 RUN dnf install -y make
 RUN dnf install -y tar
+RUN dnf install -y findutils
 
 # Installing GraphicsMagick is wholly unnecessary, but helps when using the
 # build box for things like converting images.  Since opj2_encode doesn't
@@ -29,7 +30,7 @@ RUN dnf install -y GraphicsMagick
 
 # Go comes after other installs to avoid re-pulling the more expensive
 # dependencies when changing Go versions
-RUN curl -L https://dl.google.com/go/go1.11.2.linux-amd64.tar.gz > /tmp/go.tgz
+RUN curl -L https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz > /tmp/go.tgz
 RUN cd /opt && tar -xzf /tmp/go.tgz
 
 # "Install" Go
@@ -52,10 +53,14 @@ RUN go mod download
 # trigger a rebuild
 ADD ./Makefile /opt/rais-src/Makefile
 ADD ./src /opt/rais-src/src
-RUN make binaries plugins
+ADD ./scripts /opt/rais-src/scripts
+RUN make
+
+# Manually build the ImageMagick plugin since we exclude it by default
+RUN make bin/plugins/imagick-decoder.so
 
 # Production image just installs runtime deps and copies in the binaries
-FROM fedora:29 AS production
+FROM fedora:30 AS production
 LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 
 # Stolen from mariadb dockerfile: add our user and group first to make sure
@@ -66,6 +71,7 @@ RUN groupadd -r rais && useradd -r -g rais rais
 RUN dnf update -y && dnf upgrade -y && dnf install -y openjpeg2 ImageMagick
 
 ENV RAIS_TILEPATH /var/local/images
+ENV RAIS_PLUGINS "*.so"
 RUN touch /etc/rais.toml && chown rais:rais /etc/rais.toml
 COPY --from=build /opt/rais-src/bin /opt/rais/
 

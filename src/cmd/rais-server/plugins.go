@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"plugin"
 	"rais/src/iiif"
+	"rais/src/img"
 	"reflect"
 	"sort"
 	"strings"
@@ -50,7 +51,7 @@ func LoadPlugins(l *logger.Logger, patterns []string) {
 	for _, pattern := range patterns {
 		var matches, err = pluginsFor(pattern)
 		if err != nil {
-			l.Fatalf("Cannot process pattern %q: %s", pattern, err)
+			l.Warnf("Skipping invalid plugin pattern %q: %s", pattern, err)
 		}
 
 		// We do a sanity check before actually processing any plugins
@@ -133,6 +134,7 @@ func loadPlugin(fullpath string, l *logger.Logger) error {
 	var wrapHandler func(string, http.Handler) (http.Handler, error)
 	var prgCache func()
 	var expCachedImg func(iiif.ID)
+	var imageDecoders func() []img.DecodeFn
 
 	pw.loadPluginFn("SetLogger", &log)
 	pw.loadPluginFn("IDToPath", &idToPath)
@@ -141,6 +143,7 @@ func loadPlugin(fullpath string, l *logger.Logger) error {
 	pw.loadPluginFn("WrapHandler", &wrapHandler)
 	pw.loadPluginFn("PurgeCaches", &prgCache)
 	pw.loadPluginFn("ExpireCachedImage", &expCachedImg)
+	pw.loadPluginFn("ImageDecoders", &imageDecoders)
 
 	if len(pw.errors) != 0 {
 		return errors.New(strings.Join(pw.errors, ", "))
@@ -167,6 +170,13 @@ func loadPlugin(fullpath string, l *logger.Logger) error {
 			return nil
 		}
 		l.Debugf("%q is explicitly enabled", fullpath)
+	}
+
+	// Register image decoder(s) if plugin exposes any
+	if imageDecoders != nil {
+		for _, fn := range imageDecoders() {
+			img.RegisterDecoder(fn)
+		}
 	}
 
 	// Index remaining functions

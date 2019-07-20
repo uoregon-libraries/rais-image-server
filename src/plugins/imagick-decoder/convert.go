@@ -1,4 +1,4 @@
-package magick
+package main
 
 /*
 #cgo pkg-config: MagickCore
@@ -11,11 +11,7 @@ import (
 	"image"
 	"reflect"
 	"unsafe"
-
-	"github.com/uoregon-libraries/gopkg/logger"
 )
-
-var Logger = logger.DefaultLogger
 
 // Image returns a native Go image interface.  For now, this is always RGBA for
 // simplicity, but it would be a good idea to use a gray image when it makes
@@ -48,10 +44,10 @@ func (i *Image) attemptExportRGBA(w, h C.size_t, ptr unsafe.Pointer, ex *C.Excep
 	defer func() {
 		if x := recover(); x != nil {
 			if tries < 3 {
-				Logger.Warnf("Error trying to decode from ImageMagick (trying again): %s", x)
+				l.Warnf("Error trying to decode from ImageMagick (trying again): %s", x)
 				i.attemptExportRGBA(w, h, ptr, ex, tries+1)
 			} else {
-				Logger.Errorf("Error trying to decode from ImageMagick: %s", x)
+				l.Errorf("Error trying to decode from ImageMagick: %s", x)
 				err = fmt.Errorf("imagemagick failure: %s", x)
 			}
 		}

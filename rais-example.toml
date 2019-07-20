@@ -1,5 +1,18 @@
-# Copy this to /etc/rais.toml and customize as needed to avoid specifying
-# config on the command line in your init.d / upstart / etc. scripts
+# This file documents all configuration options for RAIS.  You may use this by
+# copying it to /etc/rais.toml (or having rais.toml in the working directory
+# when you run rais-server) and adjusting the values per your needs.  You can
+# also use environment variables and, in many cases, command-line flags.  These
+# are all documented here as "Env: RAIS_..." and "CLI: --...".
+#
+# In a traditional server environment, using this file is often a good
+# approach.  In a more cloud-centric environment, environment values may be
+# easier (and are considered best-practice).  For development or testing, it
+# may be easiest to set up a configuration file locally and/or override with
+# command-line flags.
+#
+# Any configuration setting specified in a file is ignored if the same setting
+# is set in the environment.  The environment is overridden by settings on the
+# command-line.
 
 # Address: Optional, defaults to ":12415".  This is where RAIS listens for
 # traffic.  The default value causes RAIS to accept anything that talks to port
@@ -33,13 +46,13 @@ LogLevel = "INFO"
 # CLI: --tile-path
 TilePath = "/var/local/images"
 
-# IIIFURL: Optional.  If you want to enable IIIF support, set this to the
-# desired URL - it *must* resolve to the tile server.  If this isn't set, only
-# the legacy handlers will work.
+# IIIFURL: Required.  Set this to the *public* URL that resolves to RAIS.  If
+# you're testing locally, the example value below will work, but if you have
+# RAIS behind a load balancer or proxy, IIIFURL *must* be the public URL.
 #
 # Env: RAIS_IIIFURL
 # CLI: --iiif-url
-IIIFURL = "http://192.168.56.99:12415/iiif"
+IIIFURL = "http://localhost:12415/iiif"
 
 # InfoCacheLen: Optional, defaults to 10000.  Set this to 0 to avoid caching
 # IIIF Info requests, or set it higher to cache more requests.  The overhead
@@ -52,8 +65,8 @@ IIIFURL = "http://192.168.56.99:12415/iiif"
 InfoCacheLen = 10000
 
 # CapabilitiesFile: Optional, allows removal of undesired capabilities, such as
-# CORS support or GIF output.  See cap-max.toml for an example.
-CapabilitiesFile = "/etc/rais-capabilities.toml"
+# image mirroring, TIFF output, etc.  See cap-max.toml and cap-level0.toml.
+CapabilitiesFile = ""
 
 # TileCacheLen: Optional, defaults to 0.  Set this to the *number* of tiles
 # you'd like to cache.  Currently the cache is set to only store specific types
@@ -63,14 +76,16 @@ CapabilitiesFile = "/etc/rais-capabilities.toml"
 # a single page to have up to 200 unique 1024x1024 tiles.  Therefore a
 # 10,000-item cache could use as much as a gig of RAM, and still only hold 50
 # pages.  In practice, this is likely to only be useful for caching small
-# exhibits or else sites that have one or a few "featured" images.
+# exhibits or else sites that have one or a few "featured" images which receive
+# heavy traffic.
 #
 # Env: RAIS_TILECACHELEN
 TileCacheLen = 0
 
 # Plugins: Optional, defaults to "s3-images.so,json-tracer.so".
 #
-# Comma-separated list of which plugins should be loaded.
+# Comma-separated list of which plugins should be loaded.  A value of "" or "-"
+# will disable plugins entirely.
 #
 # Items in the list which don't specify an absolute path must be in a "plugins"
 # subdirectory the lives alongside the rais-server binary.
@@ -83,11 +98,11 @@ TileCacheLen = 0
 # The example s3-images and json-trace plugins are considered production-ready.
 #
 # A value of "*.so" replicates the 3.0.x behavior of loading everything in
-# plugins/.
+# plugins/, while a value of "" disabled plugins entirely.
 #
 # Env: RAIS_PLUGINS
 # CLI: --plugins
-Plugins = "*.so"
+Plugins = ""
 
 ####
 # If you wanted to globally limit request size, use the below values.  By
