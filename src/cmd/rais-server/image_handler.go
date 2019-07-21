@@ -13,7 +13,6 @@ import (
 	"rais/src/iiif"
 	"rais/src/img"
 	"rais/src/plugins"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -29,16 +28,6 @@ func acceptsLD(req *http.Request) bool {
 
 	return false
 }
-
-// DZITileSize defines deep zoom tile size
-const DZITileSize = 1024
-
-// DZI "constants" - these can be declared once (unlike IIIF regexes) because
-// we aren't allowing a custom DZI handler path
-var (
-	DZIInfoRegex     = regexp.MustCompile(`^/images/dzi/(.+).dzi$`)
-	DZITilePathRegex = regexp.MustCompile(`^/images/dzi/(.+)_files/(\d+)/(\d+)_(\d+).jpg$`)
-)
 
 // ImageHandler responds to a IIIF URL request and parses the requested
 // transformation within the limits of the handler's capabilities
@@ -178,128 +167,6 @@ func convertStrings(s1, s2, s3 string) (i1, i2, i3 int, err error) {
 	}
 	i3, err = strconv.Atoi(s3)
 	return
-}
-
-// DZIRoute takes an HTTP request and parses for responding to DZI info and
-// tile requests
-func (ih *ImageHandler) DZIRoute(w http.ResponseWriter, req *http.Request) {
-	p := req.RequestURI
-
-	var id iiif.ID
-	var filePath string
-	var handler func(*img.Resource)
-
-	parts := DZIInfoRegex.FindStringSubmatch(p)
-	if parts != nil {
-		id = iiif.URLToID(parts[1])
-		filePath = ih.TilePath + "/" + string(id)
-		handler = func(r *img.Resource) { ih.DZIInfo(w, r) }
-	}
-
-	parts = DZITilePathRegex.FindStringSubmatch(p)
-	if parts != nil {
-		id = iiif.URLToID(parts[1])
-		filePath = ih.TilePath + "/" + string(id)
-
-		level, tileX, tileY, err := convertStrings(parts[2], parts[3], parts[4])
-		if err != nil {
-			http.Error(w, "Invalid DZI request", 400)
-			return
-		}
-
-		handler = func(r *img.Resource) { ih.DZITile(w, req, r, level, tileX, tileY) }
-	}
-
-	if handler == nil {
-		// Some kind of invalid request - just spit out a generic 404
-		http.NotFound(w, req)
-		return
-	}
-
-	res, err := img.NewResource(id, filePath)
-	if err != nil {
-		e := newImageResError(err)
-		if e.Code != 404 {
-			Logger.Errorf("Error initializing resource %s (path %s): %s", id, filePath, err)
-		}
-		http.Error(w, e.Message, e.Code)
-		return
-	}
-
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	handler(res)
-}
-
-// DZIInfo returns the info response for a deep-zoom request.  This is very
-// hard-coded because the XML is simple, and deep-zoom is really a minor
-// addition to RAIS.
-func (ih *ImageHandler) DZIInfo(w http.ResponseWriter, res *img.Resource) {
-	format := `<?xml version="1.0" encoding="UTF-8"?>
-		<Image xmlns="http://schemas.microsoft.com/deepzoom/2008" TileSize="%d" Overlap="0" Format="jpg">
-			<Size Width="%d" Height="%d"/>
-		</Image>`
-	d := res.Decoder
-	xml := fmt.Sprintf(format, DZITileSize, d.GetWidth(), d.GetHeight())
-	w.Write([]byte(xml))
-}
-
-// DZITile returns a tile by setting up the appropriate IIIF data structure
-// based on the deep-zoom request
-func (ih *ImageHandler) DZITile(w http.ResponseWriter, req *http.Request, res *img.Resource, l, tX, tY int) {
-	// We always return 256x256 or bigger
-	if l < 8 {
-		l = 8
-	}
-
-	// Figure out max level
-	d := res.Decoder
-	srcWidth := uint64(d.GetWidth())
-	srcHeight := uint64(d.GetHeight())
-
-	var maxDimension uint64
-	if srcWidth > srcHeight {
-		maxDimension = srcWidth
-	} else {
-		maxDimension = srcHeight
-	}
-	maxLevel := uint64(math.Ceil(math.Log2(float64(maxDimension))))
-
-	// Ignore absurd levels - even above 20 is pretty unlikely, but this is
-	// called "future-proofing".  Or something.
-	if uint64(l) > maxLevel {
-		http.Error(w, fmt.Sprintf("Image doesn't support zoom level %d", l), 400)
-		return
-	}
-
-	// Construct a IIIF URL so we can just reuse the IIIF-centric Command function
-	var reduction uint64 = 1 << (maxLevel - uint64(l))
-
-	width := reduction * DZITileSize
-	height := reduction * DZITileSize
-	left := uint64(tX) * width
-	top := uint64(tY) * height
-
-	// Fail early if the tile requested isn't legit
-	if tX < 0 || tY < 0 || left > srcWidth || top > srcHeight {
-		http.Error(w, "Invalid tile request", 400)
-		return
-	}
-
-	// If any dimension is outside the image area, we have to adjust the requested image and tilesize
-	finalWidth := width
-	finalHeight := height
-	if left+width > srcWidth {
-		finalWidth = srcWidth - left
-	}
-	if top+height > srcHeight {
-		finalHeight = srcHeight - top
-	}
-
-	requestedWidth := DZITileSize * finalWidth / width
-
-	u, _ := iiif.NewURL(fmt.Sprintf("%s/%d,%d,%d,%d/%d,/0/default.jpg",
-		url.QueryEscape(res.FilePath), left, top, finalWidth, finalHeight, requestedWidth))
-	ih.Command(w, req, u, res, nil)
 }
 
 // Info responds to a IIIF info request with appropriate JSON based on the
