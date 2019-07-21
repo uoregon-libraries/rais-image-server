@@ -15,8 +15,8 @@ var running sync.WaitGroup
 // registered servers
 type Server struct {
 	*http.Server
-	Name string
-	Mux  *http.ServeMux
+	Name       string
+	Mux        *http.ServeMux
 	middleware []func(http.Handler) http.Handler
 }
 
