@@ -10,8 +10,7 @@ source, no-commercial-products-required, proof-of-concept tile server for JP2
 images within [chronam](https://github.com/LibraryOfCongress/chronam).
 
 It has been updated to allow more command-line options, more source file
-formats, more features, conformance to the [IIIF](http://iiif.io/) spec, and
-experimental DeepZoom support.
+formats, more features, and conformance to the [IIIF](http://iiif.io/) spec.
 
 RAIS is very efficient, completely free, and easy to set up and run.  See our
 [wiki](https://github.com/uoregon-libraries/rais-image-server/wiki) pages for
