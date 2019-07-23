@@ -49,6 +49,11 @@ clean:
 docker: | force-getbuild generate
 	docker build --rm --target build -f $(MakefileDir)/docker/Dockerfile -t uolibraries/rais:build $(MakefileDir)
 	docker build --rm -f $(MakefileDir)/docker/Dockerfile -t uolibraries/rais:latest-indev $(MakefileDir)
+	make docker-alpine
+
+# Build just the alpine image for cases where we want to get this updated / cranked out fast
+docker-alpine: | force-getbuild generate
+	docker build --rm --target build -f $(MakefileDir)/docker/Dockerfile-alpine -t uolibraries/rais:build-alpine $(MakefileDir)
 	docker build --rm -f $(MakefileDir)/docker/Dockerfile-alpine -t uolibraries/rais:latest-alpine $(MakefileDir)
 
 # Build plugins on any change to their directory or their go files
