@@ -24,6 +24,9 @@ RUN apk add --no-cache graphicsmagick
 # This is necessary for our openjp2 C bindings
 RUN apk add --no-cache musl-dev
 
+# This is just getting absurd, but results in a dramatically smaller rais-server
+RUN apk add --no-cache upx
+
 # Make sure the build box can lint code
 RUN go get -u golang.org/x/lint/golint
 
@@ -40,6 +43,8 @@ ADD ./Makefile /opt/rais-src/Makefile
 ADD ./src /opt/rais-src/src
 ADD ./scripts /opt/rais-src/scripts
 RUN make
+
+RUN upx ./bin/rais-server
 
 # Production image just installs runtime deps and copies in the binaries
 FROM alpine:3.10 AS production
