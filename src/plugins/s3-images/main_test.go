@@ -7,12 +7,9 @@ import (
 	"testing"
 
 	"github.com/uoregon-libraries/gopkg/assert"
-	"github.com/uoregon-libraries/gopkg/logger"
 )
 
 func TestIDToPath(t *testing.T) {
-	l = logger.DefaultLogger
-
 	// Set up an asset hard-coded to /dev/null so the fetch logic is skipped -
 	// download will stat the file, be tricked into thnking it's cached, and return
 	var a, _ = lookupAsset(iiif.ID("nil:foo"))

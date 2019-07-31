@@ -113,7 +113,7 @@ func handle(srv *servers.Server, pattern string, handler http.Handler) {
 		if err == nil {
 			handler = h2
 		} else if err != plugins.ErrSkipped {
-			logger.Fatalf("Error trying to wrap handler %q: %s", pattern, err)
+			Logger.Fatalf("Error trying to wrap handler %q: %s", pattern, err)
 		}
 	}
 	srv.Handle(pattern, handler)
