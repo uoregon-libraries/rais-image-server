@@ -3,8 +3,6 @@ package main
 import (
 	"net/http"
 	"rais/src/cmd/rais-server/internal/statusrecorder"
-
-	"github.com/uoregon-libraries/gopkg/logger"
 )
 
 func logMiddleware(next http.Handler) http.Handler {
@@ -16,6 +14,6 @@ func logMiddleware(next http.Handler) http.Handler {
 		}
 		var sr = statusrecorder.New(w)
 		next.ServeHTTP(sr, r)
-		logger.Infof("Request: [%s] %s - %d", ip, r.URL, sr.Status)
+		Logger.Infof("Request: [%s] %s - %d", ip, r.URL, sr.Status)
 	})
 }
