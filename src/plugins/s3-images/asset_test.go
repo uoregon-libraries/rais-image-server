@@ -12,12 +12,14 @@ import (
 )
 
 func TestAssetLookup(t *testing.T) {
+	var id = iiif.ID("s3://fakebucket/asset/key")
 	s3cache = "/tmp"
 	t.Run("S3 ID", func(t *testing.T) {
-		var a, _ = lookupAsset(iiif.ID("s3:foo"))
-		assert.Equal("foo", a.key, "key", t)
-		assert.Equal("/tmp/13/83/foo", a.path, "path", t)
-		assert.Equal(iiif.ID("s3:foo"), a.id, "id", t)
+		var a, _ = lookupAsset(id)
+		assert.Equal("fakebucket", a.bucket, "bucket", t)
+		assert.Equal("asset/key", a.key, "key", t)
+		assert.Equal("/tmp/fakebucket/54/50/asset/key", a.path, "path", t)
+		assert.Equal(id, a.id, "id", t)
 		assert.True(a.valid(), "valid", t)
 	})
 	t.Run("non-S3 ID", func(t *testing.T) {
@@ -28,7 +30,6 @@ func TestAssetLookup(t *testing.T) {
 		var a, b *asset
 		var ok bool
 		assets = make(map[iiif.ID]*asset)
-		var id = iiif.ID("s3:foo")
 
 		a, ok = lookupAsset(id)
 		assert.False(ok, "lookup is false on the first use of the key", t)
@@ -41,7 +42,7 @@ func TestAssetLookup(t *testing.T) {
 }
 
 func TestFLock(t *testing.T) {
-	var a, _ = lookupAsset(iiif.ID("s3:foo"))
+	var a, _ = lookupAsset(iiif.ID("s3://fakebucket/asset/key"))
 
 	// Set up intense concurrency to see if we can cause mayhem
 	var successes uint32

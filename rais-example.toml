@@ -152,8 +152,3 @@ S3Cache = "/var/local/rais-s3"
 #
 # Env: RAIS_S3ZONE
 S3Zone = "us-west-2"
-
-# S3Bucket is the bucket in which your assets reside
-#
-# Env: RAIS_S3BUCKET
-S3Bucket = "my-bucket"

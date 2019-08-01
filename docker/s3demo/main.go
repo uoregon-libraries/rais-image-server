@@ -76,7 +76,7 @@ func readAssets() {
 
 	for _, obj := range out.Contents {
 		var key = *obj.Key
-		var id = "s3:" + url.PathEscape(key)
+		var id = url.PathEscape(fmt.Sprintf("s3://%s/%s", bucket, key))
 		s3assets = append(s3assets, asset{Title: key, Key: key, IIIFID: id})
 	}
 	log.Printf("Indexed %d assets", len(s3assets))

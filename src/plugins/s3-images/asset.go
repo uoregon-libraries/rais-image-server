@@ -2,11 +2,11 @@ package main
 
 import (
 	"hash/fnv"
+	"net/url"
 	"os"
 	"path/filepath"
 	"rais/src/iiif"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
@@ -14,21 +14,22 @@ import (
 var assets = make(map[iiif.ID]*asset)
 var assetMutex sync.Mutex
 
-func buckets(s3ID string) (string, string) {
+func hashBuckets(s3ID string) (string, string) {
 	var h = fnv.New32()
 	h.Write([]byte(s3ID))
 	var val = int(h.Sum32() / 10000)
 	return strconv.Itoa(val % 100), strconv.Itoa((val / 100) % 100)
 }
 
-func makePath(key string) string {
-	var bucket1, bucket2 = buckets(key)
-	return filepath.Join(s3cache, bucket1, bucket2, key)
+func (a *asset) deriveLocalPath() {
+	var hb1, hb2 = hashBuckets(a.key)
+	a.path = filepath.Join(s3cache, a.bucket, hb1, hb2, a.key)
 }
 
 type asset struct {
 	id         iiif.ID
 	key        string
+	bucket     string
 	path       string
 	inUse      bool
 	fs         sync.Mutex
@@ -43,28 +44,38 @@ var dlers = map[string]func(*asset) error{
 	"nil": fetchNil,
 }
 
-func newAsset(id iiif.ID) *asset {
-	var s = string(id)
-	var parts = strings.SplitN(s, ":", 2)
-	if len(parts) != 2 {
-		return badAsset
-	}
-
-	var dlType, key = parts[0], parts[1]
-
-	return &asset{
+func newAsset(id iiif.ID, assetURL *url.URL) *asset {
+	var a = &asset{
 		id:         id,
-		key:        key,
-		path:       makePath(key),
-		downloader: dlers[dlType],
+		key:        assetURL.Path,
+		bucket:     assetURL.Host,
+		downloader: dlers[assetURL.Scheme],
 	}
+
+	// Asset path is always going to have a leading slash if the URL is valid,
+	// but the URL doesn't really have to be valid to get here, so we strip it
+	// only if it's there
+	if a.key != "" && a.key[0] == '/' {
+		a.key = a.key[1:]
+	}
+	a.deriveLocalPath()
+
+	return a
 }
 
 func lookupAsset(id iiif.ID) (a *asset, ok bool) {
+	var u, err = url.Parse(string(id))
+	if err != nil {
+		return badAsset, false
+	}
+
 	assetMutex.Lock()
 	a, ok = assets[id]
 	if !ok {
-		a = newAsset(id)
+		a = newAsset(id, u)
+		if a.downloader == nil && u.Scheme != "" {
+			l.Debugf("s3-plugin: skipping %s (non-s3 scheme %q)", id, u.Scheme)
+		}
 		if a.valid() {
 			assets[id] = a
 		}
@@ -75,7 +86,7 @@ func lookupAsset(id iiif.ID) (a *asset, ok bool) {
 }
 
 func (a *asset) valid() bool {
-	return a.key != "" && a.downloader != nil
+	return a.key != "" && a.downloader != nil && a.bucket != ""
 }
 
 func (a *asset) download() error {

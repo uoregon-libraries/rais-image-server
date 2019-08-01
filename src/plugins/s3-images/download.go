@@ -30,7 +30,7 @@ func fetchS3(a *asset) error {
 	}
 
 	var obj = &s3.GetObjectInput{
-		Bucket: aws.String(s3bucket),
+		Bucket: aws.String(a.bucket),
 		Key:    aws.String(a.key),
 	}
 
