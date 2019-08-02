@@ -3,6 +3,7 @@ module rais
 require (
 	github.com/BurntSushi/toml v0.3.0
 	github.com/aws/aws-sdk-go v1.15.82
+	github.com/gorilla/mux v1.7.3
 	github.com/hashicorp/golang-lru v0.5.0
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646

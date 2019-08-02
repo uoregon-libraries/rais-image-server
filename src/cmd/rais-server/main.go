@@ -90,8 +90,8 @@ func main() {
 
 	var admSrv = servers.New("RAIS Admin", adminAddress)
 	admSrv.AddMiddleware(logMiddleware)
-	admSrv.Handle("/admin/stats.json", stats)
-	admSrv.Handle("/admin/cache/purge", http.HandlerFunc(adminPurgeCache))
+	admSrv.HandleExact("/admin/stats.json", stats)
+	admSrv.HandlePrefix("/admin/cache/purge", http.HandlerFunc(adminPurgeCache))
 
 	interrupts.TrapIntTerm(shutdown)
 
@@ -116,7 +116,8 @@ func handle(srv *servers.Server, pattern string, handler http.Handler) {
 			Logger.Fatalf("Error trying to wrap handler %q: %s", pattern, err)
 		}
 	}
-	srv.Handle(pattern, handler)
+
+	srv.HandlePrefix(pattern, handler)
 }
 
 func shutdown() {
