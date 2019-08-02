@@ -1,5 +1,9 @@
 version: "3.4"
 
+networks:
+  internal:
+  external:
+
 services:
   rais:
     image: uolibraries/rais
@@ -8,12 +12,16 @@ services:
       - RAIS_IIIFURL
       - RAIS_S3ZONE
       - RAIS_S3BUCKET
-      - AWS_ACCESS_KEY_ID
-      - AWS_SECRET_ACCESS_KEY
+      - RAIS_S3ENDPOINT
+      - RAIS_PLUGINS
       - RAIS_INFOCACHELEN
       - RAIS_TILECACHELEN
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
     volumes:
       - /tmp:/tmp
+    networks:
+      internal:
 
   s3demo:
     build:
@@ -22,8 +30,11 @@ services:
     environment:
       - RAIS_S3ZONE
       - RAIS_S3BUCKET
+      - RAIS_S3ENDPOINT
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
+    networks:
+      internal:
 
   web:
     image: nginx:1.15
@@ -35,3 +46,6 @@ services:
       - s3demo
     ports:
       - 80:80
+    networks:
+      internal:
+      external:

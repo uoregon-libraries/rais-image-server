@@ -1,4 +1,4 @@
-FROM golang:1.11 as build-env
+FROM golang:1 as build-env
 RUN apt-get update
 WORKDIR /s3demo
 ADD s3demo/go.mod /s3demo/go.mod

@@ -5,10 +5,15 @@
 RAIS_IIIFURL=http://localhost/iiif
 
 # S3 configuration - this stuff must be specific to your setup!
+RAIS_S3CACHE=/var/tmp/rais/s3
 RAIS_S3ZONE=<region / zone>
 RAIS_S3BUCKET=<bucket-name>
+RAIS_S3ENDPOINT=<some custom s3-compatible server>
 AWS_ACCESS_KEY_ID=<access key>
 AWS_SECRET_ACCESS_KEY=<secret access key>
+
+# s3-images.so is obviously required; the rest are optional
+RAIS_PLUGINS=s3-images.so,json-tracer.so,imagick-decoder.so
 
 ##### OPTIONAL
 

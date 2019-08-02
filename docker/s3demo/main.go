@@ -27,7 +27,7 @@ var emptyAsset asset
 
 var s3assets []asset
 var indexT, assetT, adminT *template.Template
-var zone, bucket string
+var s3url, zone, bucket string
 var keyID, secretKey string
 
 func env(key string) string {
@@ -60,7 +60,11 @@ func main() {
 }
 
 func readAssets() {
-	var conf = &aws.Config{Region: &zone}
+	var conf = &aws.Config{
+		Region:           &zone,
+		Endpoint:         aws.String(s3url),
+		S3ForcePathStyle: aws.Bool(true),
+	}
 	var sess, err = session.NewSession(conf)
 	if err != nil {
 		log.Println("Error trying to instantiate a new AWS session: ", err)
