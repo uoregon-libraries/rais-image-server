@@ -43,6 +43,7 @@ func env(key string) string {
 func main() {
 	zone = env("RAIS_S3ZONE")
 	bucket = env("RAIS_S3BUCKET")
+	s3url = env("RAIS_S3ENDPOINT")
 	keyID = env("AWS_ACCESS_KEY_ID")
 	secretKey = env("AWS_SECRET_ACCESS_KEY")
 

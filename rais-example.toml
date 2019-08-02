@@ -152,3 +152,10 @@ S3Cache = "/var/local/rais-s3"
 #
 # Env: RAIS_S3ZONE
 S3Zone = "us-west-2"
+
+# S3Endpoint is the URL for requesting S3 assets.  This is typically best left
+# blank if you're using AWS, but may be overridden for services that are
+# S3-compatible like MinIO.
+#
+# Env: RAIS_S3_ENDPOINT
+S3Endpoint = ""

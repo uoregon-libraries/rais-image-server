@@ -25,6 +25,7 @@ services:
       # options through from the host's environment (or the local .env file)
       - RAIS_S3CACHE
       - RAIS_S3ZONE
+      - RAIS_S3ENDPOINT
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
       - AWS_SESSION_TOKEN

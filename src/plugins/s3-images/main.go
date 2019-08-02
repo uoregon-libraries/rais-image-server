@@ -45,7 +45,7 @@ import (
 
 var l = logger.Named("rais/s3-plugin", logger.Debug)
 
-var s3cache, s3zone string
+var s3cache, s3zone, s3endpoint string
 var cacheLifetime time.Duration
 
 // Disabled lets the plugin manager know not to add this plugin's functions to
@@ -58,6 +58,7 @@ func Initialize() {
 	viper.SetDefault("S3Cache", "/var/local/rais-s3")
 	s3cache = viper.GetString("S3Cache")
 	s3zone = viper.GetString("S3Zone")
+	s3endpoint = viper.GetString("S3Endpoint")
 
 	if s3zone == "" {
 		l.Infof("S3 plugin will not be enabled: S3Zone must be set in rais.toml or RAIS_S3ZONE must be set in the environment")

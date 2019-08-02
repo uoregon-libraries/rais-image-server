@@ -23,7 +23,11 @@ func (a *asset) setupTempFile() (*fileutil.SafeFile, error) {
 }
 
 func fetchS3(a *asset) error {
-	var conf = &aws.Config{Region: aws.String(s3zone)}
+	var conf = &aws.Config{
+		Region:           aws.String(s3zone),
+		Endpoint:         aws.String(s3endpoint),
+		S3ForcePathStyle: aws.Bool(true),
+	}
 	var sess, err = session.NewSession(conf)
 	if err != nil {
 		return fmt.Errorf("unable to set up AWS session: %s", err)
