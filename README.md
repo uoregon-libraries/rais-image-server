@@ -3,7 +3,7 @@
 Rodent-Assimilated Image Server
 =======
 
-![Gocutus](gocutus.png?raw=true "Gocutus")
+![Gocutus, the RAIS mascot](gocutus.png?raw=true "Gocutus, the RAIS mascot")
 
 RAIS was originally built by [eikeon](https://github.com/eikeon) as a 100% open
 source, no-commercial-products-required, proof-of-concept tile server for JP2
@@ -64,3 +64,10 @@ License
 
 RAIS Image Server is in the public domain under a
 [CC0](http://creativecommons.org/publicdomain/zero/1.0/) license.
+
+Contributors
+-----
+
+Special thanks to Jessica Dussault (@jduss4) for providing the hand-drawn
+"Gocutus" logo, and Greg Tunink (@techgique) for various digital refinements to
+said logo.
