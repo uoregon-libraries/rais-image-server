@@ -24,6 +24,7 @@ func TestAssetLookup(t *testing.T) {
 	})
 	t.Run("non-S3 ID", func(t *testing.T) {
 		var a, _ = lookupAsset(iiif.ID("foo"))
+		assert.Equal(a.key, "", "empty key", t)
 		assert.False(a.valid(), "invalid", t)
 	})
 	t.Run("existing ID", func(t *testing.T) {

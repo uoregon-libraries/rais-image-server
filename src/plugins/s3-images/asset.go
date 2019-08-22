@@ -70,17 +70,16 @@ func lookupAsset(id iiif.ID) (a *asset, ok bool) {
 	}
 
 	assetMutex.Lock()
+	defer assetMutex.Unlock()
+
 	a, ok = assets[id]
 	if !ok {
 		a = newAsset(id, u)
-		if a.downloader == nil && u.Scheme != "" {
-			l.Debugf("s3-plugin: skipping %s (non-s3 scheme %q)", id, u.Scheme)
+		if !a.valid() {
+			return badAsset, false
 		}
-		if a.valid() {
-			assets[id] = a
-		}
+		assets[id] = a
 	}
-	assetMutex.Unlock()
 
 	return a, ok
 }
