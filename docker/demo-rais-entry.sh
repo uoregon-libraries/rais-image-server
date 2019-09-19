@@ -14,6 +14,4 @@ if test "$url" == ""; then
   url="http://localhost"
 fi
 
-cp /etc/rais-template.toml /tmp/rais.toml
-sed 's|^\s*IIIFURL.*$|IIIFURL = "'$url'/images/iiif"|' /tmp/rais.toml > /etc/rais.toml
 exec /opt/rais/rais-server

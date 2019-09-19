@@ -34,7 +34,7 @@ func rootDir() string {
 
 // Sets up everything necessary to test a IIIF request
 func dorequestGeneric(path string, acceptLD bool, max img.Constraint, fs *iiif.FeatureSet, t *testing.T) *fakehttp.ResponseWriter {
-	u, _ := url.Parse("http://example.com/foo/bar")
+	u, _ := url.Parse("http://example.com")
 	w := fakehttp.NewResponseWriter()
 	reqPath := fmt.Sprintf("/foo/bar/%s", path)
 	req, err := http.NewRequest("get", reqPath, strings.NewReader(""))
@@ -47,11 +47,11 @@ func dorequestGeneric(path string, acceptLD bool, max img.Constraint, fs *iiif.F
 	if err != nil {
 		t.Errorf("Unable to create fake request: %s", err)
 	}
-	h := NewImageHandler(rootDir())
+	h := NewImageHandler(rootDir(), "/foo/bar")
 	h.Maximums.Width = max.Width
 	h.Maximums.Height = max.Height
 	h.Maximums.Area = max.Area
-	h.EnableIIIF(u)
+	h.BaseURL = u
 	h.FeatureSet = fs
 	h.IIIFRoute(w, req)
 
@@ -220,11 +220,11 @@ func BenchmarkRouting(b *testing.B) {
 		b.Errorf("Unable to create fake request: %s", err)
 	}
 
-	h := NewImageHandler(rootDir())
+	h := NewImageHandler(rootDir(), "/iiif")
 	h.Maximums.Width = unlimited.Width
 	h.Maximums.Height = unlimited.Height
 	h.Maximums.Area = unlimited.Area
-	h.EnableIIIF(u)
+	h.BaseURL = u
 	h.FeatureSet = iiif.FeatureSet2()
 	URIs := []string{
 		u.String() + "/foo/bar/invalid%2Fimage.jp2/10,10,80,80/full/0/default.jpg",

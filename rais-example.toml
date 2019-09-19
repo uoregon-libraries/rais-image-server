@@ -46,13 +46,32 @@ LogLevel = "INFO"
 # CLI: --tile-path
 TilePath = "/var/local/images"
 
-# IIIFURL: Required.  Set this to the *public* URL that resolves to RAIS.  If
-# you're testing locally, the example value below will work, but if you have
-# RAIS behind a load balancer or proxy, IIIFURL *must* be the public URL.
+# IIIFWebPath: Optional, defaults to "/iiif".  This is the endpoint on which
+# RAIS will listen for IIIF requests.
 #
-# Env: RAIS_IIIFURL
-# CLI: --iiif-url
-IIIFURL = "http://localhost:12415/iiif"
+# Env: RAIS_IIIFWEBPATH
+# CLI: --iiif-web-path
+IIIFWebPath = "/iiif"
+
+# IIIFBaseURL: Optional: allows RAIS to report URLs for its assets when a IIIF
+# info request occurs.  If used, make sure this is set to the *public* URL, and
+# do not add a path.  The base web path should be set above.
+#
+# This is only necessary if you need RAIS to report a specific base URL.
+# Typically, proxy servers (like Apache or nginx) will give RAIS enough
+# information to deduce its base URL, making this unnecessary.
+#
+# When not running RAIS behind a proxy, it may be better to set this to avoid
+# people putting in fake headers that cause RAIS to misrepresent its hostname.
+# There's no risk in fake hostnames, but RAIS would then not function.  I can't
+# see this really happening, but maybe it could if a user with an odd browser
+# plugin happens by your site...?
+#
+# It may also be desired to explicitly set this in cases where RAIS can be hit
+# from multiple hostnames but needs to respond with a canonical URL.
+#
+# Env: RAIS_IIIFBASEURL CLI: --iiig-base-url
+#IIIFBaseURL = "http://rais.my.edu:12415"
 
 # InfoCacheLen: Optional, defaults to 10000.  Set this to 0 to avoid caching
 # IIIF Info requests, or set it higher to cache more requests.  The overhead
