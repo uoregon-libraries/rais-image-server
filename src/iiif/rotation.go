@@ -17,6 +17,9 @@ type Rotation struct {
 // condition.  This is a known issue which needs to be fixed.
 func StringToRotation(p string) Rotation {
 	r := Rotation{}
+	if p == "" {
+		return r
+	}
 	if p[0:1] == "!" {
 		r.Mirror = true
 		p = p[1:]

@@ -31,7 +31,28 @@ type URL struct {
 	Quality         Quality
 	Format          Format
 	Info            bool
-	BaseURIRedirect bool
+}
+
+type pathParts struct {
+	data []string
+}
+
+func pathify(pth string) *pathParts {
+	return &pathParts{data: strings.Split(pth, "/")}
+}
+
+// pop implements a hacky but fast and effective "pop" operation that just
+// returns a blank string when there's nothing left to pop
+func (p *pathParts) pop() string {
+	var retval string
+	if len(p.data) > 0 {
+		retval, p.data = p.data[len(p.data)-1], p.data[:len(p.data)-1]
+	}
+	return retval
+}
+
+func (p *pathParts) rejoin() string {
+	return strings.Join(p.data, "/")
 }
 
 // NewURL takes a path string (no scheme, server, or prefix, just the IIIF
@@ -44,46 +65,39 @@ type URL struct {
 //     - Rotation: "270"                      (the image is rotated 270 degrees clockwise)
 //     - Quality:  "default"                  (the image color space is unchanged)
 //     - Format:   "jpg"                      (the resulting image will be a JPEG)
+//
+// It's possible to get a URL and an error since an id-only request could
+// theoretically exist for a resource with *any* id.  In those cases it's up to
+// the caller to figure out what to do - the returned URL will have as much
+// information as we're able to parse.
 func NewURL(path string) (*URL, error) {
-	u := &URL{Path: path}
+	var u = &URL{Path: path}
 
-	parts := strings.Split(path, "/")
-
-	// First check for an ID-only request, which must be redirected
-	if len(parts) == 1 {
-		u.ID = URLToID(path)
+	// Check for an info request first since it's pretty trivial to do
+	if strings.HasSuffix(path, "info.json") {
 		u.Info = true
-		u.BaseURIRedirect = true
-		u.Path = ""
+		u.ID = URLToID(strings.Replace(path, "/info.json", "", -1))
 		return u, nil
 	}
 
-	// Now check for an info request
-	last := len(parts) - 1
-	qualityFormat := parts[last]
-	if len(parts) == 2 && qualityFormat == "info.json" {
-		u.Info = true
-		u.ID = URLToID(parts[0])
-		return u, nil
+	// Parse in reverse order to deal with the continuing problem of slashes not
+	// being escaped properly in all situations
+	var parts = pathify(path)
+	var qualityFormat = parts.pop()
+	var qfParts = strings.SplitN(qualityFormat, ".", 2)
+	if len(qfParts) == 2 {
+		u.Format = StringToFormat(qfParts[1])
+		u.Quality = StringToQuality(qfParts[0])
 	}
+	u.Rotation = StringToRotation(parts.pop())
+	u.Size = StringToSize(parts.pop())
+	u.Region = StringToRegion(parts.pop())
 
-	// All requests for images must have exactly 5 parts
-	if len(parts) != 5 {
-		return u, errors.New("invalid IIIF path components")
-	}
+	// The remainder of the path has to be the ID
+	u.ID = URLToID(parts.rejoin())
 
-	qfParts := strings.SplitN(qualityFormat, ".", 2)
-	if len(qfParts) != 2 {
-		return u, errors.New("invalid quality/format specifier")
-	}
-
-	u.ID = URLToID(parts[0])
-	u.Region = StringToRegion(parts[1])
-	u.Size = StringToSize(parts[2])
-	u.Rotation = StringToRotation(parts[3])
-	u.Quality = StringToQuality(qfParts[0])
-	u.Format = StringToFormat(qfParts[1])
-
+	// Invalid may or may not actually mean invalid, but we just let the caller
+	// try to figure it out....
 	if !u.Valid() {
 		return u, u.Error()
 	}

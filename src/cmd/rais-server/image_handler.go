@@ -80,14 +80,15 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 
 	var urlPath = strings.Replace(p, prefix, "", 1)
 	iiifURL, err := iiif.NewURL(urlPath)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid IIIF request %q: %s", iiifURL.Path, err), 400)
-		return
-	}
 
-	// Check for base path and redirect if that's all we have
-	if iiifURL.BaseURIRedirect {
-		http.Redirect(w, req, p+"/info.json", 303)
+	// If the iiifURL is invalid, it's possible this is a base URI request.  With
+	// a bit of work we can find out if the path is a valid identifier.
+	if err != nil {
+		if ih.isValidBasePath(urlPath) {
+			http.Redirect(w, req, p+"/info.json", 303)
+		} else {
+			http.Error(w, fmt.Sprintf("Invalid IIIF request %q: %s", iiifURL.Path, err), 400)
+		}
 		return
 	}
 
@@ -140,6 +141,21 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 
 	// Attempt to run the command
 	ih.Command(w, req, iiifURL, res, info)
+}
+
+// isValidBasePath returns true if the given path is simply missing /info.json
+// to function properly
+func (ih *ImageHandler) isValidBasePath(path string) bool {
+	var jsonPath = path + "/info.json"
+	var iiifURL, err = iiif.NewURL(jsonPath)
+	if err != nil {
+		return false
+	}
+
+	var fp = ih.getIIIFPath(iiifURL.ID)
+	var e *HandlerError
+	_, e = ih.getInfo(iiifURL.ID, fp)
+	return e == nil
 }
 
 func (ih *ImageHandler) getIIIFPath(id iiif.ID) string {

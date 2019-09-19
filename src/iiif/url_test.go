@@ -54,7 +54,6 @@ func TestInfo(t *testing.T) {
 
 func TestInfoBaseRedirect(t *testing.T) {
 	i, err := NewURL("some%2Fvalid%2Fpath.jp2")
-	assert.NilError(err, "info request isn't an error", t)
-	assert.Equal("some/valid/path.jp2", string(i.ID), "identifier", t)
-	assert.Equal(true, i.BaseURIRedirect, "is an info request", t)
+	assert.Equal("empty id, invalid region, invalid size, invalid quality", err.Error(), "base redirects are error cases the caller must handle", t)
+	assert.Equal("", string(i.ID), "identifier", t)
 }

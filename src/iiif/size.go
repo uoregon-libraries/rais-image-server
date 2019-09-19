@@ -44,6 +44,10 @@ type Size struct {
 
 // StringToSize creates a Size from a string as seen in a IIIF URL.
 func StringToSize(p string) Size {
+	if p == "" {
+		return Size{}
+	}
+
 	if p == "full" {
 		return Size{Type: STFull}
 	}
