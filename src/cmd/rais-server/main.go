@@ -54,18 +54,24 @@ func main() {
 	img.RegisterDecoder(decodeJP2)
 
 	tilePath := viper.GetString("TilePath")
+	webPath := viper.GetString("IIIFWebPath")
+	if webPath == "" {
+		webPath = "/iiif"
+	}
 	address := viper.GetString("Address")
 	adminAddress := viper.GetString("AdminAddress")
 
-	ih := NewImageHandler(tilePath)
+	ih := NewImageHandler(tilePath, webPath)
 	ih.Maximums.Area = viper.GetInt64("ImageMaxArea")
 	ih.Maximums.Width = viper.GetInt("ImageMaxWidth")
 	ih.Maximums.Height = viper.GetInt("ImageMaxHeight")
 
-	iiifBase, _ := url.Parse(viper.GetString("IIIFURL"))
-
-	Logger.Infof("IIIF enabled at %s", iiifBase.String())
-	ih.EnableIIIF(iiifBase)
+	iiifBaseURL := viper.GetString("IIIFBaseURL")
+	if iiifBaseURL != "" {
+		baseURL, _ := url.Parse(iiifBaseURL)
+		Logger.Infof("Explicitly setting IIIF base URL to %q", baseURL)
+		ih.BaseURL = baseURL
+	}
 
 	capfile := viper.GetString("CapabilitiesFile")
 	if capfile != "" {
@@ -85,7 +91,7 @@ func main() {
 	// Set up handlers / listeners
 	var pubSrv = servers.New("RAIS", address)
 	pubSrv.AddMiddleware(logMiddleware)
-	handle(pubSrv, ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
+	handle(pubSrv, ih.WebPathPrefix+"/", http.HandlerFunc(ih.IIIFRoute))
 	handle(pubSrv, "/", http.NotFoundHandler())
 
 	var admSrv = servers.New("RAIS Admin", adminAddress)

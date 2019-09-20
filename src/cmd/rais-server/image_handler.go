@@ -32,24 +32,21 @@ func acceptsLD(req *http.Request) bool {
 // ImageHandler responds to a IIIF URL request and parses the requested
 // transformation within the limits of the handler's capabilities
 type ImageHandler struct {
-	IIIFBase   *url.URL
-	FeatureSet *iiif.FeatureSet
-	TilePath   string
-	Maximums   img.Constraint
+	BaseURL       *url.URL
+	WebPathPrefix string
+	FeatureSet    *iiif.FeatureSet
+	TilePath      string
+	Maximums      img.Constraint
 }
 
 // NewImageHandler sets up a base ImageHandler with no features
-func NewImageHandler(tp string) *ImageHandler {
+func NewImageHandler(tilePath, basePath string) *ImageHandler {
 	return &ImageHandler{
-		TilePath: tp,
-		Maximums: img.Constraint{Width: math.MaxInt32, Height: math.MaxInt32, Area: math.MaxInt64},
+		WebPathPrefix: basePath,
+		TilePath:      tilePath,
+		Maximums:      img.Constraint{Width: math.MaxInt32, Height: math.MaxInt32, Area: math.MaxInt64},
+		FeatureSet:    iiif.AllFeatures(),
 	}
-}
-
-// EnableIIIF sets up regexes for IIIF responses
-func (ih *ImageHandler) EnableIIIF(u *url.URL) {
-	ih.IIIFBase = u
-	ih.FeatureSet = iiif.AllFeatures()
 }
 
 // cacheKey returns a key for caching if a given IIIF URL is cacheable by our
@@ -61,31 +58,64 @@ func cacheKey(u *iiif.URL) string {
 	return ""
 }
 
+// getRequestURL determines the "real" request URL.  Proxies are supported by
+// checking headers.  This should not be considered definitive - if RAIS is
+// running standalone, users can fake these headers.  Fortunately, this is a
+// read-only application, so it shouldn't be risky to rely on these headers as
+// they only determine how to report the RAIS URLs in info.json requests.
+func getRequestURL(req *http.Request) *url.URL {
+	var host = req.Header.Get("X-Forwarded-Host")
+	var scheme = req.Header.Get("X-Forwarded-Proto")
+	if host != "" && scheme != "" {
+		return &url.URL{Host: host, Scheme: scheme}
+	}
+
+	var u = &url.URL{
+		Host:   req.Host,
+		Scheme: "http",
+	}
+	if req.TLS != nil {
+		u.Scheme = "https"
+	}
+	return u
+}
+
 // IIIFRoute takes an HTTP request and parses it to see what (if any) IIIF
 // translation is requested
 func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
-	// Pull identifier from base so we know if we're even dealing with a valid
-	// file in the first place
-	var url = *req.URL
-	url.RawQuery = ""
-	p := url.String()
+	// We need to take a copy of the URL, not the original, since we modify
+	// things a bit
+	var u = *req.URL
 
-	// If it didn't even match the base, something weird happened, so we just
-	// spit out a generic 404
-	prefix := ih.IIIFBase.Path + "/"
-	if !strings.Contains(p, prefix) {
-		http.NotFound(w, req)
-		return
+	// Massage the URL to ensure redirect / info requests will make sense
+	u.RawQuery = ""
+	u.Fragment = ""
+
+	// Figure out the hostname, scheme, port, etc. either from the request or the
+	// setting if it was explicitly set
+	if ih.BaseURL != nil {
+		u.Host = ih.BaseURL.Host
+		u.Scheme = ih.BaseURL.Scheme
+	} else {
+		var u2 = getRequestURL(req)
+		if u2 != nil {
+			u.Host = u2.Host
+			u.Scheme = u2.Scheme
+		}
 	}
 
-	var urlPath = strings.Replace(p, prefix, "", 1)
-	iiifURL, err := iiif.NewURL(urlPath)
+	// Strip the IIIF web path off the beginning of the path to determine the
+	// actual request.  This should always work because a request shouldn't be
+	// able to get here if it didn't have our prefix.
+	var prefix = ih.WebPathPrefix + "/"
+	u.Path = strings.Replace(u.Path, prefix, "", 1)
 
-	// If the iiifURL is invalid, it's possible this is a base URI request.  With
-	// a bit of work we can find out if the path is a valid identifier.
+	iiifURL, err := iiif.NewURL(u.Path)
+	// If the iiifURL is invalid, it's possible this is a base URI request.
+	// Let's see if treating the path as an ID gives us any info.
 	if err != nil {
-		if ih.isValidBasePath(urlPath) {
-			http.Redirect(w, req, p+"/info.json", 303)
+		if ih.isValidBasePath(u.Path) {
+			http.Redirect(w, req, req.URL.String()+"/info.json", 303)
 		} else {
 			http.Error(w, fmt.Sprintf("Invalid IIIF request %q: %s", iiifURL.Path, err), 400)
 		}
@@ -102,6 +132,18 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, e.Message, e.Code)
 		return
 	}
+
+	// Make sure the info JSON has the proper asset id, which, for some reason in
+	// the IIIF spec, requires the full URL to the asset, not just its identifier
+	infourl := &url.URL{
+		Scheme: u.Scheme,
+		Host:   u.Host,
+		Path:   ih.WebPathPrefix,
+	}
+
+	// Because of how Go's URL path magic works, we really do have to just
+	// concatenate these two things with a slash manually
+	info.ID = infourl.String() + "/" + iiifURL.ID.Escaped()
 
 	if iiifURL.Info {
 		ih.Info(w, req, info)
@@ -258,12 +300,8 @@ func (ih *ImageHandler) loadInfoOverride(id iiif.ID, fp string) *iiif.Info {
 
 	Logger.Debugf("Loading image data from override file (%s)", infofile)
 
-	// If an override file *is* found, replace the id
-	escapedID := ih.IIIFBase.String() + "/" + id.Escaped()
-	d2 := bytes.Replace(data, []byte("%ID%"), []byte(escapedID), 1)
-
 	info := new(iiif.Info)
-	err = json.Unmarshal(d2, info)
+	err = json.Unmarshal(data, info)
 	if err != nil {
 		Logger.Errorf("Cannot parse JSON override file %q: %s", infofile, err)
 		return nil
@@ -331,8 +369,6 @@ func (ih *ImageHandler) buildInfo(id iiif.ID, i ImageInfo) *iiif.Info {
 		}
 	}
 
-	// The info id is actually the full URL to the resource, not just its ID
-	info.ID = ih.IIIFBase.String() + "/" + id.Escaped()
 	return info
 }
 

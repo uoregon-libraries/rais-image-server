@@ -43,8 +43,11 @@ func parseConf() {
 	}
 
 	// CLI flags
-	pflag.String("iiif-url", "", `Base URL for serving IIIF requests, e.g., "http://example.com/images/iiif"`)
-	viper.BindPFlag("IIIFURL", pflag.CommandLine.Lookup("iiif-url"))
+	pflag.String("iiif-base-url", "", "Base URL for RAIS to report in info.json requests "+
+		"(defaults to the requests as they come in, so you probably don't want to set this)")
+	viper.BindPFlag("IIIFBaseURL", pflag.CommandLine.Lookup("iiif-base-url"))
+	pflag.String("iiif-web-path", "/iiif", `Base path for serving IIIF requests, e.g., "/iiif"`)
+	viper.BindPFlag("IIIFWebPath", pflag.CommandLine.Lookup("iiif-web-path"))
 	pflag.String("address", defaultAddress, "http service address")
 	viper.BindPFlag("Address", pflag.CommandLine.Lookup("address"))
 	pflag.String("admin-address", defaultAdminAddress, "http service for administrative endpoints")
@@ -84,23 +87,22 @@ func parseConf() {
 		os.Exit(1)
 	}
 
-	var iiifURL = viper.GetString("IIIFURL")
-	if iiifURL == "" {
-		fmt.Println("ERROR: IIIF URL may not be blank")
-		pflag.Usage()
-		os.Exit(1)
-	}
-	var u, err = url.Parse(iiifURL)
-	if err == nil && u.Scheme == "" {
-		err = fmt.Errorf("empty scheme")
-	}
-	if err == nil && u.Host == "" {
-		err = fmt.Errorf("empty host")
-	}
-	if err == nil && u.Path == "" {
-		err = fmt.Errorf("empty path")
-	}
-	if err != nil {
-		fmt.Printf("ERROR: invalid IIIF URL (%s) specified: %s\n", iiifURL, err)
+	var baseIIIFURL = viper.GetString("IIIFBaseURL")
+	if baseIIIFURL != "" {
+		var u, err = url.Parse(baseIIIFURL)
+		if err == nil && u.Scheme == "" {
+			err = fmt.Errorf("empty scheme")
+		}
+		if err == nil && u.Host == "" {
+			err = fmt.Errorf("empty host")
+		}
+		if err == nil && u.Path != "" {
+			err = fmt.Errorf("only scheme and hostname may be specified")
+		}
+		if err != nil {
+			fmt.Printf("ERROR: invalid Base IIIF URL (%s) specified: %s\n", baseIIIFURL, err)
+			pflag.Usage()
+			os.Exit(1)
+		}
 	}
 }

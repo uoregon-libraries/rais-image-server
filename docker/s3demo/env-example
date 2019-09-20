@@ -1,8 +1,6 @@
 ##### REQUIRED
 
-# This must be the public URL you're using, or localhost if you aren't doing a
-# public demo.  It **must** have a path of "/iiif" for this demo to work.
-RAIS_IIIFURL=http://localhost/iiif
+# **NOTE**: If you use minio, you don't need the S3 configuration
 
 # S3 configuration - this stuff must be specific to your setup!
 RAIS_S3CACHE=/var/tmp/rais/s3
