@@ -4,20 +4,19 @@ networks:
   internal:
   external:
 
+volumes:
+  minio-data:
+
 services:
   rais:
     image: uolibraries/rais
     environment:
       - RAIS_S3CACHE=/var/tmp/rais/s3
-      - RAIS_IIIFURL
-      - RAIS_S3ZONE
-      - RAIS_S3BUCKET
-      - RAIS_S3ENDPOINT
-      - RAIS_PLUGINS
-      - RAIS_INFOCACHELEN
-      - RAIS_TILECACHELEN
-      - AWS_ACCESS_KEY_ID
-      - AWS_SECRET_ACCESS_KEY
+      - RAIS_S3ZONE=us-west-2
+      - RAIS_S3ENDPOINT=http://minio:9000
+      - RAIS_PLUGINS=s3-images.so,json-tracer.so
+      - AWS_ACCESS_KEY_ID=awss3key
+      - AWS_SECRET_ACCESS_KEY=awsappsecret
     volumes:
       - /tmp:/tmp
     networks:
@@ -28,11 +27,13 @@ services:
       context: ..
       dockerfile: ./s3demo/Dockerfile
     environment:
-      - RAIS_S3ZONE
-      - RAIS_S3BUCKET
-      - RAIS_S3ENDPOINT
-      - AWS_ACCESS_KEY_ID
-      - AWS_SECRET_ACCESS_KEY
+      - RAIS_S3CACHE=/var/tmp/rais/s3
+      - RAIS_S3ZONE=us-west-2
+      - RAIS_S3ENDPOINT=http://minio:9000
+      - RAIS_S3BUCKET=rais
+      - RAIS_PLUGINS=s3-images.so,json-tracer.so
+      - AWS_ACCESS_KEY_ID=awss3key
+      - AWS_SECRET_ACCESS_KEY=awsappsecret
     networks:
       internal:
 
@@ -46,6 +47,23 @@ services:
       - s3demo
     ports:
       - 80:80
+    networks:
+      internal:
+      external:
+
+  # minio for testing against a local S3-compatible API
+  minio:
+    image: minio/minio
+    volumes:
+      - minio-data:/data
+    command: minio server /data
+    expose:
+      - 9000
+    environment:
+      - MINIO_ACCESS_KEY=awss3key
+      - MINIO_SECRET_KEY=awsappsecret
+    ports:
+      - 9000:9000
     networks:
       internal:
       external:
