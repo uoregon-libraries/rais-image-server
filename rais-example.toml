@@ -57,20 +57,27 @@ IIIFWebPath = "/iiif"
 # info request occurs.  If used, make sure this is set to the *public* URL, and
 # do not add a path.  The base web path should be set above.
 #
-# This is only necessary if you need RAIS to report a specific base URL.
 # Typically, proxy servers (like Apache or nginx) will give RAIS enough
-# information to deduce its base URL, making this unnecessary.
+# information to deduce its base URL, making this unnecessary.  However, a
+# handful of situations warrant manually specifying the base URL:
 #
-# When not running RAIS behind a proxy, it may be better to set this to avoid
-# people putting in fake headers that cause RAIS to misrepresent its hostname.
-# There's no risk in fake hostnames, but RAIS would then not function.  I can't
-# see this really happening, but maybe it could if a user with an odd browser
-# plugin happens by your site...?
+# - You expose RAIS directly to the Internet.  In this scenario, people can
+#   fake the headers which Apache and nginx normally use when forwarding
+#   requests, causing RAIS to misrepresent its hostname.  There's no risk in
+#   fake hostnames, but RAIS would then not function.  I can't see this really
+#   happening, but maybe it could if a user with an odd browser plugin happens
+#   by your site...?
+# - RAIS needs to respond on a particular port that can't be deduced easily by
+#   the proxy, as is sometimes the case if you run RAIS inside a docker setup,
+#   since the external port may not be the same one that's mapped to whatever
+#   server handles the HTTP requests which eventually make their way to RAIS.
+# - RAIS is behind multiple levels of proxies, and configuring them all to
+#   forward the proper data is more of a pain than simply configuring RAIS.
+# - You need RAIS to report a specific base URL, such as when it's reachable
+#   from multiple hostnames, but you want a canonical response
 #
-# It may also be desired to explicitly set this in cases where RAIS can be hit
-# from multiple hostnames but needs to respond with a canonical URL.
-#
-# Env: RAIS_IIIFBASEURL CLI: --iiig-base-url
+# Env: RAIS_IIIFBASEURL
+# CLI: --iiig-base-url
 #IIIFBaseURL = "http://rais.my.edu:12415"
 
 # InfoCacheLen: Optional, defaults to 10000.  Set this to 0 to avoid caching
