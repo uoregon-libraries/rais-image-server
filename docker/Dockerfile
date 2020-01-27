@@ -3,10 +3,10 @@
 # Examples:
 #
 #     # Simple case: just build the latest production image
-#     docker build --rm -t uolibraries/rais:latest ./docker
+#     docker build --rm -t uolibraries/rais:latest -f ./docker/Dockerfile .
 #
 #     # Generate the build image to simplify local development
-#     docker build --rm -t uolibraries/rais:build --target build ./docker
+#     docker build --rm -t uolibraries/rais:build --target build -f ./docker/Dockerfile .
 FROM fedora:30 AS build
 LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 
