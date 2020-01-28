@@ -14,7 +14,7 @@ src/transform/rotation.go: src/transform/generator.go src/transform/template.txt
 	gofmt -l -w -s src/transform/rotation.go
 
 force-getbuild:
-	rm src/version/build.go
+	rm -f src/version/build.go
 	make src/version/build.go
 
 src/version/build.go:
