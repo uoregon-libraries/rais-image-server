@@ -49,10 +49,30 @@ var m sync.Mutex
 
 var l *logger.Logger
 
+// Disabled lets the plugin manager know not to add this plugin's functions to
+// the global list unless somebody *really* asks for this plugin
+var Disabled = true
+
 // SetLogger is called by the RAIS server's plugin manager to let plugins use
 // the central logger
 func SetLogger(raisLogger *logger.Logger) {
 	l = raisLogger
+}
+
+// Initialize disallows this plugin unless the environment variable
+// RAIS_INSECURE_PLUGINS is set to "1".  This ensures nobody can accidentally
+// be downloading images from random sites.
+func Initialize() {
+	var envvar = "RAIS_ALLOW_INSECURE_PLUGINS"
+	if os.Getenv(envvar) != "1" {
+		l.Infof("External Images plugin is disabled.  It is an example plugin and " +
+			"may not be enabled without allowing insecure plugins by setting the " +
+			"environment variable " + envvar + " to 1.  You shouldn't ever have to " +
+			"set this value for production use.")
+		return
+	}
+
+	Disabled = false
 }
 
 // IDToPath implements the auto-download-and-convert logic when a IIIF ID

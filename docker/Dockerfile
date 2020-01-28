@@ -3,10 +3,10 @@
 # Examples:
 #
 #     # Simple case: just build the latest production image
-#     docker build --rm -t uolibraries/rais:latest ./docker
+#     docker build --rm -t uolibraries/rais:latest -f ./docker/Dockerfile .
 #
 #     # Generate the build image to simplify local development
-#     docker build --rm -t uolibraries/rais:build --target build ./docker
+#     docker build --rm -t uolibraries/rais:build --target build -f ./docker/Dockerfile .
 FROM fedora:30 AS build
 LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 
@@ -30,7 +30,7 @@ RUN dnf install -y GraphicsMagick
 
 # Go comes after other installs to avoid re-pulling the more expensive
 # dependencies when changing Go versions
-RUN curl -L https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz > /tmp/go.tgz
+RUN curl -L https://dl.google.com/go/go1.13.7.linux-amd64.tar.gz > /tmp/go.tgz
 RUN cd /opt && tar -xzf /tmp/go.tgz
 
 # "Install" Go
