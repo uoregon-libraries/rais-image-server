@@ -21,8 +21,12 @@ src/version/build.go:
 	go generate rais/src/version
 
 # Binary building rules
-binaries: src/transform/rotation.go src/version/build.go plugins
+binaries: src/transform/rotation.go src/version/build.go plugins rais-server jp2info
+
+rais-server:
 	go build -ldflags="-s -w" -o ./bin/rais-server rais/src/cmd/rais-server
+
+jp2info:
 	go build -ldflags="-s -w" -o ./bin/jp2info rais/src/cmd/jp2info
 
 # Testing
