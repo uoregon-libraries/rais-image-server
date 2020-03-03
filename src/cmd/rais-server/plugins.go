@@ -16,7 +16,6 @@ import (
 	"github.com/uoregon-libraries/gopkg/logger"
 )
 
-var idToPathPlugins []func(iiif.ID) (string, error)
 var wrapHandlerPlugins []func(string, http.Handler) (http.Handler, error)
 var teardownPlugins []func()
 var purgeCachePlugins []func()
@@ -116,7 +115,7 @@ func (pw *pluginWrapper) loadPluginFn(name string, obj interface{}) {
 
 // loadPlugin attempts to read the given plugin file and extract known symbols.
 // If a plugin exposes Initialize or SetLogger, they're called here once we're
-// sure the plugin is valid.  IDToPath functions are indexed globally for use
+// sure the plugin is valid.  All other functions are indexed globally for use
 // in the RAIS image serving handler.
 func loadPlugin(fullpath string, l *logger.Logger) error {
 	var pw, err = newPluginWrapper(fullpath)
@@ -129,7 +128,6 @@ func loadPlugin(fullpath string, l *logger.Logger) error {
 	var initialize = func() {}
 
 	// Simply initialize those functions we only want indexed if they exist
-	var idToPath func(iiif.ID) (string, error)
 	var teardown func()
 	var wrapHandler func(string, http.Handler) (http.Handler, error)
 	var prgCache func()
@@ -137,7 +135,6 @@ func loadPlugin(fullpath string, l *logger.Logger) error {
 	var imageDecoders func() []img.DecodeFunc
 
 	pw.loadPluginFn("SetLogger", &log)
-	pw.loadPluginFn("IDToPath", &idToPath)
 	pw.loadPluginFn("Initialize", &initialize)
 	pw.loadPluginFn("Teardown", &teardown)
 	pw.loadPluginFn("WrapHandler", &wrapHandler)
@@ -180,9 +177,6 @@ func loadPlugin(fullpath string, l *logger.Logger) error {
 	}
 
 	// Index remaining functions
-	if idToPath != nil {
-		idToPathPlugins = append(idToPathPlugins, idToPath)
-	}
 	if teardown != nil {
 		teardownPlugins = append(teardownPlugins, teardown)
 	}

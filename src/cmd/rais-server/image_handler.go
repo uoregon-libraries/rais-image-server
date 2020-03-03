@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"rais/src/iiif"
 	"rais/src/img"
-	"rais/src/plugins"
 	"strconv"
 	"strings"
 )
@@ -201,16 +200,6 @@ func (ih *ImageHandler) isValidBasePath(path string) bool {
 }
 
 func (ih *ImageHandler) getIIIFPath(id iiif.ID) string {
-	for _, idtopath := range idToPathPlugins {
-		fp, err := idtopath(id)
-		if err == nil {
-			return fp
-		}
-		if err == plugins.ErrSkipped {
-			continue
-		}
-		Logger.Warnf("Error trying to use plugin to translate iiif.ID: %s", err)
-	}
 	return ih.TilePath + "/" + string(id)
 }
 
