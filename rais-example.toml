@@ -126,6 +126,15 @@ TileCacheLen = 0
 # CLI: --plugins
 Plugins = ""
 
+# JPGQuality: Optional, defaults to 75.  This must be between 1 and 100, where
+# 1 is very low quality but very small JPGs, and 100 is very high quality, but
+# very large files.  Set this if you want to fine-tune the compression of
+# requested JPG files.  75 is typically a good mix of efficiency and quality.
+#
+# Env: RAIS_JPGQUALITY
+# CLI: --jpg-quality
+#JPGQuality = 95
+
 ####
 # If you wanted to globally limit request size, use the below values.  By
 # default, the server doesn't try to limit request size simply because it's
