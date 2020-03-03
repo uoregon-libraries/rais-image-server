@@ -33,7 +33,7 @@ func NewResource(id iiif.ID, filepath string) (*Resource, error) {
 
 	// File exists - is a decoder registered for it?
 	var d Decoder
-	for _, decodeFn := range fns {
+	for _, decodeFn := range decodeFuncs {
 		d, err = decodeFn(filepath)
 		if err == nil && d != nil {
 			break

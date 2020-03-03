@@ -134,7 +134,7 @@ func loadPlugin(fullpath string, l *logger.Logger) error {
 	var wrapHandler func(string, http.Handler) (http.Handler, error)
 	var prgCache func()
 	var expCachedImg func(iiif.ID)
-	var imageDecoders func() []img.DecodeFn
+	var imageDecoders func() []img.DecodeFunc
 
 	pw.loadPluginFn("SetLogger", &log)
 	pw.loadPluginFn("IDToPath", &idToPath)
