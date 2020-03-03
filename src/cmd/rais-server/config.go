@@ -19,6 +19,7 @@ func parseConf() {
 	var defaultInfoCacheLen = 10000
 	var defaultLogLevel = logger.Debug.String()
 	var defaultPlugins = "s3-images.so,json-tracer.so"
+	var defaultJPGQuality = 75
 
 	// Defaults
 	viper.SetDefault("Address", defaultAddress)
@@ -26,6 +27,7 @@ func parseConf() {
 	viper.SetDefault("InfoCacheLen", defaultInfoCacheLen)
 	viper.SetDefault("LogLevel", defaultLogLevel)
 	viper.SetDefault("Plugins", defaultPlugins)
+	viper.SetDefault("JPGQuality", defaultJPGQuality)
 
 	// Allow all configuration to be in environment variables
 	viper.SetEnvPrefix("RAIS")
@@ -70,6 +72,8 @@ func parseConf() {
 	pflag.String("plugins", defaultPlugins, "comma-separated plugin pattern list, e.g., "+
 		`"s3-images.so,datadog.so,json-tracer.so,/opt/rais/plugins/*.so"`)
 	viper.BindPFlag("Plugins", pflag.CommandLine.Lookup("plugins"))
+	pflag.Int("jpg-quality", 75, "Quality of JPEG output")
+	viper.BindPFlag("JPGQuality", pflag.CommandLine.Lookup("jpg-quality"))
 
 	pflag.Parse()
 

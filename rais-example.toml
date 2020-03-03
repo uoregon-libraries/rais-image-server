@@ -57,20 +57,16 @@ IIIFWebPath = "/iiif"
 # info request occurs.  If used, make sure this is set to the *public* URL, and
 # do not add a path.  The base web path should be set above.
 #
-# Typically, proxy servers (like Apache or nginx) will give RAIS enough
-# information to deduce its base URL, making this unnecessary.  However, a
-# handful of situations warrant manually specifying the base URL:
+# Typically, proxy servers (like Apache or nginx) can be configured to give
+# RAIS enough information to deduce its base URL, making this unnecessary.
+# However, a handful of situations warrant manually specifying the base URL:
 #
 # - You expose RAIS directly to the Internet.  In this scenario, people can
 #   fake the headers which Apache and nginx normally use when forwarding
 #   requests, causing RAIS to misrepresent its hostname.  There's no risk in
-#   fake hostnames, but RAIS would then not function.  I can't see this really
-#   happening, but maybe it could if a user with an odd browser plugin happens
-#   by your site...?
-# - RAIS needs to respond on a particular port that can't be deduced easily by
-#   the proxy, as is sometimes the case if you run RAIS inside a docker setup,
-#   since the external port may not be the same one that's mapped to whatever
-#   server handles the HTTP requests which eventually make their way to RAIS.
+#   fake hostnames from a security perspective, but RAIS wouldn't function.
+# - Whatever is proxying to RAIS needs to respond on a nonstandard port (80 for
+#   http and 443 for https are the standard ports)
 # - RAIS is behind multiple levels of proxies, and configuring them all to
 #   forward the proper data is more of a pain than simply configuring RAIS.
 # - You need RAIS to report a specific base URL, such as when it's reachable
@@ -124,11 +120,20 @@ TileCacheLen = 0
 # The example s3-images and json-trace plugins are considered production-ready.
 #
 # A value of "*.so" replicates the 3.0.x behavior of loading everything in
-# plugins/, while a value of "" disabled plugins entirely.
+# plugins/, while a value of "" disables plugins entirely.
 #
 # Env: RAIS_PLUGINS
 # CLI: --plugins
 Plugins = ""
+
+# JPGQuality: Optional, defaults to 75.  This must be between 1 and 100, where
+# 1 is very low quality but very small JPGs, and 100 is very high quality, but
+# very large files.  Set this if you want to fine-tune the compression of
+# requested JPG files.  75 is typically a good mix of efficiency and quality.
+#
+# Env: RAIS_JPGQUALITY
+# CLI: --jpg-quality
+#JPGQuality = 95
 
 ####
 # If you wanted to globally limit request size, use the below values.  By
