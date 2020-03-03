@@ -19,7 +19,11 @@ import (
 	"github.com/uoregon-libraries/gopkg/logger"
 )
 
-var unlimited = img.Constraint{math.MaxInt32, math.MaxInt32, math.MaxInt64}
+func nc(w, h int, a int64) img.Constraint {
+	return img.Constraint{Width: w, Height: h, Area: a}
+}
+
+var unlimited = nc(math.MaxInt32, math.MaxInt32, math.MaxInt64)
 
 func init() {
 	Logger = logger.New(logger.Warn)
@@ -135,7 +139,7 @@ func TestInfoRedirect(t *testing.T) {
 // TestInfoMaxSize verifies that when the image is bigger than the handler's
 // maximums, values are present in the info profile
 func TestInfoMaxSize(t *testing.T) {
-	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, img.Constraint{60, 80, 480}, t)
+	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, nc(60, 80, 480), t)
 	var data iiif.Info
 	json.Unmarshal(w.Output, &data)
 	assert.Equal(60, data.Profile.MaxWidth, "JSON-decoded max width", t)
@@ -151,7 +155,7 @@ func TestInfoMaxSize(t *testing.T) {
 // TestInfoNoMaxSize verifies that when the image is smaller than the handler's
 // maximums, values are not present in the info profile
 func TestInfoNoMaxSize(t *testing.T) {
-	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, img.Constraint{6000, 8000, 4800000}, t)
+	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, nc(6000, 8000, 4800000), t)
 	var data iiif.Info
 	json.Unmarshal(w.Output, &data)
 	assert.Equal(0, data.Profile.MaxWidth, "JSON-decoded width", t)
@@ -191,9 +195,9 @@ func TestCommandHandler(t *testing.T) {
 
 func TestCommandHandlerInvalidSize(t *testing.T) {
 	imgid := "docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/pct:10,10,80,80/full/0/default.jpg"
-	areaConstraint := img.Constraint{math.MaxInt32, math.MaxInt32, 480}
-	wConstraint := img.Constraint{20, math.MaxInt32, math.MaxInt64}
-	hConstraint := img.Constraint{math.MaxInt32, 20, math.MaxInt64}
+	areaConstraint := nc(math.MaxInt32, math.MaxInt32, 480)
+	wConstraint := nc(20, math.MaxInt32, math.MaxInt64)
+	hConstraint := nc(math.MaxInt32, 20, math.MaxInt64)
 
 	// For sanity let's make sure the request has no errors when we don't specify
 	// any constraints

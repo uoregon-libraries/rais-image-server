@@ -18,6 +18,8 @@ const (
 // Formats is the definitive list of all possible Format constants
 var Formats = []Format{FmtJPG, FmtTIF, FmtPNG, FmtGIF, FmtJP2, FmtPDF, FmtWEBP}
 
+// StringToFormat converts val into a Format constant if val is one of our
+// valid Formats
 func StringToFormat(val string) Format {
 	f := Format(val)
 	if f.Valid() {

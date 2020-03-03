@@ -18,6 +18,8 @@ const (
 // Qualities is the definitive list of all possible Quality constants
 var Qualities = []Quality{QColor, QGray, QBitonal, QDefault, QNative}
 
+// StringToQuality converts val into a Quality constant if val is one of our
+// valid Qualities
 func StringToQuality(val string) Quality {
 	q := Quality(val)
 	if q.Valid() {

@@ -22,9 +22,9 @@ type Server struct {
 	middleware []func(http.Handler) http.Handler
 }
 
-// NewServer registers a named server at the given bind address.  If the
-// address is already in use, the "new" server will instead merge with the
-// existing server.
+// New registers a named server at the given bind address.  If the address is
+// already in use, the "new" server will instead merge with the existing
+// server.
 func New(name, addr string) *Server {
 	if servers[addr] != nil {
 		servers[addr].Name += ", " + name
