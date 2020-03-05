@@ -15,6 +15,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/uoregon-libraries/gopkg/assert"
 	"github.com/uoregon-libraries/gopkg/logger"
 )
@@ -245,5 +246,44 @@ func BenchmarkRouting(b *testing.B) {
 			req.RequestURI = requri
 			h.IIIFRoute(w, req)
 		}
+	}
+}
+
+func TestIDToURL(t *testing.T) {
+	var h = NewImageHandler("/var/local/images", "/iiif")
+
+	// Prefer table-driven tests, sirs
+	var tests = map[string]struct {
+		ID          string
+		ExpectedURL *url.URL
+	}{
+		// iiif.ID should always be created by iiif.URLToID, so we don't need to
+		// test out unescaped IDs here
+		"simple": {
+			"foo/bar/baz.jp2",
+			&url.URL{Scheme: "file", Path: "/var/local/images/foo/bar/baz.jp2"},
+		},
+		"with scheme": {
+			"s3://foo/bar/baz.jp2",
+			&url.URL{Scheme: "s3", Host: "foo", Path: "/bar/baz.jp2"},
+		},
+		"explicit file won't resolve to an absolute path": {
+			"file:///etc/passwd",
+			&url.URL{Scheme: "file", Path: "/var/local/images/etc/passwd"},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			var got = h.getURL(iiif.ID(tc.ID))
+
+			// We don't care about RawPath for testing purposes
+			got.RawPath = ""
+
+			var diff = cmp.Diff(tc.ExpectedURL, got)
+			if diff != "" {
+				t.Errorf("getURL(%q): %s", tc.ID, diff)
+			}
+		})
 	}
 }

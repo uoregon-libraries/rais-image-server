@@ -10,6 +10,7 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
+	"path"
 	"rais/src/iiif"
 	"rais/src/img"
 	"strconv"
@@ -201,6 +202,33 @@ func (ih *ImageHandler) isValidBasePath(path string) bool {
 
 func (ih *ImageHandler) getIIIFPath(id iiif.ID) string {
 	return ih.TilePath + "/" + string(id)
+}
+
+// getURL converts a IIIF ID into a URL.  If the ID has no scheme, we assume
+// it's `file://`.  Additionally, all `file://` URIs get their path prefixed
+// with the configured tilepath
+func (ih *ImageHandler) getURL(id iiif.ID) *url.URL {
+	// TODO: make this a plugin function, idToURL
+	Logger.Warnf("add idToURL plugin hook")
+
+	var u, err = url.Parse(string(id))
+	// If an id fails to parse, it's probably a client-side error (such as
+	// failing to escape the pound sign)
+	// filesystem id or else a client-side error.
+	if err != nil {
+		u = &url.URL{Path: string(id)}
+	}
+
+	if u.Scheme == "" {
+		u.Scheme = "file"
+	}
+	if u.Scheme == "file" {
+		u.Path = path.Join(ih.TilePath, u.Path)
+	}
+
+	Logger.Debugf("%q translated to URL %q", id, u)
+
+	return u
 }
 
 func convertStrings(s1, s2, s3 string) (i1, i2, i3 int, err error) {
