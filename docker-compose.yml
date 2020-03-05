@@ -23,7 +23,7 @@ services:
       - RAIS_IMAGEMAXAREA
       - RAIS_IMAGEMAXWIDTH
       - RAIS_IMAGEMAXHEIGHT
-      - RAIS_PLUGINS
+      - RAIS_PLUGINS=*
       - RAIS_JPGQUALITY
       - RAIS_ALLOW_INSECURE_PLUGINS=0
     volumes:
