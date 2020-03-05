@@ -26,22 +26,18 @@ func SetLogger(raisLogger *logger.Logger) {
 	l = raisLogger
 }
 
-// Initialize sets up the MagickCore stuff
+// Initialize sets up the MagickCore stuff and registers the TIFF, PNG, JPG,
+// and GIF decoders
 func Initialize() {
 	path, _ := os.Getwd()
 	cPath := C.CString(path)
 	defer C.free(unsafe.Pointer(cPath))
 	C.MagickCoreGenesis(cPath, C.MagickFalse)
+	img.RegisterDecoder(decodeCommonFile)
 }
 
 func makeError(exception *C.ExceptionInfo) error {
 	return fmt.Errorf("%v: %v - %v", exception.severity, exception.reason, exception.description)
-}
-
-// ImageDecoders returns our list of one: the magick decoder used for the image
-// types we support
-func ImageDecoders() []img.DecodeFn {
-	return []img.DecodeFn{decodeCommonFile}
 }
 
 func decodeCommonFile(path string) (img.Decoder, error) {

@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"plugin"
 	"rais/src/iiif"
-	"rais/src/img"
 	"reflect"
 	"sort"
 	"strings"
@@ -132,7 +131,6 @@ func loadPlugin(fullpath string, l *logger.Logger) error {
 	var wrapHandler func(string, http.Handler) (http.Handler, error)
 	var prgCache func()
 	var expCachedImg func(iiif.ID)
-	var imageDecoders func() []img.DecodeFunc
 
 	pw.loadPluginFn("SetLogger", &log)
 	pw.loadPluginFn("Initialize", &initialize)
@@ -140,7 +138,6 @@ func loadPlugin(fullpath string, l *logger.Logger) error {
 	pw.loadPluginFn("WrapHandler", &wrapHandler)
 	pw.loadPluginFn("PurgeCaches", &prgCache)
 	pw.loadPluginFn("ExpireCachedImage", &expCachedImg)
-	pw.loadPluginFn("ImageDecoders", &imageDecoders)
 
 	if len(pw.errors) != 0 {
 		return errors.New(strings.Join(pw.errors, ", "))
@@ -167,13 +164,6 @@ func loadPlugin(fullpath string, l *logger.Logger) error {
 			return nil
 		}
 		l.Debugf("%q is explicitly enabled", fullpath)
-	}
-
-	// Register image decoder(s) if plugin exposes any
-	if imageDecoders != nil {
-		for _, fn := range imageDecoders() {
-			img.RegisterDecoder(fn)
-		}
 	}
 
 	// Index remaining functions
