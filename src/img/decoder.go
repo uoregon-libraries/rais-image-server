@@ -20,15 +20,15 @@ type Decoder interface {
 
 // DecodeHandler is a function which takes a URL and returns a DecodeFunc and
 // optionally an error.  If the error is ErrSkipped, the function is stating
-// that it doesn't handle images the path describes (typically just a brief
-// check on the extension suffices, but a plugin could choose to read data from the
-// file to get, e.g., a proper mime type).  A return with a nil error means
+// that it doesn't handle images the Streamer describes (typically just a brief
+// check on the URL suffices, but a plugin could choose to read data from the
+// streamer to get, e.g., a proper mime type).  A return with a nil error means
 // the returned function should be used and searching is done.
-type DecodeHandler func(string) (DecodeFunc, error)
+type DecodeHandler func(Streamer) (DecodeFunc, error)
 
 // DecodeFunc is the actual function which must be called for decoding its info
-// / image data.  Since this will typically read from the path immediately,
-// it may return an error.  A handler is expected to hold onto its path so
+// / image data.  Since this will typically read from the stream immediately,
+// it may return an error.  A handler is expected to hold onto its Streamer so
 // its returned DecodeFunc doesn't have to take an unnecessary parameter.
 type DecodeFunc func() (Decoder, error)
 

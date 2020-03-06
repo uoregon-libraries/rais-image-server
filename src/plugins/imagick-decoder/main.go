@@ -41,7 +41,12 @@ func makeError(exception *C.ExceptionInfo) error {
 	return fmt.Errorf("%v: %v - %v", exception.severity, exception.reason, exception.description)
 }
 
-func decodeCommonFile(path string) (img.DecodeFunc, error) {
+func decodeCommonFile(s img.Streamer) (img.DecodeFunc, error) {
+	if s.Location().Scheme != "file" {
+		return nil, fmt.Errorf("cannot process non-file images with imagick-decoder plugin")
+	}
+
+	var path = s.Location().Path
 	switch filepath.Ext(path) {
 	case ".tif", ".tiff", ".png", ".jpg", "jpeg", ".gif":
 		return func() (img.Decoder, error) { return NewImage(path) }, nil

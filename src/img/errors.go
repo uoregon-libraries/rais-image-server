@@ -12,4 +12,5 @@ const (
 	ErrDoesNotExist           imgError = "image file does not exist"
 	ErrInvalidFiletype        imgError = "invalid or unknown file type"
 	ErrDimensionsExceedLimits imgError = "requested image size exceeds server maximums"
+	ErrNotStreamable          imgError = "no registered streamers"
 )

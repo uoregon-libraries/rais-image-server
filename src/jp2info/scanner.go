@@ -43,6 +43,12 @@ func (s *Scanner) Scan(filename string) (*Info, error) {
 	return s.i, s.e
 }
 
+// ScanStream reads JP2 info from an io.Reader to return JP2 structural data
+func (s *Scanner) ScanStream(r io.Reader) (*Info, error) {
+	s.readInfo(r)
+	return s.i, s.e
+}
+
 func (s *Scanner) readInfo(ior io.Reader) {
 	s.i = &Info{}
 	s.r = bufio.NewReader(ior)

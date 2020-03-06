@@ -7,18 +7,18 @@ import (
 	"image/draw"
 	"math"
 	"net/url"
-	"os"
 	"rais/src/iiif"
 	"rais/src/plugins"
 	"rais/src/transform"
 )
 
-// Resource wraps a path and decode function, the two components we must
+// Resource wraps a streamer and decode function, the two components we must
 // have for any image, as well as the image ID and URL.  The actual decoder is
 // lazy-loaded when it's needed.
 type Resource struct {
 	ID         iiif.ID
 	URL        *url.URL
+	streamer   Streamer
 	decoder    Decoder
 	decodeFunc DecodeFunc
 }
@@ -31,26 +31,47 @@ type Resource struct {
 func NewResource(id iiif.ID, u *url.URL) (*Resource, error) {
 	var err error
 
-	var filepath = u.Path
+	// Do we have a streamer for this resource's scheme?
+	var s Streamer
+	s, err = getStreamer(u)
+	if err != nil {
+		return nil, err
+	}
 
-	// First, does the file exist?
-	if _, err = os.Stat(filepath); err != nil {
+	// Does the image exist?
+	if !s.Exist() {
 		return nil, ErrDoesNotExist
 	}
 
 	// An image exists - is a decoder registered for it?
 	var d DecodeFunc
-	d, err = getDecodeFunc(filepath)
+	d, err = getDecodeFunc(s)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Resource{ID: id, URL: u, decodeFunc: d}, nil
+	return &Resource{ID: id, URL: u, decodeFunc: d, streamer: s}, nil
 }
 
-func getDecodeFunc(path string) (d DecodeFunc, err error) {
+func getStreamer(u *url.URL) (s Streamer, err error) {
+	for _, streamFn := range streamFuncs {
+		s, err = streamFn(u)
+		if err == nil && s != nil {
+			return s, nil
+		}
+		if err == plugins.ErrSkipped {
+			continue
+		}
+		return nil, err
+	}
+
+	// No streamer was found for this URL
+	return nil, ErrNotStreamable
+}
+
+func getDecodeFunc(s Streamer) (d DecodeFunc, err error) {
 	for _, decodeHandler := range decodeHandlers {
-		d, err = decodeHandler(path)
+		d, err = decodeHandler(s)
 		if err == nil && d != nil {
 			return d, nil
 		}

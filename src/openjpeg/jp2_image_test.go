@@ -3,6 +3,7 @@ package openjpeg
 import (
 	"image"
 	"os"
+	"rais/src/img"
 	"testing"
 
 	"github.com/uoregon-libraries/gopkg/assert"
@@ -14,8 +15,12 @@ func init() {
 }
 
 func jp2i() *JP2Image {
-	dir, _ := os.Getwd()
-	jp2, err := NewJP2Image(dir + "/../../docker/images/testfile/test-world.jp2")
+	var dir, _ = os.Getwd()
+	var s, err = img.NewFileStream(dir + "/../../docker/images/testfile/test-world.jp2")
+	var jp2 *JP2Image
+	if err == nil {
+		jp2, err = NewJP2Image(s)
+	}
 	if err != nil {
 		panic("Error reading JP2 for testing!")
 	}
@@ -105,7 +110,10 @@ func BenchmarkReadAndDecodeImage(b *testing.B) {
 // see how we perform when using the best-case image type
 func BenchmarkReadAndDecodeTiledImage(b *testing.B) {
 	dir, _ := os.Getwd()
-	bigImage := dir + "/../../docker/images/jp2tests/sn00063609-19091231.jp2"
+	bigImage, err := img.NewFileStream(dir + "/../../docker/images/jp2tests/sn00063609-19091231.jp2")
+	if err != nil {
+		b.Fatalf("Unable to open file stream for newspaper image: %s", err)
+	}
 
 	for n := 0; n < b.N; n++ {
 		var size = ((n % 2) + 1) * 1024

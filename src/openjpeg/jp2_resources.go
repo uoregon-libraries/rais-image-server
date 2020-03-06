@@ -22,7 +22,7 @@ func (i *JP2Image) rawDecode() (jp2 *C.opj_image_t, err error) {
 	parameters.cp_reduce = C.OPJ_UINT32(i.computeProgressionLevel())
 
 	// Setup file stream
-	stream, err := initializeStream(i.filename)
+	stream, err := initializeStream(i.streamer.Location().Path)
 	if err != nil {
 		return jp2, err
 	}

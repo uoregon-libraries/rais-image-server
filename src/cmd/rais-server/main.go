@@ -53,6 +53,9 @@ func main() {
 	// something one day
 	img.RegisterDecodeHandler(decodeJP2)
 
+	// File streamer for handling images on the local filesystem
+	img.RegisterStreamer(streamFiles)
+
 	tilePath := viper.GetString("TilePath")
 	webPath := viper.GetString("IIIFWebPath")
 	if webPath == "" {
