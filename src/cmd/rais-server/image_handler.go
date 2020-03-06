@@ -265,6 +265,10 @@ func (ih *ImageHandler) Info(w http.ResponseWriter, req *http.Request, info *iii
 }
 
 func newImageResError(err error) *HandlerError {
+	if err == nil {
+		return nil
+	}
+
 	switch err {
 	case img.ErrDimensionsExceedLimits:
 		return NewError(err.Error(), 501)
