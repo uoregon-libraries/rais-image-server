@@ -296,7 +296,6 @@ func (ih *ImageHandler) getIIIFInfo(res *img.Resource) (*iiif.Info, *HandlerErro
 		return nil, err
 	}
 
-	ih.saveInfoToCache(res.ID, info)
 	return info, nil
 }
 
@@ -334,7 +333,7 @@ func (ih *ImageHandler) loadInfoOverride(res *img.Resource) *iiif.Info {
 	return info
 }
 
-func (ih *ImageHandler) saveInfoToCache(id iiif.ID, info *iiif.Info) {
+func (ih *ImageHandler) saveInfoToCache(id iiif.ID, info ImageInfo) {
 	if infoCache == nil {
 		return
 	}
@@ -354,6 +353,9 @@ func (ih *ImageHandler) loadInfoFromImageResource(res *img.Resource) (*iiif.Info
 		Levels:     d.GetLevels(),
 	}
 
+	// We save the minimal data to the cache so our cache remains incredibly
+	// small for what it gives us
+	ih.saveInfoToCache(res.ID, imageInfo)
 	return ih.buildInfo(res.ID, imageInfo), nil
 }
 
