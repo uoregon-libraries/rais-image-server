@@ -236,3 +236,9 @@ func bitonal(img image.Image) image.Image {
 
 	return imgBitonal
 }
+
+// Destroy lets the resource clean up any open streams, etc.  This *must* be
+// called to prevent resource leaks!
+func (res *Resource) Destroy() {
+	res.streamer.Close()
+}

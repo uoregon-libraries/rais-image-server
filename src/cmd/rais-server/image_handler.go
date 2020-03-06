@@ -132,6 +132,8 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	defer res.Destroy()
+
 	// Make sure the info JSON has the proper asset id, which, for some reason in
 	// the IIIF spec, requires the full URL to the asset, not just its identifier
 	infourl := &url.URL{
@@ -182,7 +184,10 @@ func (ih *ImageHandler) isValidBasePath(path string) bool {
 		return false
 	}
 
-	var _, _, e = ih.getImageData(iiifURL.ID)
+	var res, _, e = ih.getImageData(iiifURL.ID)
+	if res != nil {
+		res.Destroy()
+	}
 	return e == nil
 }
 
