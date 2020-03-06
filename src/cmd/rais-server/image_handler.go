@@ -122,12 +122,11 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Handle info.json prior to reading the image, in case of cached info
-	fp := ih.getIIIFPath(iiifURL.ID)
-	info, e := ih.getInfo(iiifURL.ID, fp)
+	// Grab the image resource and info data
+	res, info, e := ih.getImageData(iiifURL.ID)
 	if e != nil {
 		if e.Code != 404 {
-			Logger.Errorf("Error getting IIIF info.json for resource %s (path %s): %s", iiifURL.ID, fp, e.Message)
+			Logger.Errorf("Error getting image and/or IIIF Info for %q: %s", iiifURL.ID, e.Message)
 		}
 		http.Error(w, e.Message, e.Code)
 		return
@@ -164,17 +163,6 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	// No info path should mean a full command path - start reading the image
-	res, err := img.NewResource(iiifURL.ID, fp)
-	if err != nil {
-		e := newImageResError(err)
-		if e.Code != 404 {
-			Logger.Errorf("Error initializing resource %s (path %s): %s", iiifURL.ID, fp, err)
-		}
-		http.Error(w, e.Message, e.Code)
-		return
-	}
-
 	if !iiifURL.Valid() {
 		// This means the URI was probably a command, but had an invalid syntax
 		http.Error(w, "Invalid IIIF request: "+iiifURL.Error().Error(), 400)
@@ -194,9 +182,7 @@ func (ih *ImageHandler) isValidBasePath(path string) bool {
 		return false
 	}
 
-	var fp = ih.getIIIFPath(iiifURL.ID)
-	var e *HandlerError
-	_, e = ih.getInfo(iiifURL.ID, fp)
+	var _, _, e = ih.getImageData(iiifURL.ID)
 	return e == nil
 }
 
@@ -279,21 +265,40 @@ func newImageResError(err error) *HandlerError {
 	}
 }
 
-func (ih *ImageHandler) getInfo(id iiif.ID, fp string) (info *iiif.Info, err *HandlerError) {
+func (ih *ImageHandler) getImageData(id iiif.ID) (*img.Resource, *iiif.Info, *HandlerError) {
+	var res, err = img.NewResource(id, ih.getURL(id))
+	if err != nil {
+		return nil, nil, newImageResError(err)
+	}
+
+	info, e := ih.getIIIFInfo(res)
+	if e != nil {
+		return nil, nil, e
+	}
+
+	return res, info, nil
+}
+
+func (ih *ImageHandler) getIIIFInfo(res *img.Resource) (*iiif.Info, *HandlerError) {
 	// Check for cached image data first, and use that to create JSON
-	info = ih.loadInfoFromCache(id)
-
-	// Next, check for an overridden info.json file, and just spit that out
-	// directly if it exists
-	if info == nil {
-		info = ih.loadInfoOverride(id, fp)
+	var info = ih.loadInfoFromCache(res.ID)
+	if info != nil {
+		return info, nil
 	}
 
-	if info == nil {
-		info, err = ih.loadInfoFromImageResource(id, fp)
+	info = ih.loadInfoOverride(res)
+	if info != nil {
+		return info, nil
 	}
 
-	return info, err
+	var err *HandlerError
+	info, err = ih.loadInfoFromImageResource(res)
+	if err != nil {
+		return nil, err
+	}
+
+	ih.saveInfoToCache(res.ID, info)
+	return info, nil
 }
 
 func (ih *ImageHandler) loadInfoFromCache(id iiif.ID) *iiif.Info {
@@ -311,17 +316,17 @@ func (ih *ImageHandler) loadInfoFromCache(id iiif.ID) *iiif.Info {
 	return ih.buildInfo(id, data.(ImageInfo))
 }
 
-func (ih *ImageHandler) loadInfoOverride(id iiif.ID, fp string) *iiif.Info {
+func (ih *ImageHandler) loadInfoOverride(res *img.Resource) *iiif.Info {
 	// If an override file isn't found or has an error, just skip it
-	var infofile = fp + "-info.json"
-	data, err := ioutil.ReadFile(infofile)
+	var infofile = res.URL.Path + "-info.json"
+	var data, err = ioutil.ReadFile(infofile)
 	if err != nil {
 		return nil
 	}
 
 	Logger.Debugf("Loading image data from override file (%s)", infofile)
 
-	info := new(iiif.Info)
+	var info = new(iiif.Info)
 	err = json.Unmarshal(data, info)
 	if err != nil {
 		Logger.Errorf("Cannot parse JSON override file %q: %s", infofile, err)
@@ -330,15 +335,19 @@ func (ih *ImageHandler) loadInfoOverride(id iiif.ID, fp string) *iiif.Info {
 	return info
 }
 
-func (ih *ImageHandler) loadInfoFromImageResource(id iiif.ID, fp string) (*iiif.Info, *HandlerError) {
-	Logger.Debugf("Loading image data from image resource (id: %s)", id)
-	res, err := img.NewResource(id, fp)
-	if err != nil {
-		return nil, newImageResError(err)
+func (ih *ImageHandler) saveInfoToCache(id iiif.ID, info *iiif.Info) {
+	if infoCache == nil {
+		return
 	}
 
-	d := res.Decoder
-	imageInfo := ImageInfo{
+	stats.InfoCache.Set()
+	infoCache.Add(id, info)
+}
+
+func (ih *ImageHandler) loadInfoFromImageResource(res *img.Resource) (*iiif.Info, *HandlerError) {
+	Logger.Debugf("Loading image data from image resource (id: %s)", res.ID)
+	var d = res.Decoder
+	var imageInfo = ImageInfo{
 		Width:      d.GetWidth(),
 		Height:     d.GetHeight(),
 		TileWidth:  d.GetTileWidth(),
@@ -346,11 +355,7 @@ func (ih *ImageHandler) loadInfoFromImageResource(id iiif.ID, fp string) (*iiif.
 		Levels:     d.GetLevels(),
 	}
 
-	if infoCache != nil {
-		stats.InfoCache.Set()
-		infoCache.Add(id, imageInfo)
-	}
-	return ih.buildInfo(id, imageInfo), nil
+	return ih.buildInfo(res.ID, imageInfo), nil
 }
 
 func (ih *ImageHandler) buildInfo(id iiif.ID, i ImageInfo) *iiif.Info {
@@ -406,7 +411,7 @@ func marshalInfo(info *iiif.Info) ([]byte, *HandlerError) {
 // Command handles image processing operations
 func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL, res *img.Resource, info *iiif.Info) {
 	// Send last modified time
-	if err := sendHeaders(w, req, res.FilePath); err != nil {
+	if err := sendHeaders(w, req, res.URL.Path); err != nil {
 		return
 	}
 

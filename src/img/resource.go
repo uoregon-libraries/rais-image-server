@@ -6,25 +6,29 @@ import (
 	"image/color"
 	"image/draw"
 	"math"
+	"net/url"
 	"os"
 	"rais/src/iiif"
 	"rais/src/transform"
 )
 
-// Resource wraps a decoder, IIIF ID, and the path to the image
+// Resource wraps a streamer and decoder, the two components we must have for
+// any image
 type Resource struct {
-	Decoder  Decoder
-	ID       iiif.ID
-	FilePath string
+	Decoder Decoder
+	ID      iiif.ID
+	URL     *url.URL
 }
 
-// NewResource initializes and returns an Resource for the given id
-// and path.  If the path doesn't resolve to a valid file, or resolves to a
-// file type that isn't supported, an error is returned.  File type is
-// determined by extension, so images will need standard extensions in order to
-// work.
-func NewResource(id iiif.ID, filepath string) (*Resource, error) {
+// NewResource initializes and returns an Resource for the given URL
+// (translated from a IIIF ID) If the URL doesn't have a streamer, doesn't
+// resolve to a valid image, or resolves to an image for which we have no
+// decoder, an error is returned.  File type is determined by extension, so
+// images will need standard extensions in order to work.
+func NewResource(id iiif.ID, u *url.URL) (*Resource, error) {
 	var err error
+
+	var filepath = u.Path
 
 	// First, does the file exist?
 	if _, err = os.Stat(filepath); err != nil {
@@ -48,7 +52,7 @@ func NewResource(id iiif.ID, filepath string) (*Resource, error) {
 		return nil, ErrInvalidFiletype
 	}
 
-	img := &Resource{ID: id, Decoder: d, FilePath: filepath}
+	img := &Resource{ID: id, Decoder: d, URL: u}
 	return img, nil
 }
 
