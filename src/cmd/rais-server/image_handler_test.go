@@ -28,7 +28,7 @@ var unlimited = nc(math.MaxInt32, math.MaxInt32, math.MaxInt64)
 
 func init() {
 	Logger = logger.New(logger.Warn)
-	img.RegisterDecoder(decodeJP2)
+	img.RegisterDecodeHandler(decodeJP2)
 }
 
 func rootDir() string {

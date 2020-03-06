@@ -1,15 +1,13 @@
 package main
 
 import (
-	"path/filepath"
 	"rais/src/img"
 	"rais/src/openjpeg"
-	"rais/src/plugins"
 )
 
-func decodeJP2(path string) (img.Decoder, error) {
-	if filepath.Ext(path) == ".jp2" {
-		return openjpeg.NewJP2Image(path)
-	}
-	return nil, plugins.ErrSkipped
+// decodeJP2 is the last decoder function we try, after any plugins have been
+// tried, so we don't actually care about the URL - we just try it and see what
+// happens.
+func decodeJP2(path string) (img.DecodeFunc, error) {
+	return func() (img.Decoder, error) { return openjpeg.NewJP2Image(path) }, nil
 }

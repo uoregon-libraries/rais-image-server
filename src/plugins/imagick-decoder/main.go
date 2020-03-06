@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"rais/src/img"
+	"rais/src/plugins"
 	"unsafe"
 
 	"github.com/uoregon-libraries/gopkg/logger"
@@ -33,17 +34,17 @@ func Initialize() {
 	cPath := C.CString(path)
 	defer C.free(unsafe.Pointer(cPath))
 	C.MagickCoreGenesis(cPath, C.MagickFalse)
-	img.RegisterDecoder(decodeCommonFile)
+	img.RegisterDecodeHandler(decodeCommonFile)
 }
 
 func makeError(exception *C.ExceptionInfo) error {
 	return fmt.Errorf("%v: %v - %v", exception.severity, exception.reason, exception.description)
 }
 
-func decodeCommonFile(path string) (img.Decoder, error) {
+func decodeCommonFile(path string) (img.DecodeFunc, error) {
 	switch filepath.Ext(path) {
 	case ".tif", ".tiff", ".png", ".jpg", "jpeg", ".gif":
-		return NewImage(path)
+		return func() (img.Decoder, error) { return NewImage(path) }, nil
 	default:
 		return nil, plugins.ErrSkipped
 	}

@@ -13,12 +13,14 @@ import (
 	"rais/src/transform"
 )
 
-// Resource wraps a streamer and decoder, the two components we must have for
-// any image
+// Resource wraps a path and decode function, the two components we must
+// have for any image, as well as the image ID and URL.  The actual decoder is
+// lazy-loaded when it's needed.
 type Resource struct {
-	Decoder Decoder
-	ID      iiif.ID
-	URL     *url.URL
+	ID         iiif.ID
+	URL        *url.URL
+	decoder    Decoder
+	decodeFunc DecodeFunc
 }
 
 // NewResource initializes and returns an Resource for the given URL
@@ -36,12 +38,21 @@ func NewResource(id iiif.ID, u *url.URL) (*Resource, error) {
 		return nil, ErrDoesNotExist
 	}
 
-	// File exists - is a decoder registered for it?
-	var d Decoder
-	for _, decodeFn := range decodeFuncs {
-		d, err = decodeFn(filepath)
+	// An image exists - is a decoder registered for it?
+	var d DecodeFunc
+	d, err = getDecodeFunc(filepath)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Resource{ID: id, URL: u, decodeFunc: d}, nil
+}
+
+func getDecodeFunc(path string) (d DecodeFunc, err error) {
+	for _, decodeHandler := range decodeHandlers {
+		d, err = decodeHandler(path)
 		if err == nil && d != nil {
-			break
+			return d, nil
 		}
 		if err == plugins.ErrSkipped {
 			continue
@@ -49,12 +60,8 @@ func NewResource(id iiif.ID, u *url.URL) (*Resource, error) {
 		return nil, err
 	}
 
-	if d == nil {
-		return nil, ErrInvalidFiletype
-	}
-
-	img := &Resource{ID: id, Decoder: d, URL: u}
-	return img, nil
+	// No decoder was found for this file type
+	return nil, ErrInvalidFiletype
 }
 
 // getResizeWithConstraints returns a scaled rectangle, computing the best fit
@@ -90,11 +97,29 @@ func getResizeWithConstraints(crop image.Rectangle, max Constraint) image.Rectan
 	return image.Rect(0, 0, int(xf), int(yf))
 }
 
+// Decoder attempts to initialize the registered decoder.  Because this can
+// read from disk, it should only be called when it has to be called.  It may
+// return errors if reading the image fails.
+func (res *Resource) Decoder() (Decoder, error) {
+	var err error
+	if res.decoder == nil {
+		res.decoder, err = res.decodeFunc()
+	}
+
+	return res.decoder, err
+}
+
 // Apply runs all image manipulation operations described by the IIIF URL, and
 // returns an image.Image ready for encoding to the client
 func (res *Resource) Apply(u *iiif.URL, max Constraint) (image.Image, error) {
+	// Initialize a decoder if that hasn't already happened
+	var decoder, err = res.Decoder()
+	if err != nil {
+		return nil, err
+	}
+
 	// Crop and resize have to be prepared before we can decode
-	w, h := res.Decoder.GetWidth(), res.Decoder.GetHeight()
+	w, h := decoder.GetWidth(), decoder.GetHeight()
 	crop := u.Region.GetCrop(w, h)
 
 	// If size is "max", we actually want the "best fit" size type, but with our
@@ -115,10 +140,10 @@ func (res *Resource) Apply(u *iiif.URL, max Constraint) (image.Image, error) {
 		return nil, ErrDimensionsExceedLimits
 	}
 
-	res.Decoder.SetCrop(crop)
-	res.Decoder.SetResizeWH(scale.Dx(), scale.Dy())
+	decoder.SetCrop(crop)
+	decoder.SetResizeWH(scale.Dx(), scale.Dy())
 
-	img, err := res.Decoder.DecodeImage()
+	img, err := decoder.DecodeImage()
 	if err != nil {
 		return nil, errors.New("unable to decode image: " + err.Error())
 	}

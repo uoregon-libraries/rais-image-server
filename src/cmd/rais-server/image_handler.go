@@ -344,7 +344,11 @@ func (ih *ImageHandler) saveInfoToCache(id iiif.ID, info ImageInfo) {
 
 func (ih *ImageHandler) loadInfoFromImageResource(res *img.Resource) (*iiif.Info, *HandlerError) {
 	Logger.Debugf("Loading image data from image resource (id: %s)", res.ID)
-	var d = res.Decoder
+	var d, err = res.Decoder()
+	if err != nil {
+		return nil, newImageResError(err)
+	}
+
 	var imageInfo = ImageInfo{
 		Width:      d.GetWidth(),
 		Height:     d.GetHeight(),

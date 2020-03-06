@@ -51,7 +51,7 @@ func main() {
 	// Register our JP2 decoder after plugins have been loaded to allow plugins
 	// to handle images - for instance, we might want a pyramidal tiff plugin or
 	// something one day
-	img.RegisterDecoder(decodeJP2)
+	img.RegisterDecodeHandler(decodeJP2)
 
 	tilePath := viper.GetString("TilePath")
 	webPath := viper.GetString("IIIFWebPath")

@@ -34,7 +34,7 @@ func (d *fakeDecoder) SetResizeWH(w, h int)              { d.resizeW, d.resizeH 
 
 func TestSquareRegionTall(t *testing.T) {
 	var d = &fakeDecoder{w: 400, h: 950, tw: 64, th: 64, l: 1}
-	var tall = &Resource{Decoder: d}
+	var tall = &Resource{decoder: d}
 	var url, _ = iiif.NewURL("identifier/square/full/0/default.jpg")
 	var _, err = tall.Apply(url, unlimited)
 	assert.True(err == nil, "tall.Apply should not have errors", t)
@@ -50,7 +50,7 @@ func TestSquareRegionTall(t *testing.T) {
 // sizes and levels don't matter here
 func TestSquareRegionWide(t *testing.T) {
 	var d = &fakeDecoder{w: 4000, h: 650, tw: 128, th: 128, l: 4}
-	var wide = &Resource{Decoder: d}
+	var wide = &Resource{decoder: d}
 	var url, _ = iiif.NewURL("identifier/square/full/0/default.jpg")
 	var _, err = wide.Apply(url, unlimited)
 	assert.True(err == nil, "wide.Apply should not have errors", t)
@@ -64,7 +64,7 @@ func TestSquareRegionWide(t *testing.T) {
 
 func TestMaxSizeNoConstraints(t *testing.T) {
 	var d = &fakeDecoder{w: 4000, h: 650, tw: 128, th: 128, l: 4}
-	var img = &Resource{Decoder: d}
+	var img = &Resource{decoder: d}
 	var url, _ = iiif.NewURL("identifier/full/max/0/default.jpg")
 	var _, err = img.Apply(url, unlimited)
 	assert.True(err == nil, "img.Apply should not have errors", t)
@@ -76,7 +76,7 @@ func TestMaxSizeNoConstraints(t *testing.T) {
 
 func TestMaxSizeConstrainWidth(t *testing.T) {
 	var d = &fakeDecoder{w: 4000, h: 650, tw: 128, th: 128, l: 4}
-	var img = &Resource{Decoder: d}
+	var img = &Resource{decoder: d}
 	var url, _ = iiif.NewURL("identifier/full/max/0/default.jpg")
 	var c = unlimited
 	c.Width = 400
@@ -90,7 +90,7 @@ func TestMaxSizeConstrainWidth(t *testing.T) {
 
 func TestMaxSizeConstrainHeight(t *testing.T) {
 	var d = &fakeDecoder{w: 4000, h: 650, tw: 128, th: 128, l: 4}
-	var img = &Resource{Decoder: d}
+	var img = &Resource{decoder: d}
 	var url, _ = iiif.NewURL("identifier/full/max/0/default.jpg")
 	var c = unlimited
 	c.Height = 325
@@ -104,7 +104,7 @@ func TestMaxSizeConstrainHeight(t *testing.T) {
 
 func TestMaxSizeConstrainArea(t *testing.T) {
 	var d = &fakeDecoder{w: 4000, h: 600, tw: 128, th: 128, l: 4}
-	var img = &Resource{Decoder: d}
+	var img = &Resource{decoder: d}
 	var url, _ = iiif.NewURL("identifier/full/max/0/default.jpg")
 	var c = unlimited
 	c.Area = 37500
