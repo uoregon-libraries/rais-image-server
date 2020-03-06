@@ -45,6 +45,6 @@ func decodeCommonFile(path string) (img.Decoder, error) {
 	case ".tif", ".tiff", ".png", ".jpg", "jpeg", ".gif":
 		return NewImage(path)
 	default:
-		return nil, img.ErrNotHandled
+		return nil, plugins.ErrSkipped
 	}
 }

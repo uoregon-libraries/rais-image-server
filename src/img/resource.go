@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"rais/src/iiif"
+	"rais/src/plugins"
 	"rais/src/transform"
 )
 
@@ -42,7 +43,7 @@ func NewResource(id iiif.ID, u *url.URL) (*Resource, error) {
 		if err == nil && d != nil {
 			break
 		}
-		if err == ErrNotHandled {
+		if err == plugins.ErrSkipped {
 			continue
 		}
 		return nil, err
