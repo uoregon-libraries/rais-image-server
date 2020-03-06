@@ -200,7 +200,6 @@ func (ih *ImageHandler) getURL(id iiif.ID) *url.URL {
 	var u, err = url.Parse(string(id))
 	// If an id fails to parse, it's probably a client-side error (such as
 	// failing to escape the pound sign)
-	// filesystem id or else a client-side error.
 	if err != nil {
 		u = &url.URL{Path: string(id)}
 	}
