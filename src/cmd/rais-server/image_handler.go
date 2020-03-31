@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -259,14 +260,16 @@ func newImageResError(err error) *HandlerError {
 		return nil
 	}
 
-	switch err {
-	case img.ErrDimensionsExceedLimits:
+	// Allow wrapped errors for better messages without losing meanings
+	if errors.Is(err, img.ErrDimensionsExceedLimits) {
 		return NewError(err.Error(), 501)
-	case img.ErrDoesNotExist:
-		return NewError("image resource does not exist", 404)
-	default:
-		return NewError(err.Error(), 500)
 	}
+	if errors.Is(err, img.ErrDoesNotExist) {
+		return NewError("image resource does not exist", 404)
+	}
+
+	// Unknown / unhandled errors are just general 500s
+	return NewError(err.Error(), 500)
 }
 
 func (ih *ImageHandler) getImageData(id iiif.ID) (*img.Resource, *iiif.Info, *HandlerError) {
