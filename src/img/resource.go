@@ -2,6 +2,7 @@ package img
 
 import (
 	"errors"
+	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
@@ -28,44 +29,45 @@ type Resource struct {
 // resolve to a valid image, or resolves to an image for which we have no
 // decoder, an error is returned.  File type is determined by extension, so
 // images will need standard extensions in order to work.
-func NewResource(id iiif.ID, u *url.URL) (*Resource, error) {
-	var err error
+func NewResource(id iiif.ID, u *url.URL) (r *Resource, err error) {
+	var openStream OpenStreamFunc
+	r = &Resource{ID: id, URL: u}
 
 	// Do we have a streamer for this resource's scheme?
-	var s Streamer
-	s, err = getStreamer(u)
+	openStream, err = getStreamOpener(u)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to find streamer for %q: %w", u, err)
 	}
 
-	// Does the image exist?
-	if !s.Exist() {
-		return nil, ErrDoesNotExist
-	}
-
-	// An image exists - is a decoder registered for it?
-	var d DecodeFunc
-	d, err = getDecodeFunc(s)
+	// Streamer exists, so we attempt to open it
+	r.streamer, err = openStream()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to open %q: %w", u, err)
 	}
 
-	return &Resource{ID: id, URL: u, decodeFunc: d, streamer: s}, nil
+	// We have a stream - do we have a decoder for it?
+	r.decodeFunc, err = getDecodeFunc(r.streamer)
+	if err != nil {
+		// No decoder means we have to close the stream before returning
+		r.streamer.Close()
+		return nil, fmt.Errorf("unable to find decoder for %q: %w", u, err)
+	}
+
+	return r, err
 }
 
-func getStreamer(u *url.URL) (s Streamer, err error) {
-	for _, streamFn := range streamFuncs {
-		s, err = streamFn(u)
-		if err == nil && s != nil {
-			return s, nil
+func getStreamOpener(u *url.URL) (openFunc OpenStreamFunc, err error) {
+	for _, streamReader := range streamReaders {
+		openFunc, err = streamReader(u)
+		if err == nil {
+			return openFunc, nil
 		}
-		if err == plugins.ErrSkipped {
-			continue
+		if err != plugins.ErrSkipped {
+			return nil, err
 		}
-		return nil, err
 	}
 
-	// No streamer was found for this URL
+	// No stream reader was found for this URL
 	return nil, ErrNotStreamable
 }
 

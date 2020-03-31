@@ -18,7 +18,7 @@ type Decoder interface {
 	SetResizeWH(int, int)
 }
 
-// DecodeHandler is a function which takes a URL and returns a DecodeFunc and
+// DecodeHandler is a function which takes a Streamer and returns a DecodeFunc and
 // optionally an error.  If the error is ErrSkipped, the function is stating
 // that it doesn't handle images the Streamer describes (typically just a brief
 // check on the URL suffices, but a plugin could choose to read data from the

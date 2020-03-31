@@ -16,6 +16,7 @@ import (
 
 // JP2Image is a container for our simple JP2 operations
 type JP2Image struct {
+	id           uint64
 	streamer     img.Streamer
 	info         *jp2info.Info
 	decodeWidth  int
@@ -29,7 +30,15 @@ type JP2Image struct {
 func NewJP2Image(s img.Streamer) (*JP2Image, error) {
 	s.Seek(0, 0)
 	var info, err = new(jp2info.Scanner).ScanStream(s)
-	return &JP2Image{streamer: s, info: info}, err
+	if err != nil {
+		s.Close()
+		return nil, err
+	}
+
+	var i = &JP2Image{streamer: s, info: info}
+	storeImage(i)
+
+	return i, err
 }
 
 // SetResizeWH sets the image to scale to the given width and height.  If one

@@ -54,7 +54,7 @@ func main() {
 	img.RegisterDecodeHandler(decodeJP2)
 
 	// File streamer for handling images on the local filesystem
-	img.RegisterStreamer(streamFiles)
+	img.RegisterStreamReader(fileStreamReader)
 
 	tilePath := viper.GetString("TilePath")
 	webPath := viper.GetString("IIIFWebPath")

@@ -3,11 +3,13 @@ package img
 import (
 	"net/url"
 	"os"
+	"time"
 )
 
 // FileStream simply wraps an os.File to provide streaming functionality
 type FileStream struct {
 	filepath string
+	info     os.FileInfo
 	*os.File
 }
 
@@ -15,13 +17,22 @@ type FileStream struct {
 // path doesn't refer to a file on the local filesystem, this will fail in
 // stupid ways.
 func NewFileStream(path string) (*FileStream, error) {
-	var f, err = os.Open(path)
+	var fs = &FileStream{filepath: path}
+	var err error
+
+	fs.info, err = os.Stat(path)
+
 	// Make sure the most common error, at least, will get reported *our* way
 	// (e.g., translated to a 404 when this is done via a web request)
 	if os.IsNotExist(err) {
 		return nil, ErrDoesNotExist
 	}
-	return &FileStream{filepath: path, File: f}, err
+	if err != nil {
+		return nil, err
+	}
+
+	fs.File, err = os.Open(path)
+	return fs, err
 }
 
 // Location returns a "file://" location based on the original path
@@ -29,13 +40,12 @@ func (fs *FileStream) Location() *url.URL {
 	return &url.URL{Scheme: "file", Path: fs.filepath}
 }
 
-// Exist checks the filesystem to be sure the file is there.
-//
-// This is a very naive check - if stat returns a "doesn't exist" error, we say
-// no, but we don't try to decide what other cases may mean, such as lack of
-// permissions.  Those may mean the file exists and that isn't for this
-// function to handle.
-func (fs *FileStream) Exist() bool {
-	var _, err = os.Stat(fs.filepath)
-	return !os.IsNotExist(err)
+// Size returns the file's length in bytes
+func (fs *FileStream) Size() int64 {
+	return fs.info.Size()
+}
+
+// ModTime returns when the file was last changed
+func (fs *FileStream) ModTime() time.Time {
+	return fs.info.ModTime()
 }

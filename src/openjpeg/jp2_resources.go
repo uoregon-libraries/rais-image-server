@@ -4,16 +4,19 @@ package openjpeg
 // #include <openjpeg.h>
 // #include <stdlib.h>
 // #include "handlers.h"
+// #include "stream.h"
 import "C"
 
 import (
 	"fmt"
-	"unsafe"
 )
 
 // rawDecode runs the low-level operations necessary to actually get the
 // desired tile/resized image
 func (i *JP2Image) rawDecode() (jp2 *C.opj_image_t, err error) {
+	// Make sure we're at the beginning of the stream
+	i.streamer.Seek(0, 0)
+
 	// Setup the parameters for decode
 	var parameters C.opj_dparameters_t
 	C.opj_set_default_decoder_parameters(&parameters)
@@ -21,8 +24,8 @@ func (i *JP2Image) rawDecode() (jp2 *C.opj_image_t, err error) {
 	// Calculate cp_reduce - this seems smarter to put in a parameter than to call an extra function
 	parameters.cp_reduce = C.OPJ_UINT32(i.computeProgressionLevel())
 
-	// Setup file stream
-	stream, err := initializeStream(i.streamer.Location().Path)
+	// Setup the stream for openjpeg
+	stream, err := i.initializeStream()
 	if err != nil {
 		return jp2, err
 	}
@@ -61,13 +64,10 @@ func (i *JP2Image) rawDecode() (jp2 *C.opj_image_t, err error) {
 	return jp2, nil
 }
 
-func initializeStream(filename string) (*C.opj_stream_t, error) {
-	cFilename := C.CString(filename)
-	defer C.free(unsafe.Pointer(cFilename))
-
-	stream := C.opj_stream_create_default_file_stream(cFilename, 1)
+func (i *JP2Image) initializeStream() (*C.opj_stream_t, error) {
+	var stream = C.new_stream(C.OPJ_UINT64(1024*10), C.OPJ_UINT64(i.id), C.OPJ_UINT64(i.streamer.Size()))
 	if stream == nil {
-		return nil, fmt.Errorf("failed to create stream in %#v", filename)
+		return nil, fmt.Errorf("failed to create stream for %q", i.streamer.Location())
 	}
 	return stream, nil
 }

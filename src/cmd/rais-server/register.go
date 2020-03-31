@@ -14,10 +14,12 @@ func decodeJP2(s img.Streamer) (img.DecodeFunc, error) {
 	return func() (img.Decoder, error) { return openjpeg.NewJP2Image(s) }, nil
 }
 
-// streamFiles is the last, and default, streamer for RAIS to try
-func streamFiles(u *url.URL) (img.Streamer, error) {
+// fileStreamReader is the last, and default, streamer for RAIS to try... it's
+// also our last, best chance for peace.
+func fileStreamReader(u *url.URL) (img.OpenStreamFunc, error) {
 	if u.Scheme != "file" {
 		return nil, plugins.ErrSkipped
 	}
-	return img.NewFileStream(u.Path)
+
+	return func() (img.Streamer, error) { return img.NewFileStream(u.Path) }, nil
 }
