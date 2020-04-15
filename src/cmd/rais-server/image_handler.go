@@ -192,10 +192,6 @@ func (ih *ImageHandler) isValidBasePath(path string) bool {
 	return e == nil
 }
 
-func (ih *ImageHandler) getIIIFPath(id iiif.ID) string {
-	return ih.TilePath + "/" + string(id)
-}
-
 // getURL converts a IIIF ID into a URL.  If the ID has no scheme, we assume
 // it's `file://`.  Additionally, all `file://` URIs get their path prefixed
 // with the configured tilepath
