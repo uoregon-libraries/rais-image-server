@@ -420,7 +420,7 @@ func marshalInfo(info *iiif.Info) ([]byte, *HandlerError) {
 // Command handles image processing operations
 func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iiif.URL, res *img.Resource, info *iiif.Info) {
 	// Send last modified time
-	if err := sendHeaders(w, req, res.URL.Path); err != nil {
+	if err := sendHeaders(w, req, res); err != nil {
 		return
 	}
 

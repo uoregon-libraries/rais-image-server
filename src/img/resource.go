@@ -132,6 +132,11 @@ func (res *Resource) Decoder() (Decoder, error) {
 	return res.decoder, err
 }
 
+// Streamer returns the contained Streamer interface
+func (res *Resource) Streamer() Streamer {
+	return res.streamer
+}
+
 // Apply runs all image manipulation operations described by the IIIF URL, and
 // returns an image.Image ready for encoding to the client
 func (res *Resource) Apply(u *iiif.URL, max Constraint) (image.Image, error) {
