@@ -10,10 +10,12 @@ package main
 import "C"
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"rais/src/img"
 	"rais/src/plugins"
+	"strings"
 	"unsafe"
 
 	"github.com/uoregon-libraries/gopkg/logger"
@@ -41,16 +43,38 @@ func makeError(exception *C.ExceptionInfo) error {
 	return fmt.Errorf("%v: %v - %v", exception.severity, exception.reason, exception.description)
 }
 
-func decodeCommonFile(s img.Streamer) (img.DecodeFunc, error) {
-	if s.Location().Scheme != "file" {
-		return nil, fmt.Errorf("cannot process non-file images with imagick-decoder plugin")
+var validExtensions = []string{".tif", ".tiff", ".png", ".jpg", ".jpeg", ".gif"}
+
+func validExt(u *url.URL) bool {
+	var ext = strings.ToLower(filepath.Ext(u.Path))
+	for _, validExt := range validExtensions {
+		if ext == validExt {
+			return true
+		}
 	}
 
-	var path = s.Location().Path
-	switch filepath.Ext(path) {
-	case ".tif", ".tiff", ".png", ".jpg", "jpeg", ".gif":
-		return func() (img.Decoder, error) { return NewImage(path) }, nil
-	default:
+	return false
+}
+
+func validScheme(u *url.URL) bool {
+	return u.Scheme == "file"
+}
+
+func decodeCommonFile(s img.Streamer) (img.DecodeFunc, error) {
+	var u = s.Location()
+	if !validExt(u) {
+		l.Infof("plugins/imagick-decoder: skipping unsupported image extension %q (must be one of %s)",
+			s.Location(), strings.Join(validExtensions, ", "))
 		return nil, plugins.ErrSkipped
 	}
+
+	// This is sorta of overly "loud" (warning), but generally speaking, a
+	// decoder shouldn't be requiring local files, so we want people to be made
+	// aware this plugin's not great....
+	if !validScheme(u) {
+		l.Warnf("plugins/imagick-decoder: skipping unsupported URL scheme %q (must be file)")
+		return nil, plugins.ErrSkipped
+	}
+
+	return func() (img.Decoder, error) { return NewImage(u.Path) }, nil
 }
