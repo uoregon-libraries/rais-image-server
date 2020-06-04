@@ -23,3 +23,9 @@ func fileStreamReader(u *url.URL) (img.OpenStreamFunc, error) {
 
 	return func() (img.Streamer, error) { return img.NewFileStream(u.Path) }, nil
 }
+
+// cloudStreamReader allows RAIS to read from a variety of cloud URLs,
+// including S3, Google Cloud, and Azure, as well as the local filesystem
+func cloudStreamReader(u *url.URL) (img.OpenStreamFunc, error) {
+	return func() (img.Streamer, error) { return img.OpenStream(u) }, nil
+}
