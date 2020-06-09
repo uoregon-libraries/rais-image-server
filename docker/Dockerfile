@@ -7,7 +7,7 @@
 #
 #     # Generate the build image to simplify local development
 #     docker build --rm -t uolibraries/rais:build --target build -f ./docker/Dockerfile .
-FROM fedora:30 AS build
+FROM fedora:32 AS build
 LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 
 # Install all the build dependencies
