@@ -1,5 +1,7 @@
 module rais
 
+go 1.14
+
 require (
 	github.com/BurntSushi/toml v0.3.0
 	github.com/aws/aws-sdk-go v1.15.82
