@@ -196,9 +196,6 @@ func (ih *ImageHandler) isValidBasePath(path string) bool {
 // it's `file://`.  Additionally, all `file://` URIs get their path prefixed
 // with the configured tilepath
 func (ih *ImageHandler) getURL(id iiif.ID) *url.URL {
-	// TODO: make this a plugin function, idToURL
-	Logger.Warnf("add idToURL plugin hook")
-
 	var u, err = url.Parse(string(id))
 	// If an id fails to parse, it's probably a client-side error (such as
 	// failing to escape the pound sign)
