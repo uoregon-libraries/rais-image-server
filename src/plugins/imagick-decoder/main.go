@@ -72,7 +72,7 @@ func decodeCommonFile(s img.Streamer) (img.DecodeFunc, error) {
 	// decoder shouldn't be requiring local files, so we want people to be made
 	// aware this plugin's not great....
 	if !validScheme(u) {
-		l.Warnf("plugins/imagick-decoder: skipping unsupported URL scheme %q (must be file)")
+		l.Warnf("plugins/imagick-decoder: skipping unsupported URL scheme %q (must be file)", u.Scheme)
 		return nil, plugins.ErrSkipped
 	}
 
