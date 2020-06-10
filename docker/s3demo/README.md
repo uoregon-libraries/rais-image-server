@@ -1,6 +1,10 @@
 s3demo for RAIS
 ===
 
+This folder is dedicated to a mini-asset-manager-like application that presents
+a local file alongside any number of cloud files in an S3-compatible object
+store.
+
 Setup
 ---
 
@@ -13,6 +17,30 @@ Grab the RAIS codebase and go to this directory:
 ```bash
 git clone https://github.com/uoregon-libraries/rais-image-server.git
 cd rais-image-server/docker/s3demo
+```
+
+### Optional: build a docker image
+
+You may want to build your own docker image rather than using the latest stable
+version from dockerhub, especially if testing out plugins or other code that
+requires a recompile.  Building an image typically means running `make docker`
+and/or `make docker-alpine` *from the RAIS root directory*.  Note that the
+alpine image is *much* faster to build, but doesn't contain any plugins.
+
+Once that's done, you will want to put an override for the s3 demo so it uses
+your local image.  Something like this can be put into
+`docker-compose.override.yml` in this (the s3demo) directory:
+
+```
+version: "3.4"
+
+networks:
+  internal:
+  external:
+
+services:
+  rais:
+    image: uolibraries/rais:latest-alpine
 ```
 
 ### Set up an S3 environment
@@ -31,7 +59,7 @@ Run the minio container:
 Create images:
 
 - Browse to `http://localhost:9000`
-- Log in with the acces key "awss3key" and the secret key "awsappsecret"
+- Log in with the acces key "key" and the secret key "secret"
 - Create a new bucket with the name "rais"
 - Upload JP2s into this bucket
 

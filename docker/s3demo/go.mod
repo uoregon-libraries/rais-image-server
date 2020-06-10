@@ -1,3 +1,5 @@
 module s3demo
 
-require github.com/aws/aws-sdk-go v1.15.62
+go 1.14
+
+require gocloud.dev v0.19.0

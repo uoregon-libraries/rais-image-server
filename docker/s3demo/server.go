@@ -33,7 +33,7 @@ func renderIndex(w http.ResponseWriter, req *http.Request) {
 		http.NotFound(w, req)
 		return
 	}
-	var data = indexData{Assets: s3assets, Bucket: bucket}
+	var data = indexData{Assets: s3assets, Bucket: bucketName}
 	var err = indexT.Execute(w, data)
 	if err != nil {
 		log.Printf("Unable to serve index: %s", err)
