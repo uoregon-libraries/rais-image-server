@@ -66,10 +66,10 @@ func openFile(testPath string) (realFile *os.File, cloudFile *CloudStream, info 
 	return realFile, cloudFile, info
 }
 
-func testRead(length int, a, b io.Reader, t *testing.T) {
+func testRead(a, b io.Reader, bufsize int, t *testing.T) {
 	var err error
-	var aDat = make([]byte, length)
-	var bDat = make([]byte, length)
+	var aDat = make([]byte, bufsize)
+	var bDat = make([]byte, bufsize)
 	var aN, bN int
 
 	aN, err = a.Read(aDat)
@@ -86,7 +86,23 @@ func testRead(length int, a, b io.Reader, t *testing.T) {
 	if string(aDat) != string(bDat) {
 		t.Errorf("aDat %q didn't match bDat %q", aDat, bDat)
 	}
+}
 
+func testSeek(a, b io.Seeker, offset int64, whence int, t *testing.T) {
+	var err error
+	var aN, bN int64
+	aN, err = a.Seek(offset, whence)
+	if err != nil {
+		panic(fmt.Sprintf("error seeking a: %s", err))
+	}
+	bN, err = b.Seek(offset, whence)
+	if err != nil {
+		panic(fmt.Sprintf("error seeking b: %s", err))
+	}
+
+	if aN != bN {
+		t.Errorf("seek(%d, %d) returns %d for a but %d for b", offset, whence, aN, bN)
+	}
 }
 
 func TestRandomAccess(t *testing.T) {
@@ -94,16 +110,17 @@ func TestRandomAccess(t *testing.T) {
 	if err != nil {
 		t.Fatalf("os.Getwd() error: %s", err)
 	}
-	var testPath = path.Join(dir, "..", "..", "README.md")
+	var testPath = path.Join(dir, "../../docker/images/jp2tests/sn00063609-19091231.jp2")
 
 	var realFile, cloudFile, info = openFile(testPath)
 	if info.Size() != cloudFile.Size() {
 		t.Errorf("realFile size %d; cloudFile size %d", info.Size(), cloudFile.Size())
 	}
 
-	testRead(64, realFile, cloudFile, t)
-	testRead(128, realFile, cloudFile, t)
-	realFile.Seek(2000, 0)
-	cloudFile.Seek(2000, 0)
-	testRead(128, realFile, cloudFile, t)
+	testRead(realFile, cloudFile, 8192, t)
+	testRead(realFile, cloudFile, 10240, t)
+	testSeek(realFile, cloudFile, 50000, 0, t)
+	testRead(realFile, cloudFile, 10240, t)
+	testSeek(realFile, cloudFile, 50000, 1, t)
+	testRead(realFile, cloudFile, 10240, t)
 }
