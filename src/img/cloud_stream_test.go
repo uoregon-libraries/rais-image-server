@@ -1,8 +1,11 @@
 package img
 
 import (
+	"fmt"
+	"io"
 	"net/url"
 	"os"
+	"path"
 	"testing"
 )
 
@@ -39,4 +42,68 @@ func TestS3CustomURL(t *testing.T) {
 	if s.bucketURL != expected {
 		t.Errorf("expected bucket to be %q, got %q", expected, s.bucketURL)
 	}
+}
+
+func openFile(testPath string) (realFile *os.File, cloudFile *CloudStream, info os.FileInfo) {
+	var err error
+	realFile, err = os.Open(testPath)
+	if err != nil {
+		panic(fmt.Sprintf("os.Open(%q) error: %s", testPath, err))
+	}
+
+	info, _ = realFile.Stat()
+	if err != nil {
+		realFile.Close()
+		panic(fmt.Sprintf("realFile.Stat() error: %s", err))
+	}
+
+	var u, _ = url.Parse("file://" + testPath)
+	cloudFile, err = OpenStream(u)
+	if err != nil {
+		panic(fmt.Sprintf("OpenStream(%q) error: %s", "file://"+testPath, err))
+	}
+
+	return realFile, cloudFile, info
+}
+
+func testRead(length int, a, b io.Reader, t *testing.T) {
+	var err error
+	var aDat = make([]byte, length)
+	var bDat = make([]byte, length)
+	var aN, bN int
+
+	aN, err = a.Read(aDat)
+	if err != nil {
+		panic(fmt.Sprintf("error reading a: %s", err))
+	}
+	bN, err = b.Read(bDat)
+	if err != nil {
+		panic(fmt.Sprintf("error reading b: %s", err))
+	}
+	if aN != bN {
+		t.Errorf("a read %d; b read %d", aN, bN)
+	}
+	if string(aDat) != string(bDat) {
+		t.Errorf("aDat %q didn't match bDat %q", aDat, bDat)
+	}
+
+}
+
+func TestRandomAccess(t *testing.T) {
+	var dir, err = os.Getwd()
+	if err != nil {
+		t.Fatalf("os.Getwd() error: %s", err)
+	}
+	var testPath = path.Join(dir, "..", "..", "README.md")
+
+	var realFile, cloudFile, info = openFile(testPath)
+	if info.Size() != cloudFile.Size() {
+		t.Errorf("realFile size %d; cloudFile size %d", info.Size(), cloudFile.Size())
+	}
+
+	testRead(64, realFile, cloudFile, t)
+	testRead(128, realFile, cloudFile, t)
+	realFile.Seek(2000, 0)
+	cloudFile.Seek(2000, 0)
+	testRead(128, realFile, cloudFile, t)
 }
