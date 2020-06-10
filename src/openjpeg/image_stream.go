@@ -65,6 +65,14 @@ func opjStreamRead(writeBuffer unsafe.Pointer, numBytes C.OPJ_SIZE_T, id uint64)
 	dataSlice.Data = uintptr(unsafe.Pointer(writeBuffer))
 
 	var n, err = i.streamer.Read(data)
+
+	// Dumb hack - gocloud (maybe others?) returns EOF differently for local file
+	// read vs. an S3 read, and openjpeg doesn't have a way to be told "EOF and
+	// data", so we ignore EOFs if any data was read from the stream
+	if err == io.EOF && n > 0 {
+		err = nil
+	}
+
 	if err != nil {
 		if err != io.EOF {
 			Logger.Errorf("Unable to read from stream %d: %s", id, err)
