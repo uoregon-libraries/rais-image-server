@@ -59,6 +59,9 @@ order to have RAIS connect to them.
 
 For a full demo of a working custom S3 backend powered by minio, see `docker/s3demo`.
 
+**Note** that external storage is going to be slower than serving images from
+local filesystems!  Make sure you test carefully!
+
 IIIF Features
 -----
 
