@@ -9,16 +9,18 @@ volumes:
 
 services:
   rais:
-    image: uolibraries/rais
+    image: uolibraries/rais:4-alpine
     environment:
-      - RAIS_S3CACHE=/var/tmp/rais/s3
-      - RAIS_S3ZONE=us-west-2
-      - RAIS_S3ENDPOINT=http://minio:9000
-      - RAIS_PLUGINS=s3-images.so,json-tracer.so
-      - AWS_ACCESS_KEY_ID=awss3key
-      - AWS_SECRET_ACCESS_KEY=awsappsecret
+      - RAIS_S3_ENDPOINT=minio:9000
+      - RAIS_S3_DISABLESSL=true
+      - RAIS_S3_FORCEPATHSTYLE=true
+      - AWS_ACCESS_KEY_ID=key
+      - AWS_SECRET_ACCESS_KEY=secretkey
+      - AWS_SESSION_TOKEN
+      - AWS_REGION=us-west-2
     volumes:
       - /tmp:/tmp
+      - ../images/jp2tests/sn00063609-19091231.jp2:/var/local/images/news.jp2
     networks:
       internal:
 
@@ -26,14 +28,18 @@ services:
     build:
       context: ..
       dockerfile: ./s3demo/Dockerfile
+    depends_on:
+      - minio
+      - rais
     environment:
-      - RAIS_S3CACHE=/var/tmp/rais/s3
-      - RAIS_S3ZONE=us-west-2
-      - RAIS_S3ENDPOINT=http://minio:9000
-      - RAIS_S3BUCKET=rais
-      - RAIS_PLUGINS=s3-images.so,json-tracer.so
-      - AWS_ACCESS_KEY_ID=awss3key
-      - AWS_SECRET_ACCESS_KEY=awsappsecret
+      - RAIS_S3_DEMO_BUCKET=rais
+      - RAIS_S3_ENDPOINT=minio:9000
+      - RAIS_S3_DISABLESSL=true
+      - RAIS_S3_FORCEPATHSTYLE=true
+      - AWS_ACCESS_KEY_ID=key
+      - AWS_SECRET_ACCESS_KEY=secretkey
+      - AWS_SESSION_TOKEN
+      - AWS_REGION=us-west-2
     networks:
       internal:
 
@@ -60,8 +66,8 @@ services:
     expose:
       - 9000
     environment:
-      - MINIO_ACCESS_KEY=awss3key
-      - MINIO_SECRET_KEY=awsappsecret
+      - MINIO_ACCESS_KEY=key
+      - MINIO_SECRET_KEY=secretkey
     ports:
       - 9000:9000
     networks:

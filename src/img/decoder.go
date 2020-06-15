@@ -18,21 +18,26 @@ type Decoder interface {
 	SetResizeWH(int, int)
 }
 
-// DecodeFn is a function which takes a file path and returns a Decoder and
-// optionally an error.  If the error is ErrNotHandled, the decode function is
-// stating that the filetype (or some other data inferred from the id) can't be
-// handled by this decoder.
-//
-// TODO: this needs to be changed systemically to allow for a iiif ID rather
-// than a path.  ID-to-stream lookups need to be implemented, not ID-to-path.
-type DecodeFn func(string) (Decoder, error)
+// DecodeHandler is a function which takes a Streamer and returns a DecodeFunc and
+// optionally an error.  If the error is ErrSkipped, the function is stating
+// that it doesn't handle images the Streamer describes (typically just a brief
+// check on the URL suffices, but a plugin could choose to read data from the
+// streamer to get, e.g., a proper mime type).  A return with a nil error means
+// the returned function should be used and searching is done.
+type DecodeHandler func(Streamer) (DecodeFunc, error)
 
-// fns is our internal list of registered decoder functions
-var fns []DecodeFn
+// DecodeFunc is the actual function which must be called for decoding its info
+// / image data.  Since this will typically read from the stream immediately,
+// it may return an error.  A handler is expected to hold onto its Streamer so
+// its returned DecodeFunc doesn't have to take an unnecessary parameter.
+type DecodeFunc func() (Decoder, error)
 
-// RegisterDecoder adds a decoder to the internal list of registered decoders.
-// Images we want to decode will be run through each DecodeFn until one returns
-// a Decoder and nil error.
-func RegisterDecoder(fn DecodeFn) {
-	fns = append(fns, fn)
+// decodeHandlers is our internal list of registered decoder functions
+var decodeHandlers []DecodeHandler
+
+// RegisterDecodeHandler adds a DecodeHandler to the internal list of
+// registered handlers.  Images we want to decode will be run through each
+// function until one returns a handler and nil error.
+func RegisterDecodeHandler(fn DecodeHandler) {
+	decodeHandlers = append(decodeHandlers, fn)
 }

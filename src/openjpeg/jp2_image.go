@@ -6,6 +6,7 @@ import "C"
 
 import (
 	"image"
+	"rais/src/img"
 	"rais/src/jp2info"
 	"reflect"
 	"unsafe"
@@ -15,7 +16,8 @@ import (
 
 // JP2Image is a container for our simple JP2 operations
 type JP2Image struct {
-	filename     string
+	id           uint64
+	streamer     img.Streamer
 	info         *jp2info.Info
 	decodeWidth  int
 	decodeHeight int
@@ -25,20 +27,18 @@ type JP2Image struct {
 
 // NewJP2Image reads basic information about a file and returns a decode-ready
 // JP2Image instance
-func NewJP2Image(filename string) (*JP2Image, error) {
-	i := &JP2Image{filename: filename}
-
-	if err := i.readInfo(); err != nil {
+func NewJP2Image(s img.Streamer) (*JP2Image, error) {
+	s.Seek(0, 0)
+	var info, err = new(jp2info.Scanner).ScanStream(s)
+	if err != nil {
+		s.Close()
 		return nil, err
 	}
 
-	return i, nil
-}
+	var i = &JP2Image{streamer: s, info: info}
+	storeImage(i)
 
-func (i *JP2Image) readInfo() error {
-	var err error
-	i.info, err = new(jp2info.Scanner).Scan(i.filename)
-	return err
+	return i, err
 }
 
 // SetResizeWH sets the image to scale to the given width and height.  If one

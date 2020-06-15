@@ -2,54 +2,89 @@ package img
 
 import (
 	"errors"
+	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
 	"math"
-	"os"
+	"net/url"
 	"rais/src/iiif"
+	"rais/src/plugins"
 	"rais/src/transform"
 )
 
-// Resource wraps a decoder, IIIF ID, and the path to the image
+// Resource wraps a streamer and decode function, the two components we must
+// have for any image, as well as the image ID and URL.  The actual decoder is
+// lazy-loaded when it's needed.
 type Resource struct {
-	Decoder  Decoder
-	ID       iiif.ID
-	FilePath string
+	ID         iiif.ID
+	URL        *url.URL
+	streamer   Streamer
+	decoder    Decoder
+	decodeFunc DecodeFunc
 }
 
-// NewResource initializes and returns an Resource for the given id
-// and path.  If the path doesn't resolve to a valid file, or resolves to a
-// file type that isn't supported, an error is returned.  File type is
-// determined by extension, so images will need standard extensions in order to
-// work.
-func NewResource(id iiif.ID, filepath string) (*Resource, error) {
-	var err error
+// NewResource initializes and returns an Resource for the given URL
+// (translated from a IIIF ID) If the URL doesn't have a streamer, doesn't
+// resolve to a valid image, or resolves to an image for which we have no
+// decoder, an error is returned.  File type is determined by extension, so
+// images will need standard extensions in order to work.
+func NewResource(id iiif.ID, u *url.URL) (r *Resource, err error) {
+	var openStream OpenStreamFunc
+	r = &Resource{ID: id, URL: u}
 
-	// First, does the file exist?
-	if _, err = os.Stat(filepath); err != nil {
-		return nil, ErrDoesNotExist
+	// Do we have a streamer for this resource's scheme?
+	openStream, err = getStreamOpener(u)
+	if err != nil {
+		return nil, fmt.Errorf("unable to find streamer for %q: %w", u, err)
 	}
 
-	// File exists - is a decoder registered for it?
-	var d Decoder
-	for _, decodeFn := range fns {
-		d, err = decodeFn(filepath)
-		if err == nil && d != nil {
-			break
+	// Streamer exists, so we attempt to open it
+	r.streamer, err = openStream()
+	if err != nil {
+		return nil, fmt.Errorf("unable to open %q: %w", u, err)
+	}
+
+	// We have a stream - do we have a decoder for it?
+	r.decodeFunc, err = getDecodeFunc(r.streamer)
+	if err != nil {
+		// No decoder means we have to close the stream before returning
+		r.streamer.Close()
+		return nil, fmt.Errorf("unable to find decoder for %q: %w", u, err)
+	}
+
+	return r, err
+}
+
+func getStreamOpener(u *url.URL) (openFunc OpenStreamFunc, err error) {
+	for _, streamReader := range streamReaders {
+		openFunc, err = streamReader(u)
+		if err == nil {
+			return openFunc, nil
 		}
-		if err == ErrNotHandled {
+		if err != plugins.ErrSkipped {
+			return nil, err
+		}
+	}
+
+	// No stream reader was found for this URL
+	return nil, ErrNotStreamable
+}
+
+func getDecodeFunc(s Streamer) (d DecodeFunc, err error) {
+	for _, decodeHandler := range decodeHandlers {
+		d, err = decodeHandler(s)
+		if err == nil && d != nil {
+			return d, nil
+		}
+		if err == plugins.ErrSkipped {
 			continue
 		}
 		return nil, err
 	}
 
-	if d == nil {
-		return nil, ErrInvalidFiletype
-	}
-
-	img := &Resource{ID: id, Decoder: d, FilePath: filepath}
-	return img, nil
+	// No decoder was found for this file type
+	return nil, ErrInvalidFiletype
 }
 
 // getResizeWithConstraints returns a scaled rectangle, computing the best fit
@@ -85,11 +120,34 @@ func getResizeWithConstraints(crop image.Rectangle, max Constraint) image.Rectan
 	return image.Rect(0, 0, int(xf), int(yf))
 }
 
+// Decoder attempts to initialize the registered decoder.  Because this can
+// read from disk, it should only be called when it has to be called.  It may
+// return errors if reading the image fails.
+func (res *Resource) Decoder() (Decoder, error) {
+	var err error
+	if res.decoder == nil {
+		res.decoder, err = res.decodeFunc()
+	}
+
+	return res.decoder, err
+}
+
+// Streamer returns the contained Streamer interface
+func (res *Resource) Streamer() Streamer {
+	return res.streamer
+}
+
 // Apply runs all image manipulation operations described by the IIIF URL, and
 // returns an image.Image ready for encoding to the client
 func (res *Resource) Apply(u *iiif.URL, max Constraint) (image.Image, error) {
+	// Initialize a decoder if that hasn't already happened
+	var decoder, err = res.Decoder()
+	if err != nil {
+		return nil, err
+	}
+
 	// Crop and resize have to be prepared before we can decode
-	w, h := res.Decoder.GetWidth(), res.Decoder.GetHeight()
+	w, h := decoder.GetWidth(), decoder.GetHeight()
 	crop := u.Region.GetCrop(w, h)
 
 	// If size is "max", we actually want the "best fit" size type, but with our
@@ -110,10 +168,10 @@ func (res *Resource) Apply(u *iiif.URL, max Constraint) (image.Image, error) {
 		return nil, ErrDimensionsExceedLimits
 	}
 
-	res.Decoder.SetCrop(crop)
-	res.Decoder.SetResizeWH(scale.Dx(), scale.Dy())
+	decoder.SetCrop(crop)
+	decoder.SetResizeWH(scale.Dx(), scale.Dy())
 
-	img, err := res.Decoder.DecodeImage()
+	img, err := decoder.DecodeImage()
 	if err != nil {
 		return nil, errors.New("unable to decode image: " + err.Error())
 	}
@@ -184,4 +242,10 @@ func bitonal(img image.Image) image.Image {
 	}
 
 	return imgBitonal
+}
+
+// Destroy lets the resource clean up any open streams, etc.  This *must* be
+// called to prevent resource leaks!
+func (res *Resource) Destroy() {
+	res.streamer.Close()
 }

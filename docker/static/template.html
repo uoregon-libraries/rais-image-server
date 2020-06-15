@@ -10,10 +10,7 @@
     var viewer = OpenSeadragon({
       id: "openseadragon1",
       prefixUrl: "/osd/images/",
-      tileSources: [
-        %SRCS%,
-        "/images/iiif/extern-https-github.com%2Fuoregon-libraries%2Frais-image-server%2Fblob%2Fdevelop%2Fdocker%2Fimages%2Fjp2tests%2Fsn00063609-19091231.jp2%3Fraw%3Dtrue"
-      ],
+      tileSources: [%SRCS%],
       sequenceMode: true,
       showNavigator: true,
     });

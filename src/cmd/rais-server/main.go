@@ -51,7 +51,15 @@ func main() {
 	// Register our JP2 decoder after plugins have been loaded to allow plugins
 	// to handle images - for instance, we might want a pyramidal tiff plugin or
 	// something one day
-	img.RegisterDecoder(decodeJP2)
+	img.RegisterDecodeHandler(decodeJP2)
+
+	// File streamer for handling images on the local filesystem
+	img.RegisterStreamReader(fileStreamReader)
+
+	// Cloud streamer for attempting to handle anything else.  Technically this
+	// can do local files, too, but the overhead is just too much if we want to
+	// keep showcasing how fast RAIS is with local files....
+	img.RegisterStreamReader(cloudStreamReader)
 
 	tilePath := viper.GetString("TilePath")
 	webPath := viper.GetString("IIIFWebPath")
