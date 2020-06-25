@@ -104,7 +104,7 @@ CapabilitiesFile = ""
 # Env: RAIS_TILECACHELEN
 TileCacheLen = 0
 
-# Plugins: Optional, defaults to "s3-images.so,json-tracer.so".
+# Plugins: Optional, defaults to "-".
 #
 # Comma-separated list of which plugins should be loaded.  A value of "" or "-"
 # will disable plugins entirely.
@@ -117,10 +117,8 @@ TileCacheLen = 0
 # specify individual plugins to avoid accidentally loading plugins you don't
 # want in production, even if they are compiled into the plugins/ subdirectory.
 #
-# The example s3-images and json-trace plugins are considered production-ready.
-#
 # A value of "*.so" replicates the 3.0.x behavior of loading everything in
-# plugins/, while a value of "" disables plugins entirely.
+# plugins/
 #
 # Env: RAIS_PLUGINS
 # CLI: --plugins

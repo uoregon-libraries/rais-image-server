@@ -18,7 +18,7 @@ func parseConf() {
 	var defaultAdminAddress = ":12416"
 	var defaultInfoCacheLen = 10000
 	var defaultLogLevel = logger.Debug.String()
-	var defaultPlugins = "s3-images.so,json-tracer.so"
+	var defaultPlugins = "-"
 	var defaultJPGQuality = 75
 
 	// Defaults
