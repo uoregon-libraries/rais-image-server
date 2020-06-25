@@ -107,7 +107,9 @@ TileCacheLen = 0
 # Plugins: Optional, defaults to "-".
 #
 # Comma-separated list of which plugins should be loaded.  A value of "" or "-"
-# will disable plugins entirely.
+# will disable plugins entirely.  To disable this from an environment variable,
+# you *must* use a hyphen due to how RAIS attempts to read environment
+# variables.
 #
 # Items in the list which don't specify an absolute path must be in a "plugins"
 # subdirectory the lives alongside the rais-server binary.
