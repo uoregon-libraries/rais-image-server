@@ -316,6 +316,11 @@ func (ih *ImageHandler) loadInfoFromCache(id iiif.ID) *iiif.Info {
 }
 
 func (ih *ImageHandler) loadInfoOverride(res *img.Resource) *iiif.Info {
+	// If scheme isn't "file", we don't even try to find a file override
+	if res.URL.Scheme != "file" {
+		return nil
+	}
+
 	// If an override file isn't found or has an error, just skip it
 	var infofile = res.URL.Path + "-info.json"
 	var data, err = ioutil.ReadFile(infofile)
