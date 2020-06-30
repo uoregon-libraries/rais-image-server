@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"rais/src/cmd/rais-server/internal/servers"
@@ -73,6 +74,15 @@ func main() {
 	ih.Maximums.Area = viper.GetInt64("ImageMaxArea")
 	ih.Maximums.Width = viper.GetInt("ImageMaxWidth")
 	ih.Maximums.Height = viper.GetInt("ImageMaxHeight")
+
+	// Check for scheme remapping configuration - if it exists, it's the final id-to-URL handler
+	schemeMapConfig := viper.GetString("SchemeMap")
+	if schemeMapConfig != "" {
+		err := parseSchemeMap(ih, schemeMapConfig)
+		if err != nil {
+			Logger.Fatalf("Error parsing SchemeMap: %s", err)
+		}
+	}
 
 	iiifBaseURL := viper.GetString("IIIFBaseURL")
 	if iiifBaseURL != "" {
@@ -149,4 +159,22 @@ func shutdown() {
 
 	Logger.Infof("RAIS Stopped")
 	wait.Done()
+}
+
+func parseSchemeMap(ih *ImageHandler, schemeMapConfig string) error {
+	var confs = strings.Fields(schemeMapConfig)
+	for _, conf := range confs {
+		var parts = strings.Split(conf, "=")
+		if len(parts) != 2 {
+			return fmt.Errorf(`invalid scheme map %q: format must be "scheme=prefix"`, conf)
+		}
+		var scheme, prefix = parts[0], parts[1]
+
+		var err = ih.AddSchemeMap(scheme, prefix)
+		if err != nil {
+			return fmt.Errorf("invalid scheme map %q: %s", conf, err)
+		}
+	}
+
+	return nil
 }

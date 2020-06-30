@@ -74,6 +74,9 @@ func parseConf() {
 	viper.BindPFlag("Plugins", pflag.CommandLine.Lookup("plugins"))
 	pflag.Int("jpg-quality", 75, "Quality of JPEG output")
 	viper.BindPFlag("JPGQuality", pflag.CommandLine.Lookup("jpg-quality"))
+	pflag.String("scheme-map", "", "Whitespace-delimited map of scheme to prefix, e.g., "+
+		`"acme=s3://bucket1 marc=s3://bucket2/some/path"`)
+	viper.BindPFlag("SchemeMap", pflag.CommandLine.Lookup("scheme-map"))
 
 	pflag.Parse()
 
