@@ -272,6 +272,10 @@ func TestIDToURL(t *testing.T) {
 			"file:///etc/passwd",
 			&url.URL{Scheme: "file", Path: "/var/local/images/etc/passwd"},
 		},
+		"dot-dot problem": {
+			"file:///../../../../../etc/passwd",
+			&url.URL{Scheme: "file", Path: "/var/local/images/etc/passwd"},
+		},
 	}
 
 	for name, tc := range tests {
