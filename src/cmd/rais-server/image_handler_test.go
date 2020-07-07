@@ -252,6 +252,7 @@ func BenchmarkRouting(b *testing.B) {
 
 func TestIDToURL(t *testing.T) {
 	var h = NewImageHandler("/var/local/images", "/iiif")
+	h.AddSchemeMap("foo", "bar://real-host/prefixed-path")
 
 	// Prefer table-driven tests, sirs
 	var tests = map[string]struct {
@@ -275,6 +276,10 @@ func TestIDToURL(t *testing.T) {
 		"dot-dot problem": {
 			"file:///../../../../../etc/passwd",
 			&url.URL{Scheme: "file", Path: "/var/local/images/etc/passwd"},
+		},
+		"remapped scheme": {
+			"foo://foo-host/foo-path/thing.jp2",
+			&url.URL{Scheme: "bar", Host: "real-host", Path: "/prefixed-path/foo-host/foo-path/thing.jp2"},
 		},
 	}
 
