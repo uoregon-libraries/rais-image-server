@@ -38,16 +38,54 @@ type ImageHandler struct {
 	FeatureSet    *iiif.FeatureSet
 	TilePath      string
 	Maximums      img.Constraint
+	schemeMap     map[string]string
 }
 
 // NewImageHandler sets up a base ImageHandler with no features
 func NewImageHandler(tilePath, basePath string) *ImageHandler {
-	return &ImageHandler{
+	var ih = &ImageHandler{
 		WebPathPrefix: basePath,
 		TilePath:      tilePath,
 		Maximums:      img.Constraint{Width: math.MaxInt32, Height: math.MaxInt32, Area: math.MaxInt64},
 		FeatureSet:    iiif.AllFeatures(),
+		schemeMap:     make(map[string]string),
 	}
+
+	// Our core scheme maps lock empty and explicit "file" schemes to the
+	// tilePath for security.  These cannot be remapped.
+	ih.AddSchemeMap("", "file://"+tilePath)
+	ih.AddSchemeMap("file", "file://"+tilePath)
+
+	return ih
+}
+
+// AddSchemeMap maps the given scheme to the prefix, returning an error if the
+// scheme or prefix are invalid in any way
+func (ih *ImageHandler) AddSchemeMap(scheme, prefix string) error {
+	scheme = strings.ToLower(scheme)
+	if ih.schemeMap[scheme] != "" {
+		return fmt.Errorf("invalid scheme: %q is already mapped to %q", scheme, ih.schemeMap[scheme])
+	}
+
+	var u, err = url.Parse(prefix)
+	if err != nil {
+		return fmt.Errorf("invalid prefix %q: %s", prefix, err)
+	}
+	if u.Scheme == "" {
+		return fmt.Errorf("invalid prefix %q: scheme cannot be empty", prefix)
+	}
+	if u.Scheme == "file" && u.Host != "" {
+		return fmt.Errorf(`invalid prefix %q: "file://" URLs cannot have a hostname component (e.g., "file:///var/local", not "file://var/local")`, prefix)
+	}
+	if u.Scheme != "file" && u.Host == "" {
+		return fmt.Errorf(`invalid prefix %q: non-file URLs must have a hostname component (e.g., "s3://bucket/path", not "s3:///path")`, prefix)
+	}
+
+	if prefix[len(prefix)-1] != '/' {
+		prefix += "/"
+	}
+	ih.schemeMap[scheme] = prefix
+	return nil
 }
 
 // cacheKey returns a key for caching if a given IIIF URL is cacheable by our
@@ -203,14 +241,30 @@ func (ih *ImageHandler) getURL(id iiif.ID) *url.URL {
 		u = &url.URL{Path: string(id)}
 	}
 
-	if u.Scheme == "" {
-		u.Scheme = "file"
-	}
-	if u.Scheme == "file" {
-		u.Path = path.Join(ih.TilePath, u.Path)
-	}
+	// Check for scheme mappings
+	var smPrefix = ih.schemeMap[u.Scheme]
+	if smPrefix != "" {
+		var val string
+		if u.Scheme == "" {
+			val = smPrefix + u.String()
+		} else {
+			val = strings.Replace(u.String(), u.Scheme+"://", smPrefix, 1)
+		}
+		u, _ = url.Parse(val)
 
-	Logger.Debugf("%q translated to URL %q", id, u)
+		// Disallow any double-periods in a file-based path
+		if u.Scheme == "file" {
+			u.Path = strings.Replace(u.Path, "..", "", -1)
+		}
+
+		// Clean the path to avoid combining too many slashes and such - this could
+		// technically break some people's really insane setups if they rely on a
+		// weird path setup, but it's way better to break the odd case than
+		// potentially make every case a little broken.
+		u.Path = path.Clean(u.Path)
+
+		Logger.Debugf("SchemeMap translated %q to URL %q", id, u)
+	}
 
 	return u
 }

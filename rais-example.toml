@@ -46,6 +46,43 @@ LogLevel = "INFO"
 # CLI: --tile-path
 TilePath = "/var/local/images"
 
+# SchemeMap: Optional, defaults to an empty map.  This setting allows you to
+# remap a pseudo-scheme to any custom URL prefix in order to shorten image
+# identifiers or obfuscate information about stored resources.
+#
+# This can have one or more maps of "scheme=prefix" values.  Prefixes must be a
+# valid URL on their own.  Each map must be separated by one or more spaces.
+# An example might be something like this:
+#
+# SchemeMap = "briggs=s3://uoregon-images/briggs-image-studio acme=s3://uoregon-historic-art"
+#
+# In this example, identifiers that have the "briggs" scheme will get
+# translated to an S3 URL using a bucket named "uoregon-images", and prefixing
+# all ids with "briggs-image-studio".  Identifiers with the "acme" scheme will
+# be translated to an S3 URL using a bucket named "uoregon-historic-art", and
+# have no path prefix.  More specific examples:
+#
+# - A IIIF id of "briggs://tom.jp2" would map to the resource found at
+#   "s3://uoregon-images/briggs-image-studio/tom.jp2"
+# - A IIIF id of "acme://master.jp2" would map to the resource found at
+#   "s3://uoregon-historic-art/master.jp2"
+#
+# Schemes are only looked up once.  If you added a mapping to the above list to
+# make "s3" actually point to "file:///var/local/images" or something, that
+# will only work when the id has "s3" as its scheme.  The items with "briggs"
+# as their scheme will still route to
+# "s3://uoregon-images/briggs-image-studio/..."
+#
+# Note that RAIS internally includes two maps which turn the URL into
+# "file://<TilePath>": scheme-less requests and "file" scheme requests.  This
+# means nobody can put in an ID of "/etc/passwd" or "file:///etc/passwd" and
+# hope you've registered a text decoder or something, as both will simply end
+# up translating to "file:///var/local/images/etc/passwd".
+#
+# Env: RAIS_SCHEMEMAP
+# CLI: --scheme-map
+SchemeMap = ""
+
 # IIIFWebPath: Optional, defaults to "/iiif".  This is the endpoint on which
 # RAIS will listen for IIIF requests.
 #
