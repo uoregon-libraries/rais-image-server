@@ -28,7 +28,7 @@ file if one exists at `/etc/rais.toml`.
 
 The configuration file's values can be overridden by environment variables,
 while command-line flags will override both configuration files and
-environtmental variables.  Configuration is best explained and understood by
+environmental variables.  Configuration is best explained and understood by
 reading the example file above, which describes all the values in detail.
 
 ### Cloud Settings
