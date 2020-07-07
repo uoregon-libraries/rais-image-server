@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 	"rais/src/cmd/rais-server/internal/servers"
 	"rais/src/iiif"
 	"rais/src/img"
@@ -66,6 +67,11 @@ func main() {
 	webPath := viper.GetString("IIIFWebPath")
 	if webPath == "" {
 		webPath = "/iiif"
+	}
+	p2 := path.Clean(webPath)
+	if webPath != p2 {
+		Logger.Warnf("WebPath %q cleaned; using %q instead", webPath, p2)
+		webPath = p2
 	}
 	address := viper.GetString("Address")
 	adminAddress := viper.GetString("AdminAddress")
