@@ -64,8 +64,8 @@ TilePath = "/var/local/images"
 #
 # - A IIIF id of "briggs://tom.jp2" would map to the resource found at
 #   "s3://uoregon-images/briggs-image-studio/tom.jp2"
-# - A IIIF id of "acme://master.jp2" would map to the resource found at
-#   "s3://uoregon-historic-art/master.jp2"
+# - A IIIF id of "acme://main.jp2" would map to the resource found at
+#   "s3://uoregon-historic-art/main.jp2"
 #
 # Schemes are only looked up once.  If you added a mapping to the above list to
 # make "s3" actually point to "file:///var/local/images" or something, that
