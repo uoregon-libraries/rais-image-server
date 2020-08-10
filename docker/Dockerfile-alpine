@@ -7,25 +7,13 @@ FROM golang:1-alpine AS build
 LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 
 # Install all the build dependencies
-RUN apk add --no-cache openjpeg-dev
-RUN apk add --no-cache git
-RUN apk add --no-cache gcc
-RUN apk add --no-cache make
-RUN apk add --no-cache tar
-RUN apk add --no-cache curl
-
-# Installing GraphicsMagick is wholly unnecessary, but helps when using the
-# build box for things like converting images.  Since opj2_encode doesn't
-# support all formats, and ImageMagick has been iffy with some conversions for
-# us, "gm convert" is a handy fallback.  As this is a multi-stage dockerfile,
-# this installation doesn't hurt the final production docker image.
-RUN apk add --no-cache graphicsmagick
+RUN apk add --no-cache openjpeg-dev git gcc make
 
 # This is necessary for our openjp2 C bindings
 RUN apk add --no-cache musl-dev
 
-# Make sure the build box can lint code
-RUN go get -u golang.org/x/lint/golint
+# This is just getting absurd, but results in a dramatically smaller rais-server
+RUN apk add --no-cache upx
 
 # Add the go mod stuff first so we aren't re-downloading dependencies except
 # when they actually change
@@ -39,7 +27,9 @@ RUN go mod download
 ADD ./Makefile /opt/rais-src/Makefile
 ADD ./src /opt/rais-src/src
 ADD ./scripts /opt/rais-src/scripts
-RUN make
+RUN make rais-server
+
+RUN upx ./bin/rais-server
 
 # Production image just installs runtime deps and copies in the binaries
 FROM alpine:3.10 AS production

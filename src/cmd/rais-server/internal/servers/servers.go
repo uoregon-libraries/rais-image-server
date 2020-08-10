@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 var servers = make(map[string]*Server)
@@ -15,21 +17,22 @@ var running sync.WaitGroup
 // registered servers
 type Server struct {
 	*http.Server
-	Name string
-	Mux  *http.ServeMux
+	Name       string
+	Mux        *mux.Router
 	middleware []func(http.Handler) http.Handler
 }
 
-// NewServer registers a named server at the given bind address.  If the
-// address is already in use, the "new" server will instead merge with the
-// existing server.
+// New registers a named server at the given bind address.  If the address is
+// already in use, the "new" server will instead merge with the existing
+// server.
 func New(name, addr string) *Server {
 	if servers[addr] != nil {
 		servers[addr].Name += ", " + name
 		return servers[addr]
 	}
 
-	var mux = http.NewServeMux()
+	var mux = mux.NewRouter()
+	mux.SkipClean(true)
 	var s = &Server{
 		Name: name,
 		Mux:  mux,
@@ -53,12 +56,24 @@ func (s *Server) AddMiddleware(mw func(http.Handler) http.Handler) {
 	s.middleware = append(s.middleware, mw)
 }
 
-// Handle wraps the server's ServeMux Handle method
-func (s *Server) Handle(pattern string, handler http.Handler) {
+func (s *Server) wrapMiddleware(handler http.Handler) http.Handler {
 	for _, m := range s.middleware {
 		handler = m(handler)
 	}
-	s.Mux.Handle(pattern, handler)
+
+	return handler
+}
+
+// HandleExact sets up a gorilla/mux handler that response only to the exact
+// path given
+func (s *Server) HandleExact(pth string, handler http.Handler) {
+	s.Mux.Path(pth).Handler(s.wrapMiddleware(handler))
+}
+
+// HandlePrefix sets up a gorilla/mux handler for any request where the
+// beginning of the path matches the given prefix
+func (s *Server) HandlePrefix(prefix string, handler http.Handler) {
+	s.Mux.PathPrefix(prefix).Handler(s.wrapMiddleware(handler))
 }
 
 // run wraps http.Server's ListenAndServe in a background-friendly way, sending

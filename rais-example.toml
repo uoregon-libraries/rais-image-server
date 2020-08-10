@@ -46,13 +46,72 @@ LogLevel = "INFO"
 # CLI: --tile-path
 TilePath = "/var/local/images"
 
-# IIIFURL: Required.  Set this to the *public* URL that resolves to RAIS.  If
-# you're testing locally, the example value below will work, but if you have
-# RAIS behind a load balancer or proxy, IIIFURL *must* be the public URL.
+# SchemeMap: Optional, defaults to an empty map.  This setting allows you to
+# remap a pseudo-scheme to any custom URL prefix in order to shorten image
+# identifiers or obfuscate information about stored resources.
 #
-# Env: RAIS_IIIFURL
-# CLI: --iiif-url
-IIIFURL = "http://localhost:12415/iiif"
+# This can have one or more maps of "scheme=prefix" values.  Prefixes must be a
+# valid URL on their own.  Each map must be separated by one or more spaces.
+# An example might be something like this:
+#
+# SchemeMap = "briggs=s3://uoregon-images/briggs-image-studio acme=s3://uoregon-historic-art"
+#
+# In this example, identifiers that have the "briggs" scheme will get
+# translated to an S3 URL using a bucket named "uoregon-images", and prefixing
+# all ids with "briggs-image-studio".  Identifiers with the "acme" scheme will
+# be translated to an S3 URL using a bucket named "uoregon-historic-art", and
+# have no path prefix.  More specific examples:
+#
+# - A IIIF id of "briggs://tom.jp2" would map to the resource found at
+#   "s3://uoregon-images/briggs-image-studio/tom.jp2"
+# - A IIIF id of "acme://main.jp2" would map to the resource found at
+#   "s3://uoregon-historic-art/main.jp2"
+#
+# Schemes are only looked up once.  If you added a mapping to the above list to
+# make "s3" actually point to "file:///var/local/images" or something, that
+# will only work when the id has "s3" as its scheme.  The items with "briggs"
+# as their scheme will still route to
+# "s3://uoregon-images/briggs-image-studio/..."
+#
+# Note that RAIS internally includes two maps which turn the URL into
+# "file://<TilePath>": scheme-less requests and "file" scheme requests.  This
+# means nobody can put in an ID of "/etc/passwd" or "file:///etc/passwd" and
+# hope you've registered a text decoder or something, as both will simply end
+# up translating to "file:///var/local/images/etc/passwd".
+#
+# Env: RAIS_SCHEMEMAP
+# CLI: --scheme-map
+SchemeMap = ""
+
+# IIIFWebPath: Optional, defaults to "/iiif".  This is the endpoint on which
+# RAIS will listen for IIIF requests.
+#
+# Env: RAIS_IIIFWEBPATH
+# CLI: --iiif-web-path
+IIIFWebPath = "/iiif"
+
+# IIIFBaseURL: Optional: allows RAIS to report URLs for its assets when a IIIF
+# info request occurs.  If used, make sure this is set to the *public* URL, and
+# do not add a path.  The base web path should be set above.
+#
+# Typically, proxy servers (like Apache or nginx) can be configured to give
+# RAIS enough information to deduce its base URL, making this unnecessary.
+# However, a handful of situations warrant manually specifying the base URL:
+#
+# - You expose RAIS directly to the Internet.  In this scenario, people can
+#   fake the headers which Apache and nginx normally use when forwarding
+#   requests, causing RAIS to misrepresent its hostname.  There's no risk in
+#   fake hostnames from a security perspective, but RAIS wouldn't function.
+# - Whatever is proxying to RAIS needs to respond on a nonstandard port (80 for
+#   http and 443 for https are the standard ports)
+# - RAIS is behind multiple levels of proxies, and configuring them all to
+#   forward the proper data is more of a pain than simply configuring RAIS.
+# - You need RAIS to report a specific base URL, such as when it's reachable
+#   from multiple hostnames, but you want a canonical response
+#
+# Env: RAIS_IIIFBASEURL
+# CLI: --iiig-base-url
+#IIIFBaseURL = "http://rais.my.edu:12415"
 
 # InfoCacheLen: Optional, defaults to 10000.  Set this to 0 to avoid caching
 # IIIF Info requests, or set it higher to cache more requests.  The overhead
@@ -82,10 +141,12 @@ CapabilitiesFile = ""
 # Env: RAIS_TILECACHELEN
 TileCacheLen = 0
 
-# Plugins: Optional, defaults to "s3-images.so,json-tracer.so".
+# Plugins: Optional, defaults to "-".
 #
 # Comma-separated list of which plugins should be loaded.  A value of "" or "-"
-# will disable plugins entirely.
+# will disable plugins entirely.  To disable this from an environment variable,
+# you *must* use a hyphen due to how RAIS attempts to read environment
+# variables.
 #
 # Items in the list which don't specify an absolute path must be in a "plugins"
 # subdirectory the lives alongside the rais-server binary.
@@ -95,14 +156,21 @@ TileCacheLen = 0
 # specify individual plugins to avoid accidentally loading plugins you don't
 # want in production, even if they are compiled into the plugins/ subdirectory.
 #
-# The example s3-images and json-trace plugins are considered production-ready.
-#
 # A value of "*.so" replicates the 3.0.x behavior of loading everything in
-# plugins/, while a value of "" disabled plugins entirely.
+# plugins/
 #
 # Env: RAIS_PLUGINS
 # CLI: --plugins
 Plugins = ""
+
+# JPGQuality: Optional, defaults to 75.  This must be between 1 and 100, where
+# 1 is very low quality but very small JPGs, and 100 is very high quality, but
+# very large files.  Set this if you want to fine-tune the compression of
+# requested JPG files.  75 is typically a good mix of efficiency and quality.
+#
+# Env: RAIS_JPGQUALITY
+# CLI: --jpg-quality
+#JPGQuality = 95
 
 ####
 # If you wanted to globally limit request size, use the below values.  By
@@ -135,25 +203,3 @@ ImageMaxWidth = 20480
 # Env: RAIS_IMAGEMAXHEIGHT
 # CLI: --image-max-height
 ImageMaxHeight = 20480
-
-####
-# If you use the S3 plugin, your configuration needs to be in here or else in
-# the environment.  RAIS plugins cannot currently access the command-line
-# arguments.
-####
-
-# S3Cache is where files pulled from S3 reside locally for caching purposes.
-# RAIS will create this directory if it doesn't already exist.
-#
-# Env: RAIS_S3CACHE
-S3Cache = "/var/local/rais-s3"
-
-# S3Zone is the zone from which your assets will be read
-#
-# Env: RAIS_S3ZONE
-S3Zone = "us-west-2"
-
-# S3Bucket is the bucket in which your assets reside
-#
-# Env: RAIS_S3BUCKET
-S3Bucket = "my-bucket"

@@ -3,4 +3,4 @@
 package version
 
 // Version tells us the app version string
-const Version = "3.3.1"
+const Version = "4.0.0"

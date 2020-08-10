@@ -16,20 +16,8 @@ for file in $(find /var/local/images -name "*.jp2" -o -name "*.tiff" -o -name "*
     sources="$sources,"
   fi
 
-  sources="$sources\"/images/iiif/$relpath/info.json\""
+  sources="$sources\"/iiif/$relpath/info.json\""
 done
 sed "s|%SRCS%|$sources|g" /usr/share/nginx/html/template.html > /usr/share/nginx/html/iiif.html
-
-sources=""
-for file in $(find /var/local/images -name "*.jp2" -o -name "*.tiff" -o -name "*.jpg"); do
-  relpath=${file##/var/local/images/}
-  relpath=${relpath//\//%2F}
-  if [[ $sources != "" ]]; then
-    sources="$sources,"
-  fi
-
-  sources="$sources\"/images/dzi/${relpath}.dzi\""
-done
-sed "s|%SRCS%|$sources|g" /usr/share/nginx/html/template.html > /usr/share/nginx/html/dzi.html
 
 exec nginx -g "daemon off;"

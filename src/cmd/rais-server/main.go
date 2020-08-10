@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 	"rais/src/cmd/rais-server/internal/servers"
 	"rais/src/iiif"
 	"rais/src/img"
@@ -51,21 +53,49 @@ func main() {
 	// Register our JP2 decoder after plugins have been loaded to allow plugins
 	// to handle images - for instance, we might want a pyramidal tiff plugin or
 	// something one day
-	img.RegisterDecoder(decodeJP2)
+	img.RegisterDecodeHandler(decodeJP2)
+
+	// File streamer for handling images on the local filesystem
+	img.RegisterStreamReader(fileStreamReader)
+
+	// Cloud streamer for attempting to handle anything else.  Technically this
+	// can do local files, too, but the overhead is just too much if we want to
+	// keep showcasing how fast RAIS is with local files....
+	img.RegisterStreamReader(cloudStreamReader)
 
 	tilePath := viper.GetString("TilePath")
+	webPath := viper.GetString("IIIFWebPath")
+	if webPath == "" {
+		webPath = "/iiif"
+	}
+	p2 := path.Clean(webPath)
+	if webPath != p2 {
+		Logger.Warnf("WebPath %q cleaned; using %q instead", webPath, p2)
+		webPath = p2
+	}
 	address := viper.GetString("Address")
 	adminAddress := viper.GetString("AdminAddress")
 
-	ih := NewImageHandler(tilePath)
+	ih := NewImageHandler(tilePath, webPath)
 	ih.Maximums.Area = viper.GetInt64("ImageMaxArea")
 	ih.Maximums.Width = viper.GetInt("ImageMaxWidth")
 	ih.Maximums.Height = viper.GetInt("ImageMaxHeight")
 
-	iiifBase, _ := url.Parse(viper.GetString("IIIFURL"))
+	// Check for scheme remapping configuration - if it exists, it's the final id-to-URL handler
+	schemeMapConfig := viper.GetString("SchemeMap")
+	if schemeMapConfig != "" {
+		err := parseSchemeMap(ih, schemeMapConfig)
+		if err != nil {
+			Logger.Fatalf("Error parsing SchemeMap: %s", err)
+		}
+	}
 
-	Logger.Infof("IIIF enabled at %s", iiifBase.String())
-	ih.EnableIIIF(iiifBase)
+	iiifBaseURL := viper.GetString("IIIFBaseURL")
+	if iiifBaseURL != "" {
+		baseURL, _ := url.Parse(iiifBaseURL)
+		Logger.Infof("Explicitly setting IIIF base URL to %q", baseURL)
+		ih.BaseURL = baseURL
+	}
 
 	capfile := viper.GetString("CapabilitiesFile")
 	if capfile != "" {
@@ -85,14 +115,13 @@ func main() {
 	// Set up handlers / listeners
 	var pubSrv = servers.New("RAIS", address)
 	pubSrv.AddMiddleware(logMiddleware)
-	handle(pubSrv, ih.IIIFBase.Path+"/", http.HandlerFunc(ih.IIIFRoute))
-	handle(pubSrv, "/images/dzi/", http.HandlerFunc(ih.DZIRoute))
+	handle(pubSrv, ih.WebPathPrefix+"/", http.HandlerFunc(ih.IIIFRoute))
 	handle(pubSrv, "/", http.NotFoundHandler())
 
 	var admSrv = servers.New("RAIS Admin", adminAddress)
 	admSrv.AddMiddleware(logMiddleware)
-	admSrv.Handle("/admin/stats.json", stats)
-	admSrv.Handle("/admin/cache/purge", http.HandlerFunc(adminPurgeCache))
+	admSrv.HandleExact("/admin/stats.json", stats)
+	admSrv.HandlePrefix("/admin/cache/purge", http.HandlerFunc(adminPurgeCache))
 
 	interrupts.TrapIntTerm(shutdown)
 
@@ -114,10 +143,11 @@ func handle(srv *servers.Server, pattern string, handler http.Handler) {
 		if err == nil {
 			handler = h2
 		} else if err != plugins.ErrSkipped {
-			logger.Fatalf("Error trying to wrap handler %q: %s", pattern, err)
+			Logger.Fatalf("Error trying to wrap handler %q: %s", pattern, err)
 		}
 	}
-	srv.Handle(pattern, handler)
+
+	srv.HandlePrefix(pattern, handler)
 }
 
 func shutdown() {
@@ -135,4 +165,22 @@ func shutdown() {
 
 	Logger.Infof("RAIS Stopped")
 	wait.Done()
+}
+
+func parseSchemeMap(ih *ImageHandler, schemeMapConfig string) error {
+	var confs = strings.Fields(schemeMapConfig)
+	for _, conf := range confs {
+		var parts = strings.Split(conf, "=")
+		if len(parts) != 2 {
+			return fmt.Errorf(`invalid scheme map %q: format must be "scheme=prefix"`, conf)
+		}
+		var scheme, prefix = parts[0], parts[1]
+
+		var err = ih.AddSchemeMap(scheme, prefix)
+		if err != nil {
+			return fmt.Errorf("invalid scheme map %q: %s", conf, err)
+		}
+	}
+
+	return nil
 }

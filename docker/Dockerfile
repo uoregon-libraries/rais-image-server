@@ -7,7 +7,7 @@
 #
 #     # Generate the build image to simplify local development
 #     docker build --rm -t uolibraries/rais:build --target build -f ./docker/Dockerfile .
-FROM fedora:30 AS build
+FROM fedora:32 AS build
 LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 
 # Install all the build dependencies
@@ -30,7 +30,7 @@ RUN dnf install -y GraphicsMagick
 
 # Go comes after other installs to avoid re-pulling the more expensive
 # dependencies when changing Go versions
-RUN curl -L https://dl.google.com/go/go1.13.7.linux-amd64.tar.gz > /tmp/go.tgz
+RUN curl -L https://dl.google.com/go/go1.14.4.linux-amd64.tar.gz > /tmp/go.tgz
 RUN cd /opt && tar -xzf /tmp/go.tgz
 
 # "Install" Go

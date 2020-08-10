@@ -2,19 +2,13 @@ package main
 
 import (
 	"net/http"
-	"os"
+	"rais/src/img"
 	"time"
 )
 
-func sendHeaders(w http.ResponseWriter, req *http.Request, filepath string) error {
-	info, err := os.Stat(filepath)
-	if err != nil {
-		http.Error(w, "Unable to access file", 404)
-		return err
-	}
-
+func sendHeaders(w http.ResponseWriter, req *http.Request, res *img.Resource) error {
 	// Set headers
-	w.Header().Set("Last-Modified", info.ModTime().Format(time.RFC1123))
+	w.Header().Set("Last-Modified", res.Streamer().ModTime().Format(time.RFC1123))
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	// Check for forced download parameter

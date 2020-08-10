@@ -13,13 +13,13 @@ type plugStats struct {
 }
 
 type cacheStats struct {
-	m          sync.Mutex
-	Enabled    bool
 	GetCount   uint64
 	GetHits    uint64
-	HitPercent float64
 	SetCount   uint64
 	Length     int
+	m          sync.Mutex
+	Enabled    bool
+	HitPercent float64
 }
 
 func (cs *cacheStats) setHitPercent() {

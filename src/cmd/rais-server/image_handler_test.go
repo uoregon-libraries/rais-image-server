@@ -15,15 +15,21 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/uoregon-libraries/gopkg/assert"
 	"github.com/uoregon-libraries/gopkg/logger"
 )
 
-var unlimited = img.Constraint{math.MaxInt32, math.MaxInt32, math.MaxInt64}
+func nc(w, h int, a int64) img.Constraint {
+	return img.Constraint{Width: w, Height: h, Area: a}
+}
+
+var unlimited = nc(math.MaxInt32, math.MaxInt32, math.MaxInt64)
 
 func init() {
 	Logger = logger.New(logger.Warn)
-	img.RegisterDecoder(decodeJP2)
+	img.RegisterDecodeHandler(decodeJP2)
+	img.RegisterStreamReader(fileStreamReader)
 }
 
 func rootDir() string {
@@ -34,7 +40,7 @@ func rootDir() string {
 
 // Sets up everything necessary to test a IIIF request
 func dorequestGeneric(path string, acceptLD bool, max img.Constraint, fs *iiif.FeatureSet, t *testing.T) *fakehttp.ResponseWriter {
-	u, _ := url.Parse("http://example.com/foo/bar")
+	u, _ := url.Parse("http://example.com")
 	w := fakehttp.NewResponseWriter()
 	reqPath := fmt.Sprintf("/foo/bar/%s", path)
 	req, err := http.NewRequest("get", reqPath, strings.NewReader(""))
@@ -47,11 +53,11 @@ func dorequestGeneric(path string, acceptLD bool, max img.Constraint, fs *iiif.F
 	if err != nil {
 		t.Errorf("Unable to create fake request: %s", err)
 	}
-	h := NewImageHandler(rootDir())
+	h := NewImageHandler(rootDir(), "/foo/bar")
 	h.Maximums.Width = max.Width
 	h.Maximums.Height = max.Height
 	h.Maximums.Area = max.Area
-	h.EnableIIIF(u)
+	h.BaseURL = u
 	h.FeatureSet = fs
 	h.IIIFRoute(w, req)
 
@@ -135,7 +141,7 @@ func TestInfoRedirect(t *testing.T) {
 // TestInfoMaxSize verifies that when the image is bigger than the handler's
 // maximums, values are present in the info profile
 func TestInfoMaxSize(t *testing.T) {
-	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, img.Constraint{60, 80, 480}, t)
+	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, nc(60, 80, 480), t)
 	var data iiif.Info
 	json.Unmarshal(w.Output, &data)
 	assert.Equal(60, data.Profile.MaxWidth, "JSON-decoded max width", t)
@@ -151,7 +157,7 @@ func TestInfoMaxSize(t *testing.T) {
 // TestInfoNoMaxSize verifies that when the image is smaller than the handler's
 // maximums, values are not present in the info profile
 func TestInfoNoMaxSize(t *testing.T) {
-	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, img.Constraint{6000, 8000, 4800000}, t)
+	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, nc(6000, 8000, 4800000), t)
 	var data iiif.Info
 	json.Unmarshal(w.Output, &data)
 	assert.Equal(0, data.Profile.MaxWidth, "JSON-decoded width", t)
@@ -191,9 +197,9 @@ func TestCommandHandler(t *testing.T) {
 
 func TestCommandHandlerInvalidSize(t *testing.T) {
 	imgid := "docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/pct:10,10,80,80/full/0/default.jpg"
-	areaConstraint := img.Constraint{math.MaxInt32, math.MaxInt32, 480}
-	wConstraint := img.Constraint{20, math.MaxInt32, math.MaxInt64}
-	hConstraint := img.Constraint{math.MaxInt32, 20, math.MaxInt64}
+	areaConstraint := nc(math.MaxInt32, math.MaxInt32, 480)
+	wConstraint := nc(20, math.MaxInt32, math.MaxInt64)
+	hConstraint := nc(math.MaxInt32, 20, math.MaxInt64)
 
 	// For sanity let's make sure the request has no errors when we don't specify
 	// any constraints
@@ -220,11 +226,11 @@ func BenchmarkRouting(b *testing.B) {
 		b.Errorf("Unable to create fake request: %s", err)
 	}
 
-	h := NewImageHandler(rootDir())
+	h := NewImageHandler(rootDir(), "/iiif")
 	h.Maximums.Width = unlimited.Width
 	h.Maximums.Height = unlimited.Height
 	h.Maximums.Area = unlimited.Area
-	h.EnableIIIF(u)
+	h.BaseURL = u
 	h.FeatureSet = iiif.FeatureSet2()
 	URIs := []string{
 		u.String() + "/foo/bar/invalid%2Fimage.jp2/10,10,80,80/full/0/default.jpg",
@@ -241,5 +247,53 @@ func BenchmarkRouting(b *testing.B) {
 			req.RequestURI = requri
 			h.IIIFRoute(w, req)
 		}
+	}
+}
+
+func TestIDToURL(t *testing.T) {
+	var h = NewImageHandler("/var/local/images", "/iiif")
+	h.AddSchemeMap("foo", "bar://real-host/prefixed-path")
+
+	// Prefer table-driven tests, sirs
+	var tests = map[string]struct {
+		ID          string
+		ExpectedURL *url.URL
+	}{
+		// iiif.ID should always be created by iiif.URLToID, so we don't need to
+		// test out unescaped IDs here
+		"simple": {
+			"foo/bar/baz.jp2",
+			&url.URL{Scheme: "file", Path: "/var/local/images/foo/bar/baz.jp2"},
+		},
+		"with scheme": {
+			"s3://foo/bar/baz.jp2",
+			&url.URL{Scheme: "s3", Host: "foo", Path: "/bar/baz.jp2"},
+		},
+		"explicit file won't resolve to an absolute path": {
+			"file:///etc/passwd",
+			&url.URL{Scheme: "file", Path: "/var/local/images/etc/passwd"},
+		},
+		"dot-dot problem": {
+			"file:///../../../../../etc/passwd",
+			&url.URL{Scheme: "file", Path: "/var/local/images/etc/passwd"},
+		},
+		"remapped scheme": {
+			"foo://foo-host/foo-path/thing.jp2",
+			&url.URL{Scheme: "bar", Host: "real-host", Path: "/prefixed-path/foo-host/foo-path/thing.jp2"},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			var got = h.getURL(iiif.ID(tc.ID))
+
+			// We don't care about RawPath for testing purposes
+			got.RawPath = ""
+
+			var diff = cmp.Diff(tc.ExpectedURL, got)
+			if diff != "" {
+				t.Errorf("getURL(%q): %s", tc.ID, diff)
+			}
+		})
 	}
 }

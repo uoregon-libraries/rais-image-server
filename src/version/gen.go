@@ -38,6 +38,7 @@ func main() {
 
 package version
 
+// Build gives detailed information about the state of the build as pulled from "git describe"
 const Build = "` + build + `"
 `)
 	if err != nil {

@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"plugin"
 	"rais/src/iiif"
-	"rais/src/img"
 	"reflect"
 	"sort"
 	"strings"
@@ -16,7 +15,6 @@ import (
 	"github.com/uoregon-libraries/gopkg/logger"
 )
 
-var idToPathPlugins []func(iiif.ID) (string, error)
 var wrapHandlerPlugins []func(string, http.Handler) (http.Handler, error)
 var teardownPlugins []func()
 var purgeCachePlugins []func()
@@ -116,7 +114,7 @@ func (pw *pluginWrapper) loadPluginFn(name string, obj interface{}) {
 
 // loadPlugin attempts to read the given plugin file and extract known symbols.
 // If a plugin exposes Initialize or SetLogger, they're called here once we're
-// sure the plugin is valid.  IDToPath functions are indexed globally for use
+// sure the plugin is valid.  All other functions are indexed globally for use
 // in the RAIS image serving handler.
 func loadPlugin(fullpath string, l *logger.Logger) error {
 	var pw, err = newPluginWrapper(fullpath)
@@ -129,21 +127,17 @@ func loadPlugin(fullpath string, l *logger.Logger) error {
 	var initialize = func() {}
 
 	// Simply initialize those functions we only want indexed if they exist
-	var idToPath func(iiif.ID) (string, error)
 	var teardown func()
 	var wrapHandler func(string, http.Handler) (http.Handler, error)
 	var prgCache func()
 	var expCachedImg func(iiif.ID)
-	var imageDecoders func() []img.DecodeFn
 
 	pw.loadPluginFn("SetLogger", &log)
-	pw.loadPluginFn("IDToPath", &idToPath)
 	pw.loadPluginFn("Initialize", &initialize)
 	pw.loadPluginFn("Teardown", &teardown)
 	pw.loadPluginFn("WrapHandler", &wrapHandler)
 	pw.loadPluginFn("PurgeCaches", &prgCache)
 	pw.loadPluginFn("ExpireCachedImage", &expCachedImg)
-	pw.loadPluginFn("ImageDecoders", &imageDecoders)
 
 	if len(pw.errors) != 0 {
 		return errors.New(strings.Join(pw.errors, ", "))
@@ -172,17 +166,7 @@ func loadPlugin(fullpath string, l *logger.Logger) error {
 		l.Debugf("%q is explicitly enabled", fullpath)
 	}
 
-	// Register image decoder(s) if plugin exposes any
-	if imageDecoders != nil {
-		for _, fn := range imageDecoders() {
-			img.RegisterDecoder(fn)
-		}
-	}
-
 	// Index remaining functions
-	if idToPath != nil {
-		idToPathPlugins = append(idToPathPlugins, idToPath)
-	}
 	if teardown != nil {
 		teardownPlugins = append(teardownPlugins, teardown)
 	}

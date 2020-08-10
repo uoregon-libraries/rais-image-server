@@ -9,6 +9,7 @@ import (
 	"io"
 	"rais/src/iiif"
 
+	"github.com/spf13/viper"
 	"golang.org/x/image/tiff"
 )
 
@@ -20,7 +21,7 @@ var ErrInvalidEncodeFormat = errors.New("Unable to encode: unsupported format")
 func EncodeImage(w io.Writer, img image.Image, format iiif.Format) error {
 	switch format {
 	case iiif.FmtJPG:
-		return jpeg.Encode(w, img, &jpeg.Options{Quality: 80})
+		return jpeg.Encode(w, img, &jpeg.Options{Quality: viper.GetInt("JPGQuality")})
 	case iiif.FmtPNG:
 		return png.Encode(w, img)
 	case iiif.FmtGIF:

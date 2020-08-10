@@ -5,16 +5,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"html/template"
+	"io"
 	"log"
 	"net/url"
 	"os"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"gocloud.dev/blob"
+	_ "gocloud.dev/blob/s3blob"
 )
 
 type asset struct {
@@ -27,29 +28,18 @@ var emptyAsset asset
 
 var s3assets []asset
 var indexT, assetT, adminT *template.Template
-var zone, bucket string
+var s3url, zone, bucketName string
 var keyID, secretKey string
 
-func env(key string) string {
-	for _, kvpair := range os.Environ() {
-		var parts = strings.SplitN(kvpair, "=", 2)
-		if parts[0] == key {
-			return strings.TrimSpace(parts[1])
-		}
-	}
-	return ""
-}
-
 func main() {
-	zone = env("RAIS_S3ZONE")
-	bucket = env("RAIS_S3BUCKET")
-	keyID = env("AWS_ACCESS_KEY_ID")
-	secretKey = env("AWS_SECRET_ACCESS_KEY")
+	bucketName = os.Getenv("RAIS_S3_DEMO_BUCKET")
+	keyID = os.Getenv("AWS_ACCESS_KEY_ID")
+	secretKey = os.Getenv("AWS_SECRET_ACCESS_KEY")
 
-	if zone == "" || bucket == "" || keyID == "" || secretKey == "" {
-		fmt.Println("You must set env vars RAIS_S3BUCKET, RAIS_S3ZONE, AWS_ACCESS_KEY_ID, and")
+	if bucketName == "" || keyID == "" || secretKey == "" {
+		fmt.Println("You must set env vars RAIS_S3_DEMO_BUCKET, AWS_ACCESS_KEY_ID, and")
 		fmt.Println("AWS_SECRET_ACCESS_KEY before running the demo.  You can export these directly")
-		fmt.Println(`or use a the docker-compose ".env" file.`)
+		fmt.Println(`or use the docker-compose ".env" file.`)
 		os.Exit(1)
 	}
 
@@ -59,27 +49,65 @@ func main() {
 }
 
 func readAssets() {
-	var conf = &aws.Config{Region: &zone}
-	var sess, err = session.NewSession(conf)
-	if err != nil {
-		log.Println("Error trying to instantiate a new AWS session: ", err)
-		os.Exit(1)
-	}
-	var svc = s3.New(sess)
+	// set up the hard-coded newspaper asset first
+	s3assets = append(s3assets, asset{Title: "Local File", Key: "news", IIIFID: "news.jp2"})
 
-	var out *s3.ListObjectsOutput
-	out, err = svc.ListObjects(&s3.ListObjectsInput{Bucket: &bucket})
+	var ctx = context.Background()
+	var bucketURL = "s3://" + bucketName + getBucketURLQuery()
+	var bucket, err = blob.OpenBucket(ctx, bucketURL)
 	if err != nil {
-		log.Println("Error trying to list objects: ", err)
-		os.Exit(1)
+		log.Fatalf("Unable to open S3 bucket %q: %s", bucketURL, err)
 	}
+	var iter = bucket.List(nil)
+	var obj *blob.ListObject
+	for {
+		obj, err = iter.Next(ctx)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Error trying to list assets: %s", err)
+		}
 
-	for _, obj := range out.Contents {
-		var key = *obj.Key
-		var id = "s3:" + url.PathEscape(key)
+		var key = obj.Key
+		var id = url.PathEscape(fmt.Sprintf("s3://%s/%s", bucketName, key))
 		s3assets = append(s3assets, asset{Title: key, Key: key, IIIFID: id})
 	}
+
 	log.Printf("Indexed %d assets", len(s3assets))
+}
+
+// Environment variables copied from img.CloudStream
+const (
+	EnvS3Endpoint       = "RAIS_S3_ENDPOINT"
+	EnvS3DisableSSL     = "RAIS_S3_DISABLESSL"
+	EnvS3ForcePathStyle = "RAIS_S3_FORCEPATHSTYLE"
+)
+
+func getBucketURLQuery() string {
+	var endpoint = os.Getenv(EnvS3Endpoint)
+	var disableSSL = os.Getenv(EnvS3DisableSSL)
+	var forcePathStyle = os.Getenv(EnvS3ForcePathStyle)
+	var query []string
+
+	if endpoint != "" {
+		query = append(query, "endpoint="+endpoint)
+	}
+
+	// Allow "t", "T", "true", "True", etc.
+	if disableSSL != "" && strings.ToLower(disableSSL)[:1] == "t" {
+		query = append(query, "disableSSL=true")
+	}
+
+	if forcePathStyle != "" && strings.ToLower(forcePathStyle)[:1] == "t" {
+		query = append(query, "s3ForcePathStyle=true")
+	}
+
+	if len(query) == 0 {
+		return ""
+	}
+
+	return "?" + strings.Join(query, "&")
 }
 
 func preptemplates() {

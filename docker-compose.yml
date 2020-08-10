@@ -16,13 +16,15 @@ services:
       - RAIS_ADDRESS
       - RAIS_LOGLEVEL
       - RAIS_TILEPATH
-      - RAIS_IIIFURL
+      - RAIS_IIIFWEBPATH
+      - RAIS_IIIFBASEURL
       - RAIS_INFOCACHELEN
       - RAIS_TILECACHELEN
       - RAIS_IMAGEMAXAREA
       - RAIS_IMAGEMAXWIDTH
       - RAIS_IMAGEMAXHEIGHT
-      - RAIS_PLUGINS
+      - RAIS_PLUGINS=*
+      - RAIS_JPGQUALITY
       - RAIS_ALLOW_INSECURE_PLUGINS=0
     volumes:
       - ./docker/images:/var/local/images:ro

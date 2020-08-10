@@ -1,29 +1,47 @@
 version: "3.4"
 
+networks:
+  internal:
+  external:
+
+volumes:
+  minio-data:
+
 services:
   rais:
-    image: uolibraries/rais
+    image: uolibraries/rais:4-alpine
     environment:
-      - RAIS_S3CACHE=/var/tmp/rais/s3
-      - RAIS_IIIFURL
-      - RAIS_S3ZONE
-      - RAIS_S3BUCKET
-      - AWS_ACCESS_KEY_ID
-      - AWS_SECRET_ACCESS_KEY
-      - RAIS_INFOCACHELEN
-      - RAIS_TILECACHELEN
+      - RAIS_S3_ENDPOINT=minio:9000
+      - RAIS_S3_DISABLESSL=true
+      - RAIS_S3_FORCEPATHSTYLE=true
+      - AWS_ACCESS_KEY_ID=key
+      - AWS_SECRET_ACCESS_KEY=secretkey
+      - AWS_SESSION_TOKEN
+      - AWS_REGION=us-west-2
     volumes:
       - /tmp:/tmp
+      - ../images/jp2tests/sn00063609-19091231.jp2:/var/local/images/news.jp2
+    networks:
+      internal:
 
   s3demo:
     build:
       context: ..
       dockerfile: ./s3demo/Dockerfile
+    depends_on:
+      - minio
+      - rais
     environment:
-      - RAIS_S3ZONE
-      - RAIS_S3BUCKET
-      - AWS_ACCESS_KEY_ID
-      - AWS_SECRET_ACCESS_KEY
+      - RAIS_S3_DEMO_BUCKET=rais
+      - RAIS_S3_ENDPOINT=minio:9000
+      - RAIS_S3_DISABLESSL=true
+      - RAIS_S3_FORCEPATHSTYLE=true
+      - AWS_ACCESS_KEY_ID=key
+      - AWS_SECRET_ACCESS_KEY=secretkey
+      - AWS_SESSION_TOKEN
+      - AWS_REGION=us-west-2
+    networks:
+      internal:
 
   web:
     image: nginx:1.15
@@ -35,3 +53,23 @@ services:
       - s3demo
     ports:
       - 80:80
+    networks:
+      internal:
+      external:
+
+  # minio for testing against a local S3-compatible API
+  minio:
+    image: minio/minio
+    volumes:
+      - minio-data:/data
+    command: minio server /data
+    expose:
+      - 9000
+    environment:
+      - MINIO_ACCESS_KEY=key
+      - MINIO_SECRET_KEY=secretkey
+    ports:
+      - 9000:9000
+    networks:
+      internal:
+      external:

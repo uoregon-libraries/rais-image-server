@@ -10,9 +10,10 @@ import (
 	"github.com/uoregon-libraries/gopkg/logger"
 )
 
-// Logger defaults to use the standard uoregon-libraries logging mechanism, but
-// can be overridden (as is the case with the main RAIS command)
-var Logger = logger.DefaultLogger
+// Logger defaults to use a default implementation of the uoregon-libraries
+// logging mechanism, but can be overridden (as is the case with the main RAIS
+// command)
+var Logger = logger.Named("rais/openjpeg", logger.Debug)
 
 // GoLogWarning bridges the openjpeg logging with our internal logger
 //export GoLogWarning

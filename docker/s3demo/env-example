@@ -1,20 +1,18 @@
 ##### REQUIRED
 
-# This must be the public URL you're using, or localhost if you aren't doing a
-# public demo.  It **must** have a path of "/iiif" for this demo to work.
-RAIS_IIIFURL=http://localhost/iiif
+# **NOTE**: If you use minio, you don't need to mess with this
 
 # S3 configuration - this stuff must be specific to your setup!
-RAIS_S3ZONE=<region / zone>
-RAIS_S3BUCKET=<bucket-name>
-AWS_ACCESS_KEY_ID=<access key>
-AWS_SECRET_ACCESS_KEY=<secret access key>
+RAIS_S3_DEMO_BUCKET=rais
+RAIS_S3_ENDPOINT=minio:9000
+RAIS_S3_DISABLESSL=true
+RAIS_S3_FORCEPATHSTYLE=true
+AWS_ACCESS_KEY_ID=key
+AWS_SECRET_ACCESS_KEY=secretkey
+AWS_SESSION_TOKEN
+AWS_REGION=us-west-2
 
 ##### OPTIONAL
-
-# JSON Tracer: /tmp because we mount that into the container.  We want to get at this data easily.
-RAIS_TRACEROUT=/tmp/rais-traces.json
-RAIS_TRACERFLUSHSECONDS=1
 
 # In-memory caching is disabled here to help test timing, but can be enabled to
 # provide a smoother demo

@@ -21,8 +21,12 @@ src/version/build.go:
 	go generate rais/src/version
 
 # Binary building rules
-binaries: src/transform/rotation.go src/version/build.go plugins
+binaries: src/transform/rotation.go src/version/build.go plugins rais-server jp2info
+
+rais-server:
 	go build -ldflags="-s -w" -o ./bin/rais-server rais/src/cmd/rais-server
+
+jp2info:
 	go build -ldflags="-s -w" -o ./bin/jp2info rais/src/cmd/jp2info
 
 # Testing
@@ -49,6 +53,11 @@ clean:
 docker: | force-getbuild generate
 	docker build --rm --target build -f $(MakefileDir)/docker/Dockerfile -t uolibraries/rais:build $(MakefileDir)
 	docker build --rm -f $(MakefileDir)/docker/Dockerfile -t uolibraries/rais:latest-indev $(MakefileDir)
+	make docker-alpine
+
+# Build just the alpine image for cases where we want to get this updated / cranked out fast
+docker-alpine: | force-getbuild generate
+	docker build --rm --target build -f $(MakefileDir)/docker/Dockerfile-alpine -t uolibraries/rais:build-alpine $(MakefileDir)
 	docker build --rm -f $(MakefileDir)/docker/Dockerfile-alpine -t uolibraries/rais:latest-alpine $(MakefileDir)
 
 # Build plugins on any change to their directory or their go files
