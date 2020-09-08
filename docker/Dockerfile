@@ -30,7 +30,7 @@ RUN dnf install -y GraphicsMagick
 
 # Go comes after other installs to avoid re-pulling the more expensive
 # dependencies when changing Go versions
-RUN curl -L https://dl.google.com/go/go1.14.7.linux-amd64.tar.gz > /tmp/go.tgz
+RUN curl -L https://dl.google.com/go/go1.15.1.linux-amd64.tar.gz > /tmp/go.tgz
 RUN cd /opt && tar -xzf /tmp/go.tgz
 
 # "Install" Go
