@@ -15,7 +15,7 @@ services:
       - URL
       - RAIS_ADDRESS
       - RAIS_LOGLEVEL
-      - RAIS_TILEPATH
+      - RAIS_TILEPATH=/var/local/images
       - RAIS_IIIFWEBPATH
       - RAIS_IIIFBASEURL
       - RAIS_INFOCACHELEN

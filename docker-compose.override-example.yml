@@ -15,28 +15,25 @@
 version: "3.4"
 services:
   rais:
-    # Uncomment this if you'd like to fire up an Alpine-based container - note
-    # that it doesn't have any configuration baked in, so you'll have to use
-    # environment vars for *all configuration*.  Good for production, but bad
-    # for a quick demo.
-    #image: uolibraries/rais:latest-alpine
+    # Uncomment one of these if you'd like to use an image built by `make
+    # docker` rather than testing out the latest uploaded image
+    #image: uolibraries/rais:dev
+    #image: uolibraries/rais:dev-alpine
+
     environment:
       # These next lines would allow you to pass the various S3 configuration
       # options through from the host's environment (or the local .env file)
-      - RAIS_S3CACHE
-      - RAIS_S3ZONE
-      - RAIS_S3ENDPOINT
+      - RAIS_S3_ENDPOINT
+      - RAIS_S3_DISABLESSL
+      - RAIS_S3_FORCEPATHSTYLE
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
+      - AWS_REGION
       - AWS_SESSION_TOKEN
+
       # If you wanted to use a configured AWS credentials file for s3, do this
       # and then see the volume config below
       - AWS_SHARED_CREDENTIALS_FILE=/etc/aws.credentials
-    volumes:
-      # Mount in all binaries so you aren't rebuilding the image to test quick changes
-      - ./bin:/opt/rais:ro
-      # Volume config (modify source) for using an AWS credentials file
-      - /home/myuser/.aws/credentials:/etc/aws.credentials
     ports:
       - 12415:12415
       - 12416:12416

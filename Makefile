@@ -49,16 +49,25 @@ clean:
 	rm -f src/transform/rotation.go
 	rm -f src/version/build.go
 
+distclean: clean
+	go clean -modcache -testcache -cache
+	docker rmi uolibraries/rais:build || true
+	docker rmi uolibraries/rais:build-alpine || true
+	docker rmi uolibraries/rais:dev || true
+	docker rmi uolibraries/rais:dev-alpine || true
+
 # Generate the docker images
 docker: | force-getbuild generate
+	docker pull golang:1
+	docker pull golang:1-alpine
 	docker build --rm --target build -f $(MakefileDir)/docker/Dockerfile -t uolibraries/rais:build $(MakefileDir)
-	docker build --rm -f $(MakefileDir)/docker/Dockerfile -t uolibraries/rais:latest-indev $(MakefileDir)
+	docker build --rm -f $(MakefileDir)/docker/Dockerfile -t uolibraries/rais:dev $(MakefileDir)
 	make docker-alpine
 
 # Build just the alpine image for cases where we want to get this updated / cranked out fast
 docker-alpine: | force-getbuild generate
 	docker build --rm --target build -f $(MakefileDir)/docker/Dockerfile-alpine -t uolibraries/rais:build-alpine $(MakefileDir)
-	docker build --rm -f $(MakefileDir)/docker/Dockerfile-alpine -t uolibraries/rais:latest-alpine $(MakefileDir)
+	docker build --rm -f $(MakefileDir)/docker/Dockerfile-alpine -t uolibraries/rais:dev-alpine $(MakefileDir)
 
 # Build plugins on any change to their directory or their go files
 bin/plugins/%.so : src/plugins/% src/version/build.go src/plugins/%/*.go
