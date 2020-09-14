@@ -49,8 +49,17 @@ clean:
 	rm -f src/transform/rotation.go
 	rm -f src/version/build.go
 
+distclean: clean
+	go clean -modcache -testcache -cache
+	docker rmi uolibraries/rais:build || true
+	docker rmi uolibraries/rais:build-alpine || true
+	docker rmi uolibraries/rais:dev || true
+	docker rmi uolibraries/rais:dev-alpine || true
+
 # Generate the docker images
 docker: | force-getbuild generate
+	docker pull golang:1
+	docker pull golang:1-alpine
 	docker build --rm --target build -f $(MakefileDir)/docker/Dockerfile -t uolibraries/rais:build $(MakefileDir)
 	docker build --rm -f $(MakefileDir)/docker/Dockerfile -t uolibraries/rais:dev $(MakefileDir)
 	make docker-alpine
