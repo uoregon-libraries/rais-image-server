@@ -76,6 +76,7 @@ func main() {
 	address := viper.GetString("Address")
 	adminAddress := viper.GetString("AdminAddress")
 
+	Logger.Debugf("Serving images from %q", tilePath)
 	ih := NewImageHandler(tilePath, webPath)
 	ih.Maximums.Area = viper.GetInt64("ImageMaxArea")
 	ih.Maximums.Width = viper.GetInt("ImageMaxWidth")

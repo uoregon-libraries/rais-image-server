@@ -81,7 +81,7 @@ func parseConf() {
 	pflag.Parse()
 
 	// Make sure required values exist
-	if !viper.IsSet("TilePath") {
+	if viper.GetString("TilePath") == "" {
 		fmt.Println("ERROR: tile path is required")
 		pflag.Usage()
 		os.Exit(1)
