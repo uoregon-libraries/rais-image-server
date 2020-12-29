@@ -2,8 +2,8 @@
 
 - [`4`, `4.0`, `4.0.1`, `latest` (*docker/Dockerfile*)](https://github.com/uoregon-libraries/rais-image-server/blob/v4.0.1/docker/Dockerfile)
 - [`4-alpine`, `4.0-alpine`, `4.0.1-alpine`, `alpine` (*docker/Dockerfile-alpine*)](https://github.com/uoregon-libraries/rais-image-server/blob/v4.0.1/docker/Dockerfile-alpine)
-- [`3`, `3.3`, `3.3.1` (*docker/Dockerfile*)](https://github.com/uoregon-libraries/rais-image-server/blob/v3.3.1/docker/Dockerfile)
-- [`3-alpine`, `3.3-alpine`, `3.3.1-alpine` (*docker/Dockerfile-alpine*)](https://github.com/uoregon-libraries/rais-image-server/blob/v3.3.1/docker/Dockerfile-alpine)
+- [`3`, `3.3`, `3.3.2`, (*docker/Dockerfile*)](https://github.com/uoregon-libraries/rais-image-server/blob/v3.3.2/docker/Dockerfile)
+- [`3-alpine`, `3.3-alpine`, `3.3.2-alpine` (*docker/Dockerfile*)](https://github.com/uoregon-libraries/rais-image-server/blob/v3.3.2/docker/Dockerfile-alpine)
 
 # RAIS
 
