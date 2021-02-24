@@ -20,8 +20,6 @@ var imageMutex sync.RWMutex
 // These are stupid, but we need to return what openjpeg considers failure
 // numbers, and Go doesn't allow a direct translation of negative values to an
 // unsigned type
-var opjZero64 C.OPJ_UINT64 = 0
-var opjMinusOne64 = opjZero64 - 1
 var opjZeroSizeT C.OPJ_SIZE_T = 0
 var opjMinusOneSizeT = opjZeroSizeT - 1
 
