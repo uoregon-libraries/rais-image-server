@@ -26,8 +26,7 @@ if [ ! -f /etc/rais.toml ]; then
 fi
 
 sudo cp bin/rais-server /usr/local/rais/rais-server
-sudo rm /usr/local/rais/plugins/*
-sudo cp bin/plugins/s3-images.so /usr/local/rais/plugins/
+sudo rm -f /usr/local/rais/plugins/*
 sudo cp bin/plugins/datadog.so /usr/local/rais/plugins/
 sudo cp bin/plugins/json-tracer.so /usr/local/rais/plugins/
 sudo systemctl daemon-reload

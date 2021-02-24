@@ -20,8 +20,6 @@ var imageMutex sync.RWMutex
 // These are stupid, but we need to return what openjpeg considers failure
 // numbers, and Go doesn't allow a direct translation of negative values to an
 // unsigned type
-var opjZero64 C.OPJ_UINT64 = 0
-var opjMinusOne64 = opjZero64 - 1
 var opjZeroSizeT C.OPJ_SIZE_T = 0
 var opjMinusOneSizeT = opjZeroSizeT - 1
 
@@ -55,7 +53,7 @@ func opjStreamRead(writeBuffer unsafe.Pointer, numBytes C.OPJ_SIZE_T, id uint64)
 	var i, ok = lookupImage(id)
 	if !ok {
 		Logger.Errorf("Unable to find stream %d", id)
-		return opjMinusOne64
+		return opjMinusOneSizeT
 	}
 
 	var data []byte
@@ -77,7 +75,7 @@ func opjStreamRead(writeBuffer unsafe.Pointer, numBytes C.OPJ_SIZE_T, id uint64)
 		if err != io.EOF {
 			Logger.Errorf("Unable to read from stream %d: %s", id, err)
 		}
-		return opjMinusOne64
+		return opjMinusOneSizeT
 	}
 
 	return C.OPJ_SIZE_T(n)

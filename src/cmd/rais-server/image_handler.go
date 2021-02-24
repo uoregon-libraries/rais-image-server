@@ -434,8 +434,8 @@ func (ih *ImageHandler) buildInfo(id iiif.ID, i ImageInfo) *iiif.Info {
 		info.Profile.MaxHeight = ih.Maximums.Height
 	}
 
-	// Set up tile sizes
-	if i.TileWidth > 0 {
+	// Compute scaling and tiling
+	if i.TileWidth > 0 && i.TileWidth < i.Width && i.TileHeight < i.Height {
 		var sf []int
 		scale := 1
 		for x := 0; x < i.Levels; x++ {
@@ -450,6 +450,7 @@ func (ih *ImageHandler) buildInfo(id iiif.ID, i ImageInfo) *iiif.Info {
 			sf = append(sf, scale)
 			scale <<= 1
 		}
+
 		info.Tiles = make([]iiif.TileSize, 1)
 		info.Tiles[0] = iiif.TileSize{
 			Width:        i.TileWidth,
