@@ -63,16 +63,13 @@ func validScheme(u *url.URL) bool {
 func decodeCommonFile(s img.Streamer) (img.DecodeFunc, error) {
 	var u = s.Location()
 	if !validExt(u) {
-		l.Infof("plugins/imagick-decoder: skipping unsupported image extension %q (must be one of %s)",
+		l.Debugf("plugins/imagick-decoder: skipping unsupported image extension %q (must be one of %s)",
 			s.Location(), strings.Join(validExtensions, ", "))
 		return nil, plugins.ErrSkipped
 	}
 
-	// This is sorta of overly "loud" (warning), but generally speaking, a
-	// decoder shouldn't be requiring local files, so we want people to be made
-	// aware this plugin's not great....
 	if !validScheme(u) {
-		l.Warnf("plugins/imagick-decoder: skipping unsupported URL scheme %q (must be file)", u.Scheme)
+		l.Debugf("plugins/imagick-decoder: skipping unsupported URL scheme %q (must be file)", u.Scheme)
 		return nil, plugins.ErrSkipped
 	}
 
