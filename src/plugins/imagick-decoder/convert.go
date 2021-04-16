@@ -13,10 +13,10 @@ import (
 	"unsafe"
 )
 
-// Image returns a native Go image interface.  For now, this is always RGBA for
+// image returns a native Go image interface.  For now, this is always RGBA for
 // simplicity, but it would be a good idea to use a gray image when it makes
 // sense to improve performance and RAM usage.
-func (i *Image) Image() (image.Image, error) {
+func (i *Image) image(cimg *C.Image) (image.Image, error) {
 	// Create and prep-for-freeing the exception
 	exception := C.AcquireExceptionInfo()
 	defer C.DestroyExceptionInfo(exception)
@@ -33,19 +33,19 @@ func (i *Image) Image() (image.Image, error) {
 	w := C.size_t(i.decodeWidth)
 	h := C.size_t(i.decodeHeight)
 
-	i.attemptExportRGBA(w, h, ptr, exception, 0)
+	i.attemptExportRGBA(cimg, w, h, ptr, exception, 0)
 
 	img.Pix = pi.([]uint8)
 
 	return img, nil
 }
 
-func (i *Image) attemptExportRGBA(w, h C.size_t, ptr unsafe.Pointer, ex *C.ExceptionInfo, tries int) (err error) {
+func (i *Image) attemptExportRGBA(cimg *C.Image, w, h C.size_t, ptr unsafe.Pointer, ex *C.ExceptionInfo, tries int) (err error) {
 	defer func() {
 		if x := recover(); x != nil {
 			if tries < 3 {
 				l.Warnf("Error trying to decode from ImageMagick (trying again): %s", x)
-				i.attemptExportRGBA(w, h, ptr, ex, tries+1)
+				i.attemptExportRGBA(cimg, w, h, ptr, ex, tries+1)
 			} else {
 				l.Errorf("Error trying to decode from ImageMagick: %s", x)
 				err = fmt.Errorf("imagemagick failure: %s", x)
@@ -53,6 +53,6 @@ func (i *Image) attemptExportRGBA(w, h C.size_t, ptr unsafe.Pointer, ex *C.Excep
 		}
 	}()
 
-	C.ExportRGBA(i.image, w, h, ptr, ex)
+	C.ExportRGBA(cimg, w, h, ptr, ex)
 	return
 }

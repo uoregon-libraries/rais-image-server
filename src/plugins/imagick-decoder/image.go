@@ -8,7 +8,6 @@ package main
 import "C"
 import (
 	"image"
-	"runtime"
 	"unsafe"
 )
 
@@ -20,8 +19,9 @@ import (
 // encode, etc.  We instead convert to a Go image, which is itself probably
 // slow, and then let even less efficient code take over for those operations.
 type Image struct {
-	image        (*C.Image)
-	imageInfo    (*C.ImageInfo)
+	filename     string
+	width        int
+	height       int
 	decodeWidth  int
 	decodeHeight int
 	decodeArea   image.Rectangle
@@ -50,32 +50,29 @@ func NewImage(filename string) (*Image, error) {
 	defer C.free(unsafe.Pointer(cFilename))
 
 	info := C.AcquireImageInfo()
+	defer cleanupImageInfo(info)
+
 	C.SetImageInfoFilename(info, cFilename)
 
-	image := C.ReadImages(info, exception)
+	image := C.PingImage(info, exception)
+	defer cleanupImage(image)
+
 	if C.HasError(exception) == 1 {
-		C.DestroyImageInfo(info)
 		return nil, makeError(exception)
 	}
 
-	i := &Image{image: image, imageInfo: info}
-	runtime.SetFinalizer(i, finalizer)
+	i := &Image{filename: filename, width: int(image.columns), height: int(image.rows)}
 	return i, nil
-}
-
-func (i *Image) replace(newImg *C.Image) {
-	i.cleanupImage()
-	i.image = newImg
 }
 
 // GetWidth returns the Width of the loaded image in pixels as an int
 func (i *Image) GetWidth() int {
-	return (int)(i.image.columns)
+	return i.width
 }
 
 // GetHeight returns the Height of the loaded image in pixels as an int
 func (i *Image) GetHeight() int {
-	return (int)(i.image.rows)
+	return i.height
 }
 
 // GetTileWidth returns 0 since images using this library have no tiles
@@ -95,31 +92,29 @@ func (i *Image) GetLevels() int {
 	return 1
 }
 
-func (i *Image) doResize(w, h int) error {
+func (i *Image) doResize(cimg *C.Image, w, h int) (*C.Image, error) {
 	exception := C.AcquireExceptionInfo()
 	defer C.DestroyExceptionInfo(exception)
 
-	newImg := C.Resize(i.image, C.size_t(w), C.size_t(h), exception)
+	newImg := C.Resize(cimg, C.size_t(w), C.size_t(h), exception)
 	if C.HasError(exception) == 1 {
-		return makeError(exception)
+		return nil, makeError(exception)
 	}
 
-	i.replace(newImg)
-	return nil
+	return newImg, nil
 }
 
-func (i *Image) doCrop(r image.Rectangle) error {
+func (i *Image) doCrop(cimg *C.Image, r image.Rectangle) (*C.Image, error) {
 	exception := C.AcquireExceptionInfo()
 	defer C.DestroyExceptionInfo(exception)
 
 	var ri = C.MakeRectangle(C.int(r.Min.X), C.int(r.Min.Y), C.int(r.Dx()), C.int(r.Dy()))
-	newImg := C.CropImage(i.image, &ri, exception)
+	newImg := C.CropImage(cimg, &ri, exception)
 	if C.HasError(exception) == 1 {
-		return makeError(exception)
+		return nil, makeError(exception)
 	}
 
-	i.replace(newImg)
-	return nil
+	return newImg, nil
 }
 
 // DecodeImage returns an image.Image that holds the decoded image data,
@@ -153,20 +148,39 @@ func (i *Image) DecodeImage() (image.Image, error) {
 		}
 	}
 
+	// Read the image from ImageMagick
+	exception := C.AcquireExceptionInfo()
+	defer C.DestroyExceptionInfo(exception)
+	cFilename := C.CString(i.filename)
+	defer C.free(unsafe.Pointer(cFilename))
+	info := C.AcquireImageInfo()
+	defer cleanupImageInfo(info)
+	C.SetImageInfoFilename(info, cFilename)
+	cimg := C.ReadImages(info, exception)
+	// We need to make this defer into a closure since we have to reuse cimg below
+	defer func() { cleanupImage(cimg) }()
+	if C.HasError(exception) == 1 {
+		return nil, makeError(exception)
+	}
+
 	// Crop if decode area isn't the same as the full image
 	if i.decodeArea != image.Rect(0, 0, w, h) {
-		err := i.doCrop(i.decodeArea)
+		cimg2, err := i.doCrop(cimg, i.decodeArea)
 		if err != nil {
 			return nil, err
 		}
+		cleanupImage(cimg)
+		cimg = cimg2
 	}
 
 	if i.decodeWidth != i.decodeArea.Dx() || i.decodeHeight != i.decodeArea.Dy() {
-		err := i.doResize(i.decodeWidth, i.decodeHeight)
+		cimg2, err := i.doResize(cimg, i.decodeWidth, i.decodeHeight)
 		if err != nil {
 			return nil, err
 		}
+		cleanupImage(cimg)
+		cimg = cimg2
 	}
 
-	return i.Image()
+	return i.image(cimg)
 }
