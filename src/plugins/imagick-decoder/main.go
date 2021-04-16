@@ -16,12 +16,14 @@ import (
 	"rais/src/img"
 	"rais/src/plugins"
 	"strings"
+	"sync"
 	"unsafe"
 
 	"github.com/uoregon-libraries/gopkg/logger"
 )
 
 var l *logger.Logger
+var m sync.Mutex
 
 // SetLogger is called by the RAIS server's plugin manager to let plugins use
 // the central logger

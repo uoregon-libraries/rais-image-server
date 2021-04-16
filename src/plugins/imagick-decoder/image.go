@@ -122,6 +122,12 @@ func (i *Image) doCrop(cimg *C.Image, r image.Rectangle) (*C.Image, error) {
 // and resizing happen here due to the nature of openjpeg and our desire to
 // keep this API consistent with the jp2 api.
 func (i *Image) DecodeImage() (image.Image, error) {
+	// This is tragic, but MagickCore may not be threadsafe, and it's in the
+	// expensive calls that it's really clear it's a major problem.  So ... we
+	// lock.  Around the most expensive operation.  Ow.
+	m.Lock()
+	defer m.Unlock()
+
 	w, h := i.GetWidth(), i.GetHeight()
 	if i.decodeArea == image.ZR {
 		i.decodeArea = image.Rect(0, 0, w, h)
