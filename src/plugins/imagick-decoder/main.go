@@ -39,10 +39,10 @@ func Initialize() {
 	img.RegisterDecodeHandler(decodeCommonFile)
 }
 
-func makeError(exception *C.ExceptionInfo) error {
+func makeError(where string, exception *C.ExceptionInfo) error {
 	var reason = C.GoString(exception.reason)
 	var description = C.GoString(exception.description)
-	return fmt.Errorf("ImageMagick API Error #%v: %q - %q", exception.severity, reason, description)
+	return fmt.Errorf("ImageMagick/%s: API Error #%v: %q - %q", where, exception.severity, reason, description)
 }
 
 var validExtensions = []string{".tif", ".tiff", ".png", ".jpg", ".jpeg", ".gif"}

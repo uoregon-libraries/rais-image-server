@@ -58,7 +58,7 @@ func NewImage(filename string) (*Image, error) {
 	defer cleanupImage(image)
 
 	if C.HasError(exception) == 1 {
-		return nil, makeError(exception)
+		return nil, makeError("NewImage", exception)
 	}
 
 	i := &Image{filename: filename, width: int(image.columns), height: int(image.rows)}
@@ -98,7 +98,7 @@ func (i *Image) doResize(cimg *C.Image, w, h int) (*C.Image, error) {
 
 	newImg := C.Resize(cimg, C.size_t(w), C.size_t(h), exception)
 	if C.HasError(exception) == 1 {
-		return nil, makeError(exception)
+		return nil, makeError("doResize", exception)
 	}
 
 	return newImg, nil
@@ -111,7 +111,7 @@ func (i *Image) doCrop(cimg *C.Image, r image.Rectangle) (*C.Image, error) {
 	var ri = C.MakeRectangle(C.int(r.Min.X), C.int(r.Min.Y), C.int(r.Dx()), C.int(r.Dy()))
 	newImg := C.CropImage(cimg, &ri, exception)
 	if C.HasError(exception) == 1 {
-		return nil, makeError(exception)
+		return nil, makeError("doCrop", exception)
 	}
 
 	return newImg, nil
@@ -160,7 +160,7 @@ func (i *Image) DecodeImage() (image.Image, error) {
 	// We need to make this defer into a closure since we have to reuse cimg below
 	defer func() { cleanupImage(cimg) }()
 	if C.HasError(exception) == 1 {
-		return nil, makeError(exception)
+		return nil, makeError("DecodeImage", exception)
 	}
 
 	// Crop if decode area isn't the same as the full image
