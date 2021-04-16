@@ -40,7 +40,9 @@ func Initialize() {
 }
 
 func makeError(exception *C.ExceptionInfo) error {
-	return fmt.Errorf("%v: %v - %v", exception.severity, exception.reason, exception.description)
+	var reason = C.GoString(exception.reason)
+	var description = C.GoString(exception.description)
+	return fmt.Errorf("ImageMagick API Error #%v: %q - %q", exception.severity, reason, description)
 }
 
 var validExtensions = []string{".tif", ".tiff", ".png", ".jpg", ".jpeg", ".gif"}
