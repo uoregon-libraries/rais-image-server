@@ -16,12 +16,14 @@ import (
 	"rais/src/img"
 	"rais/src/plugins"
 	"strings"
+	"sync"
 	"unsafe"
 
 	"github.com/uoregon-libraries/gopkg/logger"
 )
 
 var l *logger.Logger
+var m sync.Mutex
 
 // SetLogger is called by the RAIS server's plugin manager to let plugins use
 // the central logger
@@ -36,11 +38,14 @@ func Initialize() {
 	cPath := C.CString(path)
 	defer C.free(unsafe.Pointer(cPath))
 	C.MagickCoreGenesis(cPath, C.MagickFalse)
+	C.SetMagickResourceLimit(C.DiskResource, C.MagickResourceInfinity)
 	img.RegisterDecodeHandler(decodeCommonFile)
 }
 
-func makeError(exception *C.ExceptionInfo) error {
-	return fmt.Errorf("%v: %v - %v", exception.severity, exception.reason, exception.description)
+func makeError(where string, exception *C.ExceptionInfo) error {
+	var reason = C.GoString(exception.reason)
+	var description = C.GoString(exception.description)
+	return fmt.Errorf("ImageMagick/%s: API Error #%v: %q - %q", where, exception.severity, reason, description)
 }
 
 var validExtensions = []string{".tif", ".tiff", ".png", ".jpg", ".jpeg", ".gif"}
