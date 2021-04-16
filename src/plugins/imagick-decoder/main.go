@@ -36,6 +36,7 @@ func Initialize() {
 	cPath := C.CString(path)
 	defer C.free(unsafe.Pointer(cPath))
 	C.MagickCoreGenesis(cPath, C.MagickFalse)
+	C.SetMagickResourceLimit(C.DiskResource, C.MagickResourceInfinity)
 	img.RegisterDecodeHandler(decodeCommonFile)
 }
 
