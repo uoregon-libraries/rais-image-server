@@ -23,14 +23,14 @@ func (id ID) Escaped() string {
 
 // URL represents the different options composed into a IIIF URL request
 type URL struct {
-	Path            string
-	ID              ID
-	Region          Region
-	Size            Size
-	Rotation        Rotation
-	Quality         Quality
-	Format          Format
-	Info            bool
+	Path     string
+	ID       ID
+	Region   Region
+	Size     Size
+	Rotation Rotation
+	Quality  Quality
+	Format   Format
+	Info     bool
 }
 
 type pathParts struct {
