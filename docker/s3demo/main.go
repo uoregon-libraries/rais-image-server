@@ -127,10 +127,3 @@ func preptemplates() {
 	assetT = template.Must(template.Must(layout.Clone()).ParseFiles("asset.go.html"))
 	adminT = template.Must(template.Must(layout.Clone()).ParseFiles("admin.go.html"))
 }
-
-type Data struct {
-	Zone      string
-	Bucket    string
-	KeyID     string
-	SecretKey string
-}

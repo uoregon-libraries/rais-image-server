@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -154,7 +155,7 @@ func handle(srv *servers.Server, pattern string, handler http.Handler) {
 func shutdown() {
 	wait.Add(1)
 	Logger.Infof("Stopping RAIS...")
-	servers.Shutdown(nil)
+	servers.Shutdown(context.Background())
 
 	if len(teardownPlugins) > 0 {
 		Logger.Infof("Tearing down plugins")
