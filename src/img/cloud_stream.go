@@ -12,10 +12,10 @@ import (
 	"time"
 
 	"gocloud.dev/blob"
-	_ "gocloud.dev/blob/azureblob"
-	_ "gocloud.dev/blob/fileblob"
-	_ "gocloud.dev/blob/gcsblob"
-	_ "gocloud.dev/blob/s3blob"
+	_ "gocloud.dev/blob/azureblob" // Required for Azure support
+	_ "gocloud.dev/blob/fileblob"  // Required for local file support within the cloud streamer
+	_ "gocloud.dev/blob/gcsblob"   // Required for Google Cloud support
+	_ "gocloud.dev/blob/s3blob"    // Required for AWS S3 support
 )
 
 // Environment variables which CloudStream uses to set up S3
