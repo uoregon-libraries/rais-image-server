@@ -12,7 +12,7 @@ import (
 func main() {
 	var err error
 
-	var cmd = exec.Command("git", "describe")
+	var cmd = exec.Command("git", "describe", "--tags")
 	var out []byte
 	out, err = cmd.CombinedOutput()
 
