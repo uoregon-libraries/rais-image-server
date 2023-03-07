@@ -17,6 +17,6 @@ require (
 	github.com/tinylib/msgp v1.1.2 // indirect
 	github.com/uoregon-libraries/gopkg v0.7.0
 	gocloud.dev v0.19.0
-	golang.org/x/image v0.0.0-20190227222117-0694c2d4d067
+	golang.org/x/image v0.6.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.3.0
 )
