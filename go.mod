@@ -14,7 +14,7 @@ require (
 	github.com/spf13/viper v1.15.0
 	github.com/uoregon-libraries/gopkg v0.7.0
 	gocloud.dev v0.29.0
-	golang.org/x/image v0.6.0
+	golang.org/x/image v0.10.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.3.0
 )
 
@@ -76,7 +76,7 @@ require (
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/oauth2 v0.5.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.110.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
