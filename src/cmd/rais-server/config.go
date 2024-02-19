@@ -70,7 +70,7 @@ func parseConf() {
 	pflag.Int("image-max-height", math.MaxInt32, "Maximum height of images to be served")
 	viper.BindPFlag("ImageMaxHeight", pflag.CommandLine.Lookup("image-max-height"))
 	pflag.String("plugins", defaultPlugins, "comma-separated plugin pattern list, e.g., "+
-		`"s3-images.so,datadog.so,json-tracer.so,/opt/rais/plugins/*.so"`)
+		`"json-tracer.so,/opt/rais/plugins/*.so"`)
 	viper.BindPFlag("Plugins", pflag.CommandLine.Lookup("plugins"))
 	pflag.Int("jpg-quality", 75, "Quality of JPEG output")
 	viper.BindPFlag("JPGQuality", pflag.CommandLine.Lookup("jpg-quality"))

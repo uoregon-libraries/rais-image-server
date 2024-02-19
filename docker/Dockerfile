@@ -31,8 +31,10 @@ ADD ./src /opt/rais-src/src
 ADD ./scripts /opt/rais-src/scripts
 RUN make
 
-# Manually build the ImageMagick plugin since we exclude it by default
+# Manually build the ImageMagick and DataDog plugins to make this image as full
+# featured as possible, since debian's already pretty bloated.
 RUN make bin/plugins/imagick-decoder.so
+RUN make bin/plugins/datadog.so
 
 
 

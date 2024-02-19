@@ -14,7 +14,7 @@
 set -eu
 
 make clean
-make binaries plugins
+make
 sudo systemctl stop rais
 sudo rm -f /usr/local/rais/rais-server
 sudo mkdir -p /usr/local/rais
@@ -27,7 +27,6 @@ fi
 
 sudo cp bin/rais-server /usr/local/rais/rais-server
 sudo rm -f /usr/local/rais/plugins/*
-sudo cp bin/plugins/datadog.so /usr/local/rais/plugins/
 sudo cp bin/plugins/json-tracer.so /usr/local/rais/plugins/
 sudo systemctl daemon-reload
 sudo systemctl start rais
