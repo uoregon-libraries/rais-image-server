@@ -15,7 +15,7 @@ RUN apt-get update -y && apt-get upgrade -y && \
     apt-get install -y libopenjp2-7-dev libmagickcore-dev git gcc make tar findutils
 
 # Make sure the build box can lint code
-RUN go get -u golang.org/x/lint/golint
+RUN go install github.com/mgechev/revive@latest
 
 # Add the go mod stuff first so we aren't re-downloading dependencies except
 # when they actually change
