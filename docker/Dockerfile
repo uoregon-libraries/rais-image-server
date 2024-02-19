@@ -37,7 +37,7 @@ RUN make bin/plugins/imagick-decoder.so
 
 
 # Production image just installs runtime deps and copies in the binaries
-FROM debian:buster AS production
+FROM debian:12 AS production
 LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 
 # Stolen from mariadb dockerfile: add our user and group first to make sure
