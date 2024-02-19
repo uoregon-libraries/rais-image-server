@@ -138,7 +138,7 @@ func FeatureCompare(a, b *FeatureSet) (union, onlyA, onlyB FeaturesMap) {
 		}
 	}
 
-	return
+	return union, onlyA, onlyB
 }
 
 // includes returns whether or not fs includes all features in fsIncluded

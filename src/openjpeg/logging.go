@@ -28,7 +28,7 @@ func GoLogError(cmessage *C.char) {
 }
 
 // Internal go-specific version of logger
-func log(logfn func(string, ...interface{}), cmessage *C.char) {
+func log(logfn func(string, ...any), cmessage *C.char) {
 	var message = strings.TrimSpace(C.GoString(cmessage))
 	logfn("FROM OPJ: %s", message)
 }

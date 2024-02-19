@@ -5,7 +5,7 @@ import (
 	"rais/src/iiif"
 )
 
-func (s *serverStats) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (s *serverStats) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 	var json, err = s.Serialize()
 	if err != nil {
 		http.Error(w, "error generating json: "+err.Error(), 500)

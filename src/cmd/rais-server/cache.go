@@ -42,7 +42,7 @@ func setupCaches() {
 		// Unfortunately, the tile cache is keyed by the entire IIIF request, not the
 		// ID (obviously).  Since we can't get a list of all cached tiles for a given
 		// image, we have to purge the whole cache.
-		expireCachedImagePlugins = append(expireCachedImagePlugins, func(id iiif.ID) { tileCache.Purge() })
+		expireCachedImagePlugins = append(expireCachedImagePlugins, func(_ iiif.ID) { tileCache.Purge() })
 	}
 }
 

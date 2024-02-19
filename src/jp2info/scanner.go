@@ -90,7 +90,11 @@ func (s *Scanner) readColor() {
 }
 
 func (s *Scanner) readEnumeratedColor() {
-	s.r.Discard(2)
+	var _, err = s.r.Discard(2)
+	if err != nil {
+		s.e = err
+		return
+	}
 	var colorSpace uint16
 
 	s.readBE(&colorSpace)
@@ -139,12 +143,12 @@ func (s *Scanner) scanUntil(token []byte) {
 }
 
 // readBE wraps binary.Read for reading any arbitrary amount of BigEndian data
-func (s *Scanner) readBE(data ...interface{}) {
+func (s *Scanner) readBE(data ...any) {
 	if s.e != nil {
 		return
 	}
 
-	var datum interface{}
+	var datum any
 	for _, datum = range data {
 		s.e = binary.Read(s.r, binary.BigEndian, datum)
 		if s.e != nil {

@@ -93,7 +93,7 @@ func newPluginWrapper(path string) (*pluginWrapper, error) {
 // loadPluginFn loads the symbol by the given name and attempts to set it to
 // the given object via reflection.  If the two aren't the same type, an error
 // is added to the pluginWrapper's error list.
-func (pw *pluginWrapper) loadPluginFn(name string, obj interface{}) {
+func (pw *pluginWrapper) loadPluginFn(name string, obj any) {
 	var sym, err = pw.Lookup(name)
 	if err != nil {
 		return

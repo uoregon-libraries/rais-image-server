@@ -58,7 +58,7 @@ func (i *JP2Image) SetCrop(r image.Rectangle) {
 // resized and cropped if resizing or cropping was requested.  Both cropping
 // and resizing happen here due to the nature of openjpeg, so SetScale,
 // SetResizeWH, and SetCrop must be called before this function.
-func (i *JP2Image) DecodeImage() (img image.Image, err error) {
+func (i *JP2Image) DecodeImage() (im image.Image, err error) {
 	i.computeDecodeParameters()
 
 	var jp2 *C.opj_image_t
@@ -83,7 +83,7 @@ func (i *JP2Image) DecodeImage() (img image.Image, err error) {
 	// We assume grayscale if we don't have at least 3 components, because it's
 	// probably the safest default
 	if len(comps) < 3 {
-		img = &image.Gray{Pix: JP2ComponentData(comps[0]), Stride: width, Rect: bounds}
+		im = &image.Gray{Pix: JP2ComponentData(comps[0]), Stride: width, Rect: bounds}
 	} else {
 		// If we have 3+ components, we only care about the first three - I have no
 		// idea what else we might have other than alpha, and as a tile server, we
@@ -110,14 +110,14 @@ func (i *JP2Image) DecodeImage() (img image.Image, err error) {
 			offset++
 		}
 
-		img = &image.RGBA{Pix: realData, Stride: width << 2, Rect: bounds}
+		im = &image.RGBA{Pix: realData, Stride: width << 2, Rect: bounds}
 	}
 
 	if i.decodeWidth != i.decodeArea.Dx() || i.decodeHeight != i.decodeArea.Dy() {
-		img = resize.Resize(uint(i.decodeWidth), uint(i.decodeHeight), img, resize.Bilinear)
+		im = resize.Resize(uint(i.decodeWidth), uint(i.decodeHeight), im, resize.Bilinear)
 	}
 
-	return img, nil
+	return im, nil
 }
 
 // GetWidth returns the image width

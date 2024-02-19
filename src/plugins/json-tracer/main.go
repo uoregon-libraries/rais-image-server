@@ -50,7 +50,7 @@ func Initialize() {
 
 // WrapHandler takes all RAIS routes' handlers and wraps them with the JSON
 // tracer middleware
-func WrapHandler(pattern string, handler http.Handler) (http.Handler, error) {
+func WrapHandler(_ string, handler http.Handler) (http.Handler, error) {
 	return reg.new(handler), nil
 }
 

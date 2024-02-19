@@ -54,14 +54,14 @@ func NewImage(filename string) (*Image, error) {
 
 	C.SetImageInfoFilename(info, cFilename)
 
-	image := C.PingImage(info, exception)
-	defer cleanupImage(image)
+	im := C.PingImage(info, exception)
+	defer cleanupImage(im)
 
 	if C.HasError(exception) == 1 {
 		return nil, makeError("NewImage", exception)
 	}
 
-	i := &Image{filename: filename, width: int(image.columns), height: int(image.rows)}
+	i := &Image{filename: filename, width: int(im.columns), height: int(im.rows)}
 	return i, nil
 }
 
