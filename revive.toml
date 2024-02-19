@@ -1,0 +1,119 @@
+ignoreGeneratedHeader = false
+severity = "warning"
+confidence = 0.8
+errorCode = 0
+warningCode = 0
+
+# Turn everything on except rules we very explicitly decide we don't want
+enableAllRules = true
+
+##
+# Rules which probably don't benefit RAIS, or which can't be configured enough
+# to avoid false positives
+##
+
+[rule.add-constant]
+  Disabled = true
+[rule.argument-limit]
+  Disabled = true
+[rule.banned-characters]
+  Disabled = true
+[rule.bool-literal-in-expr]
+  Disabled = true
+[rule.cognitive-complexity]
+  Disabled = true
+[rule.cyclomatic]
+  Disabled = true
+[rule.file-header]
+  Disabled = true
+[rule.flag-parameter]
+  Disabled = true
+[rule.function-length]
+  Disabled = true
+[rule.function-result-limit]
+  Disabled = true
+[rule.get-return]
+  Disabled = true
+[rule.line-length-limit]
+  Disabled = true
+[rule.max-public-structs]
+  Disabled = true
+[rule.nested-structs]
+  Disabled = true
+[rule.package-comments]
+  Disabled = true
+[rule.unused-receiver]
+  Disabled = true
+
+##
+# Questionable omissions: these would be great for us, but either can't be
+# configured properly (yet) or show too many false positives to be worth
+# digging through the noise. If possible we should look in the future at revive
+# to see if it fixes the issues.
+#
+# DEVS: if you omit a rule that isn't completely unambiguously "meh", *explain
+# your rationale*!
+##
+
+# This is just sad - it doesn't know to skip CGo exports ("//export <function
+# name>") when making Go functions available to C
+[rule.comment-spacings]
+  Disabled = true
+
+# I could go either way on this one, but I think the pattern of making your
+# "private" function match your public one, other than capitalization, is
+# not really that bad. Maybe I'm insane.
+[rule.confusing-naming]
+  Disabled = true
+
+# I actually like this one, but it gets annoying digging through reports when
+# there are functions built specifically to "die" on problems. panic() isn't
+# the right answer in a call to logger.Fatalf or a CLI arg reading function.
+[rule.deep-exit]
+  Disabled = true
+
+# I love pre-compile checking of struct tags. Sadly this is busted. It doesn't
+# recognize valid struct tags that have had to embed backticks in them.
+[rule.struct-tag]
+  Disabled = true
+
+# This hurts my soul. Super useful in some cases (meaningless returns,
+# unnecessary breaks, etc.), but it also bundles in single-element switch
+# statements ("can be replaced by an if-then"), which can be really handy (easy
+# to add a new case you know is going to happen, doing a very clear type
+# switch, etc.) and have no extra cognitive load.
+[rule.unnecessary-stmt]
+  Disabled = true
+
+# This is probably a good rule, but the description is ambiguous, and it flags
+# things where I want a value because the type is something from C where its
+# zero value isn't necessarily going to be obvious to devs
+[rule.var-declaration]
+  Disabled = true
+
+##
+# Rules we mostly like, but need to configure
+##
+
+# I don't love skipping some of these, but in most cases errors from various
+# print statements don't matter, while errors from others (particularly
+# io.Closer.Close and os.Remove) are rarely actionable or are happening as a
+# result of something else already having gone wrong.
+#
+# I thought about adding SaveOp to this list, but I feel like it's too easy to
+# accidentally rely on magicsql's error aggregation and then forget about it.
+# This at least hits you with a warning if you forget to explicitly skip the
+# error....
+#
+# Note that this is *not* a catch-all - there are outstanding bugs (see below)
+# where this rule doesn't catch problems we likely have.
+#
+# Relevant issues:
+#   - https://github.com/mgechev/revive/issues/350
+#   - https://github.com/mgechev/revive/issues/582
+[rule.unhandled-error]
+  arguments =[
+    "fmt\\.Print.*", "fmt\\.Fprint.*", "os\\.File\\.WriteString", "io\\.Closer\\.Close",
+    "encoding/csv\\.Writer\\.Write", "os\\.Remove", "math/rand\\.Read",
+    "net/http\\.ResponseWriter\\.Write", "fakehttp\\.ResponseWriter\\.Write",
+  ]
