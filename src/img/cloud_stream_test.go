@@ -7,16 +7,21 @@ import (
 	"os"
 	"path"
 	"testing"
+
+	"github.com/uoregon-libraries/gopkg/assert"
 )
 
 func TestS3URL(t *testing.T) {
-	os.Setenv(EnvS3Endpoint, "")
-	os.Setenv(EnvS3DisableSSL, "")
-	os.Setenv(EnvS3ForcePathStyle, "")
+	assert.NilError(os.Setenv(EnvS3Endpoint, ""), "Setenv succeeded", t)
+	assert.NilError(os.Setenv(EnvS3DisableSSL, ""), "Setenv succeeded", t)
+	assert.NilError(os.Setenv(EnvS3ForcePathStyle, ""), "Setenv succeeded", t)
 
 	var u, _ = url.Parse("s3://mybucket/path/to/asset.jp2")
 	var s = new(CloudStream)
-	s.initialize(u)
+	var err = s.initialize(u)
+	if err != nil {
+		t.Errorf("Unable to initialize %#v: %s", u, err)
+	}
 
 	var expected = "s3://mybucket"
 	if s.bucketURL != expected {
@@ -30,13 +35,16 @@ func TestS3URL(t *testing.T) {
 }
 
 func TestS3CustomURL(t *testing.T) {
-	os.Setenv(EnvS3Endpoint, "minio:9000")
-	os.Setenv(EnvS3DisableSSL, "true")
-	os.Setenv(EnvS3ForcePathStyle, "false")
+	assert.NilError(os.Setenv(EnvS3Endpoint, "minio:9000"), "Setenv succeeded", t)
+	assert.NilError(os.Setenv(EnvS3DisableSSL, "true"), "Setenv succeeded", t)
+	assert.NilError(os.Setenv(EnvS3ForcePathStyle, "false"), "Setenv succeeded", t)
 
 	var u, _ = url.Parse("s3://mybucket/path/to/asset.jp2")
 	var s = new(CloudStream)
-	s.initialize(u)
+	var err = s.initialize(u)
+	if err != nil {
+		t.Errorf("Unable to initialize %#v: %s", u, err)
+	}
 
 	var expected = "s3://mybucket?endpoint=minio:9000&disableSSL=true"
 	if s.bucketURL != expected {
@@ -53,7 +61,7 @@ func openFile(testPath string) (realFile *os.File, cloudFile *CloudStream, info 
 
 	info, _ = realFile.Stat()
 	if err != nil {
-		realFile.Close()
+		_ = realFile.Close()
 		panic(fmt.Sprintf("realFile.Stat() error: %s", err))
 	}
 

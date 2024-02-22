@@ -3,15 +3,6 @@
 #
 # - All binaries are mounted into the container so you can test out local changes
 # - RAIS directly exposes its port to the host machine for quick debugging
-#
-# Note that docker-compose.override.yml is only automatically used if you
-# *don't* specify a compose file.  e.g., `docker-compose up` will use
-# docker-compose.yml and docker-compose.override.yml (if present).  But
-# `docker-compose -f docker-compose.yml` will *not* use the override file.  If
-# you wanted to use this with, for instance, datadog, you'd have to merge the
-# datadog config with the overrides or else set up something like this:
-#
-#     alias ddog='docker-compose -f docker-compose.yml -f docker-compose.datadog.yml -f docker-compose.override.yml'
 version: "3.4"
 services:
   rais:

@@ -15,7 +15,7 @@ RUN apt-get update -y && apt-get upgrade -y && \
     apt-get install -y libopenjp2-7-dev libmagickcore-dev git gcc make tar findutils
 
 # Make sure the build box can lint code
-RUN go get -u golang.org/x/lint/golint
+RUN go install github.com/mgechev/revive@latest
 
 # Add the go mod stuff first so we aren't re-downloading dependencies except
 # when they actually change
@@ -31,13 +31,15 @@ ADD ./src /opt/rais-src/src
 ADD ./scripts /opt/rais-src/scripts
 RUN make
 
-# Manually build the ImageMagick plugin since we exclude it by default
+# Manually build the ImageMagick and DataDog plugins to make this image as full
+# featured as possible, since debian's already pretty bloated.
 RUN make bin/plugins/imagick-decoder.so
+RUN make bin/plugins/datadog.so
 
 
 
 # Production image just installs runtime deps and copies in the binaries
-FROM debian:buster AS production
+FROM debian:12 AS production
 LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 
 # Stolen from mariadb dockerfile: add our user and group first to make sure

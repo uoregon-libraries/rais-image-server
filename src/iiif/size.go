@@ -113,20 +113,22 @@ func (s Size) Valid() bool {
 // capabilities and therefore it shouldn't call this in that scenario.
 func (s Size) GetResize(region image.Rectangle) image.Rectangle {
 	w, h := region.Dx(), region.Dy()
+
+	var cloned = s
 	switch s.Type {
 	case STScaleToWidth:
-		s.H = math.MaxInt32
-		w, h = s.getBestFit(w, h)
+		cloned.H = math.MaxInt32
+		w, h = cloned.getBestFit(w, h)
 	case STScaleToHeight:
-		s.W = math.MaxInt32
-		w, h = s.getBestFit(w, h)
+		cloned.W = math.MaxInt32
+		w, h = cloned.getBestFit(w, h)
 	case STExact:
-		w, h = s.W, s.H
+		w, h = cloned.W, cloned.H
 	case STBestFit:
-		w, h = s.getBestFit(w, h)
+		w, h = cloned.getBestFit(w, h)
 	case STScalePercent:
-		w = int(float64(w) * s.Percent / 100.0)
-		h = int(float64(h) * s.Percent / 100.0)
+		w = int(float64(w) * cloned.Percent / 100.0)
+		h = int(float64(h) * cloned.Percent / 100.0)
 	}
 
 	return image.Rect(0, 0, w, h)
@@ -135,7 +137,7 @@ func (s Size) GetResize(region image.Rectangle) image.Rectangle {
 // getBestFit preserves the aspect ratio while determining the proper scaling
 // factor to get width and height adjusted to fit within the width and height
 // of the desired size operation
-func (s Size) getBestFit(w, h int) (int, int) {
+func (s Size) getBestFit(w, h int) (width int, height int) {
 	fW, fH, fsW, fsH := float64(w), float64(h), float64(s.W), float64(s.H)
 	sf := fsW / fW
 	if sf*fH > fsH {

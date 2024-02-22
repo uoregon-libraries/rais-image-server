@@ -30,7 +30,7 @@ type profileElement2 struct {
 
 // MarshalJSON implements json.Marshaler
 func (p *ProfileWrapper) MarshalJSON() ([]byte, error) {
-	var hack = make([]interface{}, 2)
+	var hack = make([]any, 2)
 	hack[0] = p.ConformanceURL
 	hack[1] = p.profileElement2
 
@@ -39,7 +39,7 @@ func (p *ProfileWrapper) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements json.Unmarshaler
 func (p *ProfileWrapper) UnmarshalJSON(data []byte) error {
-	var hack = make([]interface{}, 2)
+	var hack = make([]any, 2)
 	hack[0] = ""
 	hack[1] = &profileElement2{}
 
@@ -98,14 +98,14 @@ func (fs *FeatureSet) Info() *Info {
 // baseFeatureSetData returns a FeatureSet instance for the base level as well
 // as the profile URI for a given feature level
 func (fs *FeatureSet) baseFeatureSet() (*FeatureSet, string) {
-	FeaturesLevel2 := FeatureSet2()
-	if fs.includes(FeaturesLevel2) {
-		return FeaturesLevel2, "http://iiif.io/api/image/2/level2.json"
+	featuresLevel2 := FeatureSet2()
+	if fs.includes(featuresLevel2) {
+		return featuresLevel2, "http://iiif.io/api/image/2/level2.json"
 	}
 
-	FeaturesLevel1 := FeatureSet1()
-	if fs.includes(FeaturesLevel1) {
-		return FeaturesLevel1, "http://iiif.io/api/image/2/level1.json"
+	featuresLevel1 := FeatureSet1()
+	if fs.includes(featuresLevel1) {
+		return featuresLevel1, "http://iiif.io/api/image/2/level1.json"
 	}
 
 	return FeatureSet0(), "http://iiif.io/api/image/2/level0.json"

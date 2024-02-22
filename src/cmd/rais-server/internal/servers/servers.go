@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/uoregon-libraries/gopkg/logger"
 )
 
 var servers = make(map[string]*Server)
@@ -31,16 +32,16 @@ func New(name, addr string) *Server {
 		return servers[addr]
 	}
 
-	var mux = mux.NewRouter()
-	mux.SkipClean(true)
+	var m = mux.NewRouter()
+	m.SkipClean(true)
 	var s = &Server{
 		Name: name,
-		Mux:  mux,
+		Mux:  m,
 		Server: &http.Server{
 			ReadTimeout:  5 * time.Second,
 			WriteTimeout: 30 * time.Second,
 			Addr:         addr,
-			Handler:      mux,
+			Handler:      m,
 		},
 	}
 
@@ -87,9 +88,12 @@ func (s *Server) run(done func(*Server, error)) {
 }
 
 // Shutdown stops all registered servers
-func Shutdown(ctx context.Context) {
+func Shutdown(ctx context.Context, l *logger.Logger) {
 	for _, s := range servers {
-		s.Shutdown(ctx)
+		var err = s.Shutdown(ctx)
+		if err != nil {
+			l.Errorf("Error shutting down server %q: %s", s.Name, err)
+		}
 	}
 }
 

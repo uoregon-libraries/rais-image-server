@@ -33,9 +33,16 @@ func (i *Image) image(cimg *C.Image) (image.Image, error) {
 	w := C.size_t(i.decodeWidth)
 	h := C.size_t(i.decodeHeight)
 
-	i.attemptExportRGBA(cimg, w, h, ptr, exception, 0)
+	var err = i.attemptExportRGBA(cimg, w, h, ptr, exception, 0)
+	if err != nil {
+		return nil, err
+	}
 
-	img.Pix = pi.([]uint8)
+	var ok bool
+	img.Pix, ok = pi.([]uint8)
+	if !ok {
+		return nil, fmt.Errorf("unable to cast img.Pix to []uint8")
+	}
 
 	return img, nil
 }
@@ -45,7 +52,7 @@ func (i *Image) attemptExportRGBA(cimg *C.Image, w, h C.size_t, ptr unsafe.Point
 		if x := recover(); x != nil {
 			if tries < 3 {
 				l.Warnf("Error trying to decode from ImageMagick (trying again): %s", x)
-				i.attemptExportRGBA(cimg, w, h, ptr, ex, tries+1)
+				_ = i.attemptExportRGBA(cimg, w, h, ptr, ex, tries+1)
 			} else {
 				l.Errorf("Error trying to decode from ImageMagick: %s", x)
 				err = fmt.Errorf("imagemagick failure: %s", x)
@@ -54,5 +61,5 @@ func (i *Image) attemptExportRGBA(cimg *C.Image, w, h C.size_t, ptr unsafe.Point
 	}()
 
 	C.ExportRGBA(cimg, w, h, ptr, ex)
-	return
+	return err
 }

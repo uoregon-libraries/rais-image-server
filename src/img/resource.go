@@ -187,7 +187,7 @@ func (res *Resource) Apply(u *iiif.URL, max Constraint) (image.Image, error) {
 	case iiif.QGray:
 		img = grayscale(img)
 	case iiif.QBitonal:
-		img = bitonal(img)
+		img, err = bitonal(img)
 	}
 
 	return img, nil
@@ -230,9 +230,13 @@ func grayscale(img image.Image) image.Image {
 	return dst
 }
 
-func bitonal(img image.Image) image.Image {
+func bitonal(img image.Image) (image.Image, error) {
 	// First turn the image into 8-bit grayscale for easier manipulation
-	imgGray := grayscale(img).(*image.Gray)
+	imgGray, ok := grayscale(img).(*image.Gray)
+	if !ok {
+		return nil, fmt.Errorf("unable to cast image to grayscale")
+	}
+
 	b := imgGray.Bounds()
 	imgBitonal := image.NewGray(image.Rect(0, 0, b.Dx(), b.Dy()))
 	for i, pixel := range imgGray.Pix {
@@ -241,7 +245,7 @@ func bitonal(img image.Image) image.Image {
 		}
 	}
 
-	return imgBitonal
+	return imgBitonal, nil
 }
 
 // Destroy lets the resource clean up any open streams, etc.  This *must* be

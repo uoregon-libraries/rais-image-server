@@ -1,7 +1,7 @@
 # Makefile directory
 MakefileDir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: all generate force-getbuild binaries test format lint clean distclean docker plugins
+.PHONY: all generate force-getbuild binaries test format lint clean distclean docker
 
 # Default target builds binaries
 all: binaries
@@ -21,7 +21,7 @@ src/version/build.go:
 	go generate rais/src/version
 
 # Binary building rules
-binaries: src/transform/rotation.go src/version/build.go plugins rais-server jp2info
+binaries: src/transform/rotation.go src/version/build.go rais-server jp2info bin/plugins/json-tracer.so
 
 rais-server:
 	go build -ldflags="-s -w" -o ./bin/rais-server rais/src/cmd/rais-server
@@ -40,7 +40,7 @@ format: src/version/build.go
 	find src/ -name "*.go" | xargs gofmt -l -w -s
 
 lint: src/version/build.go
-	golint src/...
+	revive src/...
 	go vet rais/src/...
 
 # Cleanup
@@ -72,7 +72,3 @@ docker-alpine: | force-getbuild generate
 # Build plugins on any change to their directory or their go files
 bin/plugins/%.so : src/plugins/% src/version/build.go src/plugins/%/*.go
 	go build -ldflags="-s -w" -buildmode=plugin -o $@ rais/$<
-
-# Build the plugins that don't have external dependencies
-PLUGS := $(shell ./scripts/pluglist.sh)
-plugins: $(PLUGS)

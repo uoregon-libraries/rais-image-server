@@ -53,8 +53,14 @@ func NewImageHandler(tilePath, basePath string) *ImageHandler {
 
 	// Our core scheme maps lock empty and explicit "file" schemes to the
 	// tilePath for security.  These cannot be remapped.
-	ih.AddSchemeMap("", "file://"+tilePath)
-	ih.AddSchemeMap("file", "file://"+tilePath)
+	var err = ih.AddSchemeMap("", "file://"+tilePath)
+	if err != nil {
+		Logger.Criticalf("Failed to create default scheme map: %s", err)
+	}
+	err = ih.AddSchemeMap("file", "file://"+tilePath)
+	if err != nil {
+		Logger.Criticalf("Failed to create 'file' scheme map: %s", err)
+	}
 
 	return ih
 }
@@ -216,8 +222,8 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 
 // isValidBasePath returns true if the given path is simply missing /info.json
 // to function properly
-func (ih *ImageHandler) isValidBasePath(path string) bool {
-	var jsonPath = path + "/info.json"
+func (ih *ImageHandler) isValidBasePath(pth string) bool {
+	var jsonPath = pth + "/info.json"
 	var iiifURL, err = iiif.NewURL(jsonPath)
 	if err != nil {
 		return false
@@ -272,21 +278,21 @@ func (ih *ImageHandler) getURL(id iiif.ID) *url.URL {
 func convertStrings(s1, s2, s3 string) (i1, i2, i3 int, err error) {
 	i1, err = strconv.Atoi(s1)
 	if err != nil {
-		return
+		return i1, i2, i3, err
 	}
 	i2, err = strconv.Atoi(s2)
 	if err != nil {
-		return
+		return i1, i2, i3, err
 	}
 	i3, err = strconv.Atoi(s3)
-	return
+	return i1, i2, i3, err
 }
 
 // Info responds to a IIIF info request with appropriate JSON based on the
 // image's data and the handler's capabilities
 func (ih *ImageHandler) Info(w http.ResponseWriter, req *http.Request, info *iiif.Info) {
 	// Convert info to JSON
-	json, err := marshalInfo(info)
+	jsonData, err := marshalInfo(info)
 	if err != nil {
 		http.Error(w, err.Message, err.Code)
 		return
@@ -299,7 +305,7 @@ func (ih *ImageHandler) Info(w http.ResponseWriter, req *http.Request, info *iii
 	}
 	w.Header().Set("Content-Type", ct)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Write(json)
+	w.Write(jsonData)
 }
 
 func newImageResError(err error) *HandlerError {
@@ -366,7 +372,7 @@ func (ih *ImageHandler) loadInfoFromCache(id iiif.ID) *iiif.Info {
 	}
 
 	stats.InfoCache.Hit()
-	return ih.buildInfo(id, data.(ImageInfo))
+	return ih.buildInfo(data.(ImageInfo))
 }
 
 func (ih *ImageHandler) loadInfoOverride(res *img.Resource) *iiif.Info {
@@ -420,10 +426,10 @@ func (ih *ImageHandler) loadInfoFromImageResource(res *img.Resource) (*iiif.Info
 	// We save the minimal data to the cache so our cache remains incredibly
 	// small for what it gives us
 	ih.saveInfoToCache(res.ID, imageInfo)
-	return ih.buildInfo(res.ID, imageInfo), nil
+	return ih.buildInfo(imageInfo), nil
 }
 
-func (ih *ImageHandler) buildInfo(id iiif.ID, i ImageInfo) *iiif.Info {
+func (ih *ImageHandler) buildInfo(i ImageInfo) *iiif.Info {
 	info := ih.FeatureSet.Info()
 	info.Width = i.Width
 	info.Height = i.Height
@@ -465,13 +471,13 @@ func (ih *ImageHandler) buildInfo(id iiif.ID, i ImageInfo) *iiif.Info {
 }
 
 func marshalInfo(info *iiif.Info) ([]byte, *HandlerError) {
-	json, err := json.Marshal(info)
+	jsonData, err := json.Marshal(info)
 	if err != nil {
 		Logger.Errorf("Unable to marshal IIIFInfo response: %s", err)
 		return nil, NewError("server error", 500)
 	}
 
-	return json, nil
+	return jsonData, nil
 }
 
 // Command handles image processing operations
@@ -507,7 +513,7 @@ func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iii
 			max.Area = math.MaxInt64
 		}
 	}
-	img, err := res.Apply(u, max)
+	imgData, err := res.Apply(u, max)
 	if err != nil {
 		e := newImageResError(err)
 		Logger.Errorf("Error applying transorm: %s", err)
@@ -518,7 +524,7 @@ func (ih *ImageHandler) Command(w http.ResponseWriter, req *http.Request, u *iii
 	w.Header().Set("Content-Type", mime.TypeByExtension("."+string(u.Format)))
 
 	cacheBuf := bytes.NewBuffer(nil)
-	if err := EncodeImage(cacheBuf, img, u.Format); err != nil {
+	if err := EncodeImage(cacheBuf, imgData, u.Format); err != nil {
 		http.Error(w, "Unable to encode", 500)
 		Logger.Errorf("Unable to encode to %s: %s", u.Format, err)
 		return

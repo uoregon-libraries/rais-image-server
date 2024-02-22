@@ -91,7 +91,7 @@ func TestInfoHandlerJSONOverride(t *testing.T) {
 	w := request("docker%2Fimages%2Ftestfile%2Ftest-world.jp2/info.json", t)
 	assert.Equal(-1, w.StatusCode, "Valid info request doesn't explicitly set status code", t)
 	var data iiif.Info
-	json.Unmarshal(w.Output, &data)
+	assert.NilError(json.Unmarshal(w.Output, &data), "unmarshal doesn't throw an error", t)
 	assert.Equal("http://iiif.io/api/image/2/level2.json", data.Profile.ConformanceURL, "Proper profile string", t)
 	assert.Equal(800, data.Width, "JSON-decoded width", t)
 	assert.Equal(400, data.Height, "JSON-decoded height", t)
@@ -110,7 +110,7 @@ func TestInfoHandlerBuiltJSON(t *testing.T) {
 	w := request("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", t)
 	assert.Equal(-1, w.StatusCode, "Valid info request doesn't explicitly set status code", t)
 	var data iiif.Info
-	json.Unmarshal(w.Output, &data)
+	assert.NilError(json.Unmarshal(w.Output, &data), "unmarshal doesn't throw an error", t)
 	assert.Equal("http://iiif.io/api/image/2/level1.json", data.Profile.ConformanceURL, "Proper profile string", t)
 	assert.Equal(800, data.Width, "JSON-decoded width", t)
 	assert.Equal(400, data.Height, "JSON-decoded height", t)
@@ -140,7 +140,7 @@ func TestInfoRedirect(t *testing.T) {
 func TestInfoMaxSize(t *testing.T) {
 	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, nc(60, 80, 480), t)
 	var data iiif.Info
-	json.Unmarshal(w.Output, &data)
+	assert.NilError(json.Unmarshal(w.Output, &data), "unmarshal doesn't throw an error", t)
 	assert.Equal(60, data.Profile.MaxWidth, "JSON-decoded max width", t)
 	assert.Equal(80, data.Profile.MaxHeight, "JSON-decoded max height", t)
 	assert.Equal(int64(480), data.Profile.MaxArea, "JSON-decoded max area", t)
@@ -156,7 +156,7 @@ func TestInfoMaxSize(t *testing.T) {
 func TestInfoNoMaxSize(t *testing.T) {
 	w := dorequest("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json", false, nc(6000, 8000, 4800000), t)
 	var data iiif.Info
-	json.Unmarshal(w.Output, &data)
+	assert.NilError(json.Unmarshal(w.Output, &data), "unmarshal doesn't throw an error", t)
 	assert.Equal(0, data.Profile.MaxWidth, "JSON-decoded width", t)
 	assert.Equal(0, data.Profile.MaxHeight, "JSON-decoded height", t)
 	assert.Equal(int64(0), data.Profile.MaxArea, "JSON-decoded height", t)
@@ -229,7 +229,7 @@ func BenchmarkRouting(b *testing.B) {
 	h.Maximums.Area = unlimited.Area
 	h.BaseURL = u
 	h.FeatureSet = iiif.FeatureSet2()
-	URIs := []string{
+	uris := []string{
 		u.String() + "/foo/bar/invalid%2Fimage.jp2/10,10,80,80/full/0/default.jpg",
 		u.String() + "/foo/bar/invalid%2Fimage.jp2/full/max/0/default.jpg",
 		u.String() + "/foo/bar/invalid%2Fimage.jp2/full/pct:25/90/default.jpg",
@@ -240,7 +240,7 @@ func BenchmarkRouting(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		// We fire off fake requests of multiple types to test the different ways
 		// the URL is parsed
-		for _, requri := range URIs {
+		for _, requri := range uris {
 			req.RequestURI = requri
 			h.IIIFRoute(w, req)
 		}
@@ -249,7 +249,7 @@ func BenchmarkRouting(b *testing.B) {
 
 func TestIDToURL(t *testing.T) {
 	var h = NewImageHandler("/var/local/images", "/iiif")
-	h.AddSchemeMap("foo", "bar://real-host/prefixed-path")
+	assert.NilError(h.AddSchemeMap("foo", "bar://real-host/prefixed-path"), "added schema map without error", t)
 
 	// Prefer table-driven tests, sirs
 	var tests = map[string]struct {

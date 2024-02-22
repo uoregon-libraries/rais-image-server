@@ -155,7 +155,7 @@ func handle(srv *servers.Server, pattern string, handler http.Handler) {
 func shutdown() {
 	wait.Add(1)
 	Logger.Infof("Stopping RAIS...")
-	servers.Shutdown(context.Background())
+	servers.Shutdown(context.Background(), Logger)
 
 	if len(teardownPlugins) > 0 {
 		Logger.Infof("Tearing down plugins")
