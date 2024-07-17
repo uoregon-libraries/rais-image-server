@@ -57,7 +57,6 @@ type serverStats struct {
 	TileCache   cacheStats
 	Plugins     []plugStats
 	RAISVersion string
-	RAISBuild   string
 	ServerStart time.Time
 	Uptime      string
 }

@@ -29,6 +29,7 @@ RUN go mod download
 ADD ./Makefile /opt/rais-src/Makefile
 ADD ./src /opt/rais-src/src
 ADD ./scripts /opt/rais-src/scripts
+ADD ./.git /opt/rais-src/.git
 RUN make
 
 # Manually build the ImageMagick and DataDog plugins to make this image as full

@@ -3,4 +3,3 @@
 !/docker/images/testfile/test-world*
 /.env
 /docker-compose.override.yml
-/src/version/build.go

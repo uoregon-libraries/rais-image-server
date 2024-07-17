@@ -112,7 +112,6 @@ func main() {
 	// Setup server info in our stats structure
 	stats.ServerStart = time.Now()
 	stats.RAISVersion = version.Version
-	stats.RAISBuild = version.Build
 
 	// Set up handlers / listeners
 	var pubSrv = servers.New("RAIS", address)
