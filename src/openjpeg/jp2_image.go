@@ -5,6 +5,7 @@ package openjpeg
 import "C"
 
 import (
+	"fmt"
 	"image"
 	"rais/src/img"
 	"rais/src/jp2info"
@@ -71,53 +72,26 @@ func (i *JP2Image) DecodeImage() (im image.Image, err error) {
 	}
 
 	var comps []C.opj_image_comp_t
-	compsSlice := (*reflect.SliceHeader)((unsafe.Pointer(&comps)))
+	var compsSlice = (*reflect.SliceHeader)((unsafe.Pointer(&comps)))
 	compsSlice.Cap = int(jp2.numcomps)
 	compsSlice.Len = int(jp2.numcomps)
 	compsSlice.Data = uintptr(unsafe.Pointer(jp2.comps))
 
-	width := int(comps[0].w)
-	height := int(comps[0].h)
-	bounds := image.Rect(0, 0, width, height)
-
-	// We assume grayscale if we don't have at least 3 components, because it's
-	// probably the safest default
-	if len(comps) < 3 {
-		im = &image.Gray{Pix: JP2ComponentData(comps[0]), Stride: width, Rect: bounds}
-	} else {
-		// If we have 3+ components, we only care about the first three - I have no
-		// idea what else we might have other than alpha, and as a tile server, we
-		// don't care about the *source* image's alpha.  It's worth noting that
-		// this will almost certainly blow up on any JP2 that isn't using RGB.
-
-		area := width * height
-		bytes := area << 2
-		realData := make([]uint8, bytes)
-
-		red := JP2ComponentData(comps[0])
-		green := JP2ComponentData(comps[1])
-		blue := JP2ComponentData(comps[2])
-
-		offset := 0
-		for i := 0; i < area; i++ {
-			realData[offset] = red[i]
-			offset++
-			realData[offset] = green[i]
-			offset++
-			realData[offset] = blue[i]
-			offset++
-			realData[offset] = 255
-			offset++
-		}
-
-		im = &image.RGBA{Pix: realData, Stride: width << 2, Rect: bounds}
+	var j *opjp2
+	j, err = newOpjp2(comps, i.info.BPC)
+	if err != nil {
+		return nil, err
+	}
+	var i2 image.Image
+	i2, err= j.decode()
+	if err != nil {
+		return nil, fmt.Errorf("decoding raw JP2 data: %w", err)
 	}
 
 	if i.decodeWidth != i.decodeArea.Dx() || i.decodeHeight != i.decodeArea.Dy() {
-		im = resize.Resize(uint(i.decodeWidth), uint(i.decodeHeight), im, resize.Bilinear)
+		i2 = resize.Resize(uint(i.decodeWidth), uint(i.decodeHeight), i2, resize.Bilinear)
 	}
-
-	return im, nil
+	return i2, nil
 }
 
 // GetWidth returns the image width
@@ -172,22 +146,4 @@ func (i *JP2Image) computeProgressionLevel() int {
 	}
 
 	return level
-}
-
-// JP2ComponentData returns a slice of Image-usable uint8s from the JP2 raw
-// data in the given component struct
-func JP2ComponentData(comp C.struct_opj_image_comp) []uint8 {
-	var data []int32
-	dataSlice := (*reflect.SliceHeader)((unsafe.Pointer(&data)))
-	size := int(comp.w) * int(comp.h)
-	dataSlice.Cap = size
-	dataSlice.Len = size
-	dataSlice.Data = uintptr(unsafe.Pointer(comp.data))
-
-	realData := make([]uint8, len(data))
-	for index, point := range data {
-		realData[index] = uint8(point)
-	}
-
-	return realData
 }
