@@ -126,7 +126,7 @@ func main() {
 
 	interrupts.TrapIntTerm(shutdown)
 
-	Logger.Infof("RAIS v%s starting...", version.Version)
+	Logger.Infof("RAIS %s starting...", version.Version)
 	servers.ListenAndServe(func(srv *servers.Server, err error) {
 		Logger.Errorf("Error running %q server: %s", srv.Name, err)
 		shutdown()
