@@ -7,6 +7,7 @@ import "C"
 import (
 	"fmt"
 	"image"
+	"image/color"
 	"rais/src/img"
 	"rais/src/jp2info"
 	"reflect"
@@ -82,18 +83,33 @@ func (i *JP2Image) DecodeImage() (im image.Image, err error) {
 	if err != nil {
 		return nil, err
 	}
-	var i2 image.Image
-	i2, err= j.decode()
+	var decoded image.Image
+	decoded, err = j.decode()
 	if err != nil {
 		return nil, fmt.Errorf("decoding raw JP2 data: %w", err)
 	}
 
 	if i.decodeWidth != i.decodeArea.Dx() || i.decodeHeight != i.decodeArea.Dy() {
-		var resized = image.NewGray16(image.Rect(0, 0, i.decodeWidth, i.decodeHeight))
-		draw.BiLinear.Scale(resized, resized.Bounds(), i2, i2.Bounds(), draw.Over, nil)
-		i2 = resized
+		var resized draw.Image
+		var rect = image.Rect(0, 0, i.decodeWidth, i.decodeHeight)
+
+		switch decoded.ColorModel() {
+		case color.RGBAModel:
+			resized = image.NewRGBA(rect)
+		case color.GrayModel:
+			resized = image.NewGray(rect)
+		case color.RGBA64Model:
+			resized = image.NewRGBA64(rect)
+		case color.Gray16Model:
+			resized = image.NewGray16(rect)
+		default:
+			return nil, fmt.Errorf("unsupported color model")
+		}
+		draw.BiLinear.Scale(resized, rect, decoded, decoded.Bounds(), draw.Over, nil)
+		decoded = resized
 	}
-	return i2, nil
+
+	return decoded, nil
 }
 
 // GetWidth returns the image width
