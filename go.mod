@@ -9,7 +9,6 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/golang-lru v0.6.0
 	github.com/jessevdk/go-flags v1.5.0
-	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.15.0
 	github.com/uoregon-libraries/gopkg v0.7.0

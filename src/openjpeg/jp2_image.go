@@ -12,7 +12,7 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/nfnt/resize"
+	"golang.org/x/image/draw"
 )
 
 // JP2Image is a container for our simple JP2 operations
@@ -89,7 +89,9 @@ func (i *JP2Image) DecodeImage() (im image.Image, err error) {
 	}
 
 	if i.decodeWidth != i.decodeArea.Dx() || i.decodeHeight != i.decodeArea.Dy() {
-		i2 = resize.Resize(uint(i.decodeWidth), uint(i.decodeHeight), i2, resize.Bilinear)
+		var resized = image.NewGray16(image.Rect(0, 0, i.decodeWidth, i.decodeHeight))
+		draw.BiLinear.Scale(resized, resized.Bounds(), i2, i2.Bounds(), draw.Over, nil)
+		i2 = resized
 	}
 	return i2, nil
 }
