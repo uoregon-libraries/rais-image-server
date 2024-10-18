@@ -66,6 +66,9 @@ func (s *Scanner) readInfo(ior io.Reader) {
 	s.scanUntil(IHDR)
 	s.readBE(&s.i.Height, &s.i.Width, &s.i.Comps, &s.i.BPC)
 
+	// For some reason this is always 7 or 15
+	s.i.BPC++
+
 	// Find COLR to get colorspace data
 	s.scanUntil(COLR)
 	s.readColor()

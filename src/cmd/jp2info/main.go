@@ -48,6 +48,6 @@ func printScanResults(i *jp2info.Info, err error) {
 }
 
 func printInfo(i *jp2info.Info) {
-	fmt.Printf("dim:%dx%d tiles:%dx%d levels:%d %s\n",
-		i.Width, i.Height, i.TileWidth(), i.TileHeight(), i.Levels, i.ColorSpace.String())
+	fmt.Printf("dim:%dx%d tiles:%dx%d levels:%d %d-bit %s\n",
+		i.Width, i.Height, i.TileWidth(), i.TileHeight(), i.Levels, i.BPC, i.ColorSpace.String())
 }

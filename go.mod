@@ -9,12 +9,11 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/golang-lru v0.6.0
 	github.com/jessevdk/go-flags v1.5.0
-	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.15.0
 	github.com/uoregon-libraries/gopkg v0.7.0
 	gocloud.dev v0.37.0
-	golang.org/x/image v0.6.0
+	golang.org/x/image v0.21.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.3.0
 )
 
@@ -85,9 +84,9 @@ require (
 	golang.org/x/crypto v0.25.0 // indirect
 	golang.org/x/net v0.27.0 // indirect
 	golang.org/x/oauth2 v0.18.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
+	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.22.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/text v0.19.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/api v0.169.0 // indirect
