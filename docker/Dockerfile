@@ -51,8 +51,8 @@ RUN groupadd -r rais && useradd -r -g rais rais
 RUN apt-get update -y && apt-get upgrade -y && \
     apt-get install -y libopenjp2-7 imagemagick
 
-ENV RAIS_TILEPATH /var/local/images
-ENV RAIS_PLUGINS "*.so"
+ENV RAIS_TILEPATH=/var/local/images
+ENV RAIS_PLUGINS="*.so"
 RUN touch /etc/rais.toml && chown rais:rais /etc/rais.toml
 COPY --from=build /opt/rais-src/bin /opt/rais/
 

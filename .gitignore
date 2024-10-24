@@ -3,3 +3,4 @@
 !/docker/images/testfile/test-world*
 /.env
 /docker-compose.override.yml
+/compose.override.yml

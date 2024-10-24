@@ -10,7 +10,7 @@ if test "$url" = ""; then
   echo "No URL provided; defaulting to 'http://localhost'"
   echo "If you can't see images, try an explicitly-set URL, e.g.:"
   echo
-  echo "    URL="http://192.168.0.5" docker-compose up"
+  echo "    URL="http://192.168.0.5" docker compose up"
   url="http://localhost"
 fi
 

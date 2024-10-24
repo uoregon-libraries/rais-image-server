@@ -1,8 +1,6 @@
 # This file is used to run builds on systems where installing the RAIS
 # dependencies is too cumbersome or simply undesirable.  This is most easily
 # used via the `scripts/buildrun.sh` command.
-version: "3.4"
-
 volumes:
   gopkg: {}
   gocache: {}

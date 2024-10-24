@@ -2,8 +2,7 @@
 // will require a new configuration value, "TracerOut", or an environment value
 // in RAIS_TRACEROUT.
 //
-// To use this with docker-compose, do something like this in
-// docker-compose.override.yml:
+// To use this with compose, do something like this in compose.override.yml:
 //
 // environment:
 //   - RAIS_TRACEROUT=/tmp/rais-traces.json
