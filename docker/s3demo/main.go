@@ -38,8 +38,8 @@ func main() {
 
 	if bucketName == "" || keyID == "" || secretKey == "" {
 		fmt.Println("You must set env vars RAIS_S3_DEMO_BUCKET, AWS_ACCESS_KEY_ID, and")
-		fmt.Println("AWS_SECRET_ACCESS_KEY before running the demo.  You can export these directly")
-		fmt.Println(`or use the docker-compose ".env" file.`)
+		fmt.Println("AWS_SECRET_ACCESS_KEY before running the demo. You can export these directly")
+		fmt.Println(`or use the compose ".env" file.`)
 		os.Exit(1)
 	}
 

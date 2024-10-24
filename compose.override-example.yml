@@ -1,9 +1,8 @@
-# Copy this to docker-compose.override.yml and modify as needed.  This file
+# Copy this to compose.override.yml and modify as needed. This file
 # adds some dev-friendly container magic to the mix:
 #
 # - All binaries are mounted into the container so you can test out local changes
 # - RAIS directly exposes its port to the host machine for quick debugging
-version: "3.4"
 services:
   rais:
     # Uncomment one of these if you'd like to use an image built by `make

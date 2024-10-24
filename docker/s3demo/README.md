@@ -29,7 +29,7 @@ alpine image is *much* faster to build, but doesn't contain any plugins.
 
 Once that's done, you will want to put an override for the s3 demo so it uses
 your local image.  Something like this can be put into
-`docker-compose.override.yml` in this (the s3demo) directory:
+`compose.override.yml` in this (the s3demo) directory:
 
 ```
 version: "3.4"
@@ -54,7 +54,7 @@ default.  No actual S3 environment necessary!
 
 Run the minio container:
 
-`docker-compose up minio`
+`docker compose up minio`
 
 Create images:
 
@@ -84,7 +84,7 @@ here, however, so if you are unfamiliar with AWS, go with the easy way above.
 
 ### Start the stack
 
-Run `docker-compose up` and visit `http://localhost`.  Gaze upon your glorious
+Run `docker compose up` and visit `http://localhost`.  Gaze upon your glorious
 images, lovingly served up by RAIS.
 
 Caveats
@@ -99,7 +99,7 @@ production use.  Some caveats:
 - If you have non-images in your S3 bucket, behavior is undefined
 - If you're running anything else on your server at port 80, this demo won't
   work as-is.  You may have to customize your setup (e.g., with a
-  `docker-compose.override.yml` file)
+  `compose.override.yml` file)
 
 Development
 ---
@@ -108,5 +108,5 @@ Don't hack up the demo unless you want pain.  The demo server is a mess, and
 the setup is a little hacky.  It's here to provide a quick demo, not showcase
 elegant solutions to a problem.
 
-If you are a masochist, however, make sure you re-run "docker-compose build"
+If you are a masochist, however, make sure you re-run "docker compose build"
 anytime you change the codebase or the go templates.

@@ -3,13 +3,13 @@
 // when RAIS is shutting down.  Use of this plugin should be fairly
 // straightforward, but you will have to add some configuration for DataDog.
 //
-// First, you must set up a DataDog agent.  If you do this with docker-compose,
+// First, you must set up a DataDog agent.  If you do this with compose,
 // DD_API_KEY should be added to your .env, but you should be able to use our
-// demo docker-compose.yml file otherwise.
+// demo compose.yml file otherwise.
 //
 // Then, "DatadogAddress" must be added to your rais.toml or else
 // RAIS_DATADOGADDRESS must be in your RAIS environment.  This is shown in our
-// demo docker-compose.yml.
+// demo compose.yml.
 //
 // If you want to set a custom service name, set "DatadogServiceName" or else
 // expose RAIS_DatadogServiceName in your environment.  The default service

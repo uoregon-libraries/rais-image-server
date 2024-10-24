@@ -43,8 +43,8 @@ RUN addgroup -S rais && adduser -S rais -G rais
 RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
 RUN apk add --no-cache openjpeg
 
-ENV RAIS_TILEPATH /var/local/images
-ENV RAIS_PLUGINS "-"
+ENV RAIS_TILEPATH=/var/local/images
+ENV RAIS_PLUGINS="-"
 RUN touch /etc/rais.toml && chown rais:rais /etc/rais.toml
 
 # Though we compile everything, we want our default alpine image tiny, so we offer *no* plugins
