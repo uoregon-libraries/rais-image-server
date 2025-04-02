@@ -8,6 +8,11 @@ BUILD := $(shell git describe --tags)
 # Default target builds binaries
 all: binaries
 
+# Security check
+.PHONY: audit
+audit:
+	go tool govulncheck ./src/...
+
 # Generated code
 generate: src/transform/rotation.go
 
