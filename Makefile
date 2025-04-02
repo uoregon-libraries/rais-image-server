@@ -8,6 +8,11 @@ BUILD := $(shell git describe --tags)
 # Default target builds binaries
 all: binaries
 
+# Security check
+.PHONY: audit
+audit:
+	go tool govulncheck ./src/...
+
 # Generated code
 generate: src/transform/rotation.go
 
@@ -35,7 +40,7 @@ format:
 	find src/ -name "*.go" | xargs gofmt -l -w -s
 
 lint:
-	revive src/...
+	go tool revive src/...
 	go vet rais/src/...
 
 # Cleanup
