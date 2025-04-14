@@ -6,12 +6,16 @@ MakefileDir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 BUILD := $(shell git describe --tags)
 
 # Default target builds binaries
-all: binaries
+all: cgo binaries
 
 # Security check
 .PHONY: audit
 audit:
 	go tool govulncheck ./src/...
+
+.PHONY: cgo
+cgo:
+	./scripts/can_cgo.sh
 
 # Generated code
 generate: src/transform/rotation.go
