@@ -32,8 +32,6 @@ your local image.  Something like this can be put into
 `compose.override.yml` in this (the s3demo) directory:
 
 ```
-version: "3.4"
-
 networks:
   internal:
   external:
@@ -58,17 +56,30 @@ Run the minio container:
 
 Create images:
 
-- Browse to `http://localhost:9000`
-- Log in with the acces key "key" and the secret key "secret"
-- Create a new bucket with the name "rais"
-- Upload JP2s into this bucket
+- Browse to `http://localhost:9000` to make sure the service is working
+- If you are able to use the Web UI (it's a wonderful combination of super ugly
+  and completely inaccessible):
+  - Log in as "admin" with password "admin123"
+  - Create a new bucket with the name "rais"
+  - Upload JP2s into this bucket
 
-You can also use other s3 tools if the web interface for minio isn't to your
-liking - you'll just have to specify the S3 endpoint as
-`http://localhost:9000`.
+You can also use other s3 tools if the web interface for minio isn't usable for
+you. You'll just have to specify the S3 endpoint as `http://localhost:9000`.
 
-When you're done, you can stop the minio container - it'll restart in the next
-step anyway.
+The command-line tool `mc` can be used something like this:
+
+```bash
+go install github.com/minio/mc@latest
+
+# Disable mc's built-in pager: it's got fewer features than `less` and `more`,
+# and somehow makes terminal accessibility worse than those tools
+export MC_DISABLE_PAGER=1
+
+mc alias set rais http://localhost:9000 admin admin123
+mc admin accesskey create rais --access-key access-key --secret-key secret-key
+mc mb rais/rais
+mc cp ../images/jp2tests/* rais/rais/
+```
 
 #### The hard way
 
@@ -84,8 +95,12 @@ here, however, so if you are unfamiliar with AWS, go with the easy way above.
 
 ### Start the stack
 
-Run `docker compose up` and visit `http://localhost`.  Gaze upon your glorious
-images, lovingly served up by RAIS.
+Run `docker compose up -d minio && sleep 1 && docker compose up -d` and visit
+`http://localhost`.  Gaze upon your glorious images, lovingly served up by
+RAIS.
+
+You *must* make sure your minio container is running first (hence the weird
+command above), as the s3demo will crash on startup if minio isn't ready.
 
 Caveats
 ---

@@ -9,13 +9,15 @@ services:
   rais:
     image: uolibraries/rais:4-alpine
     environment:
-      - RAIS_S3_ENDPOINT=minio:9000
-      - RAIS_S3_DISABLESSL=true
-      - RAIS_S3_FORCEPATHSTYLE=true
-      - AWS_ACCESS_KEY_ID=key
-      - AWS_SECRET_ACCESS_KEY=secretkey
-      - AWS_SESSION_TOKEN
-      - AWS_REGION=us-west-2
+      RAIS_S3_ENDPOINT: minio:9000
+      RAIS_S3_DISABLESSL: true
+      RAIS_S3_FORCEPATHSTYLE: true
+      RAIS_LOGLEVEL: DEBUG
+      RAIS_SCHEMEMAP: test=s3://rais other=s3://xxx
+      AWS_ACCESS_KEY_ID: access-key
+      AWS_SECRET_ACCESS_KEY: secret-key
+      AWS_SESSION_TOKEN:
+      AWS_REGION: us-west-2
     volumes:
       - /tmp:/tmp
       - ../images/jp2tests/sn00063609-19091231.jp2:/var/local/images/news.jp2
@@ -30,14 +32,14 @@ services:
       - minio
       - rais
     environment:
-      - RAIS_S3_DEMO_BUCKET=rais
-      - RAIS_S3_ENDPOINT=minio:9000
-      - RAIS_S3_DISABLESSL=true
-      - RAIS_S3_FORCEPATHSTYLE=true
-      - AWS_ACCESS_KEY_ID=key
-      - AWS_SECRET_ACCESS_KEY=secretkey
-      - AWS_SESSION_TOKEN
-      - AWS_REGION=us-west-2
+      RAIS_S3_DEMO_BUCKET: rais
+      RAIS_S3_ENDPOINT: minio:9000
+      RAIS_S3_DISABLESSL: true
+      RAIS_S3_FORCEPATHSTYLE: true
+      AWS_ACCESS_KEY_ID: access-key
+      AWS_SECRET_ACCESS_KEY: secret-key
+      AWS_SESSION_TOKEN:
+      AWS_REGION: us-west-2
     networks:
       internal:
 
@@ -57,17 +59,20 @@ services:
 
   # minio for testing against a local S3-compatible API
   minio:
-    image: minio/minio
+    build:
+      dockerfile: Dockerfile-minio
     volumes:
       - minio-data:/data
-    command: minio server /data
+    command: minio server /data --console-address :9001
     expose:
       - 9000
+      - 9001
     environment:
-      - MINIO_ACCESS_KEY=key
-      - MINIO_SECRET_KEY=secretkey
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: "admin123"
     ports:
       - 9000:9000
+      - 9001:9001
     networks:
       internal:
       external:
