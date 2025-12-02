@@ -1,7 +1,7 @@
 # Supported tags and respective `Dockerfile` links
 
-- [`4`, `4.2`, `4.2.0`, `latest` (*docker/Dockerfile*)](https://github.com/uoregon-libraries/rais-image-server/blob/v4.2.0/docker/Dockerfile)
-- [`4-alpine`, `4.2-alpine`, `4.2.0-alpine`, `alpine` (*docker/Dockerfile-alpine*)](https://github.com/uoregon-libraries/rais-image-server/blob/v4.2.0/docker/Dockerfile-alpine)
+- [`4`, `4.2`, `4.2.1`, `latest` (*docker/Dockerfile*)](https://github.com/uoregon-libraries/rais-image-server/blob/v4.2.1/docker/Dockerfile)
+- [`4-alpine`, `4.2-alpine`, `4.2.1-alpine`, `alpine` (*docker/Dockerfile-alpine*)](https://github.com/uoregon-libraries/rais-image-server/blob/v4.2.1/docker/Dockerfile-alpine)
 - [`3`, `3.3`, `3.3.2`, (*docker/Dockerfile*)](https://github.com/uoregon-libraries/rais-image-server/blob/v3.3.2/docker/Dockerfile)
 - [`3-alpine`, `3.3-alpine`, `3.3.2-alpine` (*docker/Dockerfile*)](https://github.com/uoregon-libraries/rais-image-server/blob/v3.3.2/docker/Dockerfile-alpine)
 
