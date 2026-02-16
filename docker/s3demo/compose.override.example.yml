@@ -1,0 +1,25 @@
+# Copy this to compose.override.yml and modify as needed
+services:
+  web:
+    # Expose the nginx proxy on whatever port you need
+    ports:
+      - 8080:80
+
+  rais:
+    # This lets you build the image from your local source for testing S3 with
+    # your latest code, rather than pulling an image down
+    image: localhost/uolibraries/rais:4-alpine-dev
+    build:
+      context: ../..
+      dockerfile: ./docker/Dockerfile-alpine
+    # Make sure your webpath and baseurl are set to whatever your local
+    # environment needs!
+    environment:
+      RAIS_IIIFWEBPATH: /iiif
+      RAIS_IIIFBASEURL: http://localhost:8080
+
+  minio:
+    # To interact with minio from the host, e.g. via `mc`, you need at least
+    # port 9000 exposed
+    ports:
+      - 9000:9000

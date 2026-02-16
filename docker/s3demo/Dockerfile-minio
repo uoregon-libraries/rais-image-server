@@ -9,4 +9,3 @@ RUN upx /go/bin/minio
 FROM alpine:latest AS server
 
 COPY --from=build /go/bin/minio /usr/local/bin/minio
-COPY --from=build /go/bin/mc /usr/local/bin/mc
