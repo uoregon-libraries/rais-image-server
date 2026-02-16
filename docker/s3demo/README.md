@@ -66,7 +66,8 @@ Create images:
 You can also use other s3 tools if the web interface for minio isn't usable for
 you. You'll just have to specify the S3 endpoint as `http://localhost:9000`.
 
-The command-line tool `mc` can be used something like this:
+The command-line tool `mc` can be used something like this (from you host, not
+one of the containers!):
 
 ```bash
 go install github.com/minio/mc@latest
@@ -78,7 +79,10 @@ export MC_DISABLE_PAGER=1
 mc alias set rais http://localhost:9000 admin admin123
 mc admin accesskey create rais --access-key access-key --secret-key secret-key
 mc mb rais/rais
-mc cp ../images/jp2tests/* rais/rais/
+mc cp --recursive ../images/jp2tests/ rais/rais/
+
+# Verify the images are there
+mc ls rais/rais
 ```
 
 #### The hard way
