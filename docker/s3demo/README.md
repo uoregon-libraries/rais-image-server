@@ -66,7 +66,7 @@ Create images:
 You can also use other s3 tools if the web interface for minio isn't usable for
 you. You'll just have to specify the S3 endpoint as `http://localhost:9000`.
 
-The command-line tool `mc` can be used something like this (from you host, not
+The command-line tool `mc` can be used something like this (from your host, not
 one of the containers!):
 
 ```bash
