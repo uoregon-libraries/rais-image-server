@@ -7,7 +7,7 @@ volumes:
 
 services:
   rais:
-    image: uolibraries/rais:4-alpine
+    image: docker.io/uolibraries/rais:4-alpine
     environment:
       RAIS_S3_ENDPOINT: minio:9000
       RAIS_S3_DISABLESSL: true
@@ -44,7 +44,7 @@ services:
       internal:
 
   web:
-    image: nginx:1.15
+    image: docker.io/nginx:1.15
     volumes:
       - ../../:/opt/rais-image-server:ro
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
