@@ -20,6 +20,8 @@ services:
       AWS_REGION: us-west-2
     networks:
       internal:
+    volumes:
+      - ../images/jp2tests/sn00063609-19091231.jp2:/var/local/images/news.jp2
 
   s3demo:
     build:
@@ -41,7 +43,9 @@ services:
       internal:
 
   web:
-    image: docker.io/nginx:1.15
+    build:
+      context: ../..
+      dockerfile: ./docker/s3demo/Dockerfile-nginx
     depends_on:
       - rais
       - s3demo

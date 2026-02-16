@@ -1,0 +1,4 @@
+FROM docker.io/nginx:1
+
+COPY . /opt/rais-image-server
+COPY docker/s3demo/nginx.conf /etc/nginx/conf.d/default.conf
