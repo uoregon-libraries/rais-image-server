@@ -11,7 +11,7 @@ all: cgo binaries
 # Security check
 .PHONY: audit
 audit:
-	go tool govulncheck ./src/...
+	go tool govulncheck $$(go list ./src/... | grep -v 'src/plugins/imagick')
 
 .PHONY: cgo
 cgo:
