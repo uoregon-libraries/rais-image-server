@@ -1,6 +1,7 @@
 package main
 
 import (
+	"rais/src/iiif"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -28,7 +29,7 @@ func TestParseSchemeMap(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			var actual = NewImageHandler("/tilepath", "/iiif")
+			var actual = NewImageHandler("/tilepath", "/iiif", iiif.V2)
 			var err = parseSchemeMap(actual, tc.input)
 			if err == nil && tc.hasError {
 				t.Errorf("expected error, got nil")
@@ -37,7 +38,7 @@ func TestParseSchemeMap(t *testing.T) {
 				t.Errorf("expected no error, got %s", err)
 			}
 
-			var expected = NewImageHandler("/tilepath", "url")
+			var expected = NewImageHandler("/tilepath", "url", iiif.V2)
 			for scheme, prefix := range tc.extraMaps {
 				expected.schemeMap[scheme] = prefix
 			}

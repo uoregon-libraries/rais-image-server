@@ -35,16 +35,19 @@ func acceptsLD(req *http.Request) bool {
 type ImageHandler struct {
 	BaseURL       *url.URL
 	WebPathPrefix string
+	Version       iiif.Version
 	FeatureSet    *iiif.FeatureSet
 	TilePath      string
 	Maximums      img.Constraint
 	schemeMap     map[string]string
 }
 
-// NewImageHandler sets up a base ImageHandler with no features
-func NewImageHandler(tilePath, basePath string) *ImageHandler {
+// NewImageHandler sets up a base ImageHandler with no features, serving the
+// given IIIF spec version
+func NewImageHandler(tilePath, basePath string, version iiif.Version) *ImageHandler {
 	var ih = &ImageHandler{
 		WebPathPrefix: basePath,
+		Version:       version,
 		TilePath:      tilePath,
 		Maximums:      img.Constraint{Width: math.MaxInt32, Height: math.MaxInt32, Area: math.MaxInt64},
 		FeatureSet:    iiif.AllFeatures(),
@@ -155,7 +158,7 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 	var prefix = ih.WebPathPrefix + "/"
 	u.Path = strings.Replace(u.Path, prefix, "", 1)
 
-	iiifURL, err := iiif.NewURL(u.Path)
+	iiifURL, err := iiif.NewURL(u.Path, ih.Version)
 	// If the iiifURL is invalid, it's possible this is a base URI request.
 	// Let's see if treating the path as an ID gives us any info.
 	if err != nil {
@@ -224,7 +227,7 @@ func (ih *ImageHandler) IIIFRoute(w http.ResponseWriter, req *http.Request) {
 // to function properly
 func (ih *ImageHandler) isValidBasePath(pth string) bool {
 	var jsonPath = pth + "/info.json"
-	var iiifURL, err = iiif.NewURL(jsonPath)
+	var iiifURL, err = iiif.NewURL(jsonPath, ih.Version)
 	if err != nil {
 		return false
 	}
@@ -390,7 +393,9 @@ func (ih *ImageHandler) loadInfoOverride(res *img.Resource) *iiif.Info {
 
 	Logger.Debugf("Loading image data from override file (%s)", infofile)
 
-	var info = new(iiif.Info)
+	// The override file is parsed in the handler's spec version's shape; set the
+	// version before unmarshaling so Info reads the right structure
+	var info = iiif.NewInfo(ih.Version)
 	err = json.Unmarshal(data, info)
 	if err != nil {
 		Logger.Errorf("Cannot parse JSON override file %q: %s", infofile, err)
@@ -430,7 +435,7 @@ func (ih *ImageHandler) loadInfoFromImageResource(res *img.Resource) (*iiif.Info
 }
 
 func (ih *ImageHandler) buildInfo(i ImageInfo) *iiif.Info {
-	info := ih.FeatureSet.Info()
+	info := ih.FeatureSet.Info(ih.Version)
 	info.Width = i.Width
 	info.Height = i.Height
 

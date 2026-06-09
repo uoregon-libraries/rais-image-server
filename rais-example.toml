@@ -83,12 +83,22 @@ TilePath = "/var/local/images"
 # CLI: --scheme-map
 SchemeMap = ""
 
-# IIIFWebPath: Optional, defaults to "/iiif".  This is the endpoint on which
-# RAIS will listen for IIIF requests.
+# IIIFWebPathV2 / IIIFWebPathV3: the endpoints on which RAIS listens for IIIF
+# Image API 2.1 and 3.0 requests, respectively.  RAIS serves both specs at once,
+# each on its own path.
 #
-# Env: RAIS_IIIFWEBPATH
-# CLI: --iiif-web-path
-IIIFWebPath = "/iiif"
+# Each defaults as shown below.  Set either one to "" to disable that spec
+# version (e.g., set IIIFWebPathV3 = "" to serve only v2).  At least one must be
+# non-empty, and the two cannot be the same path.
+#
+# NOTE: this replaces the old single "IIIFWebPath" setting, which has been
+# removed.  If you previously set IIIFWebPath = "/iiif", set IIIFWebPathV2 to the
+# same value (and choose a distinct path, e.g., "/iiif/v3", for v3).
+#
+# Env: RAIS_IIIFWEBPATHV2 / RAIS_IIIFWEBPATHV3
+# CLI: --iiif-web-path-v2 / --iiif-web-path-v3
+IIIFWebPathV2 = "/iiif/v2"
+IIIFWebPathV3 = "/iiif/v3"
 
 # IIIFBaseURL: Optional: allows RAIS to report URLs for its assets when a IIIF
 # info request occurs.  If used, make sure this is set to the *public* URL, and

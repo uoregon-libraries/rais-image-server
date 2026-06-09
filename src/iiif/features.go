@@ -108,18 +108,71 @@ func (fs *FeatureSet) toMap() FeaturesMap {
 	}
 }
 
+// toMapV3 converts a FeatureSet's boolean support values into a map using IIIF
+// 3.0 feature names.  Several names differ from 2.1: notably the v2
+// "sizeByForcedWh" (the "w,h" form) is "sizeByWh" in v3, and the v2 "sizeByWh"
+// (the "!w,h" form) is "sizeByConfinedWh" in v3.  Feature names that no longer
+// exist in v3 (sizeByWhListed, sizeByForcedWh, sizeAboveFull, sizeByDistortedWh)
+// are intentionally omitted.  sizeUpscaling is also omitted because RAIS never
+// upscales.
+func (fs *FeatureSet) toMapV3() FeaturesMap {
+	return FeaturesMap{
+		"regionByPx":          fs.RegionByPx,
+		"regionByPct":         fs.RegionByPct,
+		"regionSquare":        fs.RegionSquare,
+		"sizeByW":             fs.SizeByW,
+		"sizeByH":             fs.SizeByH,
+		"sizeByPct":           fs.SizeByPct,
+		"sizeByWh":            fs.SizeByForcedWh,
+		"sizeByConfinedWh":    fs.SizeByWh,
+		"rotationBy90s":       fs.RotationBy90s,
+		"rotationArbitrary":   fs.RotationArbitrary,
+		"mirroring":           fs.Mirroring,
+		"default":             fs.Default,
+		"color":               fs.Color,
+		"gray":                fs.Gray,
+		"bitonal":             fs.Bitonal,
+		"jpg":                 fs.Jpg,
+		"png":                 fs.Png,
+		"tif":                 fs.Tif,
+		"gif":                 fs.Gif,
+		"jp2":                 fs.Jp2,
+		"pdf":                 fs.Pdf,
+		"webp":                fs.Webp,
+		"baseUriRedirect":     fs.BaseURIRedirect,
+		"cors":                fs.Cors,
+		"jsonldMediaType":     fs.JsonldMediaType,
+		"profileLinkHeader":   fs.ProfileLinkHeader,
+		"canonicalLinkHeader": fs.CanonicalLinkHeader,
+	}
+}
+
+// featureMap returns the FeaturesMap appropriate for the given spec version
+func (fs *FeatureSet) featureMap(v Version) FeaturesMap {
+	if v == V3 {
+		return fs.toMapV3()
+	}
+	return fs.toMap()
+}
+
 // FeatureCompare returns which features are in common between two FeatureSets,
-// which are exclusive to a, and which are exclusive to b.  The returned maps
-// will ONLY contain keys with a value of true, as opposed to the full list of
-// features and true/false.  This helps to quickly determine equality, subset
-// status, and superset status.
+// which are exclusive to a, and which are exclusive to b, using IIIF 2.1 feature
+// names.  See featureCompare for details.
 func FeatureCompare(a, b *FeatureSet) (union, onlyA, onlyB FeaturesMap) {
+	return featureCompare(a, b, V2)
+}
+
+// featureCompare is the version-aware implementation behind FeatureCompare.  The
+// returned maps will ONLY contain keys with a value of true, as opposed to the
+// full list of features and true/false.  This helps to quickly determine
+// equality, subset status, and superset status.
+func featureCompare(a, b *FeatureSet, v Version) (union, onlyA, onlyB FeaturesMap) {
 	union = make(FeaturesMap)
 	onlyA = make(FeaturesMap)
 	onlyB = make(FeaturesMap)
 
-	mapA := a.toMap()
-	mapB := b.toMap()
+	mapA := a.featureMap(v)
+	mapB := b.featureMap(v)
 
 	for feature, supportedA := range mapA {
 		supportedB := mapB[feature]
@@ -141,8 +194,15 @@ func FeatureCompare(a, b *FeatureSet) (union, onlyA, onlyB FeaturesMap) {
 	return union, onlyA, onlyB
 }
 
-// includes returns whether or not fs includes all features in fsIncluded
+// includes returns whether or not fs includes all features in fsIncluded, using
+// IIIF 2.1 feature naming
 func (fs *FeatureSet) includes(fsIncluded *FeatureSet) bool {
-	_, _, onlyYours := FeatureCompare(fs, fsIncluded)
+	return fs.includesVersion(fsIncluded, V2)
+}
+
+// includesVersion returns whether or not fs includes all features in fsIncluded
+// when compared under the given spec version's feature naming
+func (fs *FeatureSet) includesVersion(fsIncluded *FeatureSet, v Version) bool {
+	_, _, onlyYours := featureCompare(fs, fsIncluded, v)
 	return len(onlyYours) == 0
 }

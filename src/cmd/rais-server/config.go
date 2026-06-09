@@ -5,11 +5,21 @@ import (
 	"math"
 	"net/url"
 	"os"
+	"path"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/uoregon-libraries/gopkg/logger"
 )
+
+// cleanWebPath normalizes a configured IIIF web path.  An empty string is left
+// empty (which disables that endpoint); anything else is run through path.Clean.
+func cleanWebPath(p string) string {
+	if p == "" {
+		return ""
+	}
+	return path.Clean(p)
+}
 
 // parseConf centralizes all config reading and validating for the core RAIS options
 func parseConf() {
@@ -29,8 +39,11 @@ func parseConf() {
 	viper.SetDefault("Plugins", defaultPlugins)
 	viper.SetDefault("JPGQuality", defaultJPGQuality)
 
-	// Allow all configuration to be in environment variables
+	// Allow all configuration to be in environment variables.  AllowEmptyEnv lets
+	// an explicitly-empty env var (e.g., RAIS_IIIFWEBPATHV3="") override a default,
+	// which is how a spec version's endpoint is disabled via the environment.
 	viper.SetEnvPrefix("RAIS")
+	viper.AllowEmptyEnv(true)
 	viper.AutomaticEnv()
 
 	// Config file options
@@ -48,8 +61,10 @@ func parseConf() {
 	pflag.String("iiif-base-url", "", "Base URL for RAIS to report in info.json requests "+
 		"(defaults to the requests as they come in, so you probably don't want to set this)")
 	viper.BindPFlag("IIIFBaseURL", pflag.CommandLine.Lookup("iiif-base-url"))
-	pflag.String("iiif-web-path", "/iiif", `Base path for serving IIIF requests, e.g., "/iiif"`)
-	viper.BindPFlag("IIIFWebPath", pflag.CommandLine.Lookup("iiif-web-path"))
+	pflag.String("iiif-web-path-v2", "/iiif/v2", `Base path for serving IIIF 2.1 requests, e.g., "/iiif/v2" (empty disables v2)`)
+	viper.BindPFlag("IIIFWebPathV2", pflag.CommandLine.Lookup("iiif-web-path-v2"))
+	pflag.String("iiif-web-path-v3", "/iiif/v3", `Base path for serving IIIF 3.0 requests, e.g., "/iiif/v3" (empty disables v3)`)
+	viper.BindPFlag("IIIFWebPathV3", pflag.CommandLine.Lookup("iiif-web-path-v3"))
 	pflag.String("address", defaultAddress, "http service address")
 	viper.BindPFlag("Address", pflag.CommandLine.Lookup("address"))
 	pflag.String("admin-address", defaultAdminAddress, "http service for administrative endpoints")
@@ -90,6 +105,21 @@ func parseConf() {
 	var level = logger.LogLevelFromString(viper.GetString("LogLevel"))
 	if level == logger.Invalid {
 		fmt.Println("ERROR: Invalid log level (must be DEBUG, INFO, WARN, ERROR, or CRIT)")
+		pflag.Usage()
+		os.Exit(1)
+	}
+
+	// Validate the two IIIF web paths.  Either (but not both) may be empty to
+	// disable that spec version, and the two cannot resolve to the same path.
+	var webPathV2 = cleanWebPath(viper.GetString("IIIFWebPathV2"))
+	var webPathV3 = cleanWebPath(viper.GetString("IIIFWebPathV3"))
+	if webPathV2 == "" && webPathV3 == "" {
+		fmt.Println("ERROR: at least one of IIIFWebPathV2 or IIIFWebPathV3 must be set")
+		pflag.Usage()
+		os.Exit(1)
+	}
+	if webPathV2 != "" && webPathV2 == webPathV3 {
+		fmt.Printf("ERROR: IIIFWebPathV2 and IIIFWebPathV3 cannot be the same path (%q)\n", webPathV2)
 		pflag.Usage()
 		os.Exit(1)
 	}

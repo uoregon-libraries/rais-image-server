@@ -37,6 +37,12 @@ func (fs *FeatureSet) SupportsRegion(r Region) bool {
 
 // SupportsSize just verifies a given size type is supported
 func (fs *FeatureSet) SupportsSize(s Size) bool {
+	// RAIS never upscales, so a v3 "^" (sizeUpscaling) request is valid syntax
+	// but unsupported - report it as such so the handler returns a 501
+	if s.Upscale {
+		return false
+	}
+
 	switch s.Type {
 	case STScaleToWidth:
 		return fs.SizeByW

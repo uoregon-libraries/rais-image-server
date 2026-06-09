@@ -38,8 +38,8 @@ func rootDir() string {
 	return root
 }
 
-// Sets up everything necessary to test a IIIF request
-func dorequestGeneric(path string, acceptLD bool, max img.Constraint, fs *iiif.FeatureSet, t *testing.T) *fakehttp.ResponseWriter {
+// Sets up everything necessary to test a IIIF request of the given spec version
+func dorequestVersion(path string, acceptLD bool, max img.Constraint, fs *iiif.FeatureSet, version iiif.Version, t *testing.T) *fakehttp.ResponseWriter {
 	u, _ := url.Parse("http://example.com")
 	w := fakehttp.NewResponseWriter()
 	reqPath := fmt.Sprintf("/foo/bar/%s", path)
@@ -53,7 +53,7 @@ func dorequestGeneric(path string, acceptLD bool, max img.Constraint, fs *iiif.F
 	if err != nil {
 		t.Errorf("Unable to create fake request: %s", err)
 	}
-	h := NewImageHandler(rootDir(), "/foo/bar")
+	h := NewImageHandler(rootDir(), "/foo/bar", version)
 	h.Maximums.Width = max.Width
 	h.Maximums.Height = max.Height
 	h.Maximums.Area = max.Area
@@ -62,6 +62,11 @@ func dorequestGeneric(path string, acceptLD bool, max img.Constraint, fs *iiif.F
 	h.IIIFRoute(w, req)
 
 	return w
+}
+
+// Sets up everything necessary to test a IIIF v2 request
+func dorequestGeneric(path string, acceptLD bool, max img.Constraint, fs *iiif.FeatureSet, t *testing.T) *fakehttp.ResponseWriter {
+	return dorequestVersion(path, acceptLD, max, fs, iiif.V2, t)
 }
 
 // Sets up everything necessary to test a IIIF request using level 1 support
@@ -118,6 +123,37 @@ func TestInfoHandlerBuiltJSON(t *testing.T) {
 	assert.Equal("http://example.com/foo/bar/docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2", data.ID, "JSON-decoded ID", t)
 	assert.Equal(1, len(w.Headers["Content-Type"]), "Proper content type length", t)
 	assert.Equal("application/json", w.Headers["Content-Type"][0], "Proper content type", t)
+}
+
+// TestInfoHandlerV3 verifies that a v3 handler emits the IIIF 3.0 info.json
+// document shape (the symlinked file is used to avoid the v2-shaped override).
+func TestInfoHandlerV3(t *testing.T) {
+	// AllFeatures includes regionSquare, which v3 requires at level 1+, so this
+	// reports level2 (the v2 FeatureSet2 lacks regionSquare and would be level0).
+	w := dorequestVersion("docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2/info.json",
+		false, unlimited, iiif.AllFeatures(), iiif.V3, t)
+	assert.Equal(-1, w.StatusCode, "Valid v3 info request doesn't explicitly set status code", t)
+
+	var raw map[string]any
+	assert.NilError(json.Unmarshal(w.Output, &raw), "unmarshal v3 info into a map", t)
+	assert.Equal("http://iiif.io/api/image/3/context.json", raw["@context"], "v3 context", t)
+	assert.Equal("ImageService3", raw["type"], "v3 type", t)
+	assert.Equal("level2", raw["profile"], "v3 profile is a level string", t)
+	assert.Equal("http://example.com/foo/bar/docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2", raw["id"], "v3 id", t)
+	assert.Equal(nil, raw["@id"], "v3 must not emit @id", t)
+	assert.Equal(float64(800), raw["width"], "v3 width", t)
+	assert.Equal(float64(400), raw["height"], "v3 height", t)
+}
+
+// TestCommandHandlerV3FullRejected verifies that "full" size is a 400 on the v3
+// endpoint (it was removed in favor of "max"), while "max" works.
+func TestCommandHandlerV3FullRejected(t *testing.T) {
+	id := "docker%2Fimages%2Ftestfile%2Ftest-world-link.jp2"
+	w := dorequestVersion(id+"/10,10,80,80/full/0/default.jpg", false, unlimited, iiif.AllFeatures(), iiif.V3, t)
+	assert.Equal(400, w.StatusCode, "v3 rejects size=full as a bad request", t)
+
+	w = dorequestVersion(id+"/10,10,80,80/max/0/default.jpg", false, unlimited, iiif.AllFeatures(), iiif.V3, t)
+	assert.Equal(-1, w.StatusCode, "v3 accepts size=max", t)
 }
 
 func TestInfoHandlerLD(t *testing.T) {
@@ -223,7 +259,7 @@ func BenchmarkRouting(b *testing.B) {
 		b.Errorf("Unable to create fake request: %s", err)
 	}
 
-	h := NewImageHandler(rootDir(), "/iiif")
+	h := NewImageHandler(rootDir(), "/iiif", iiif.V2)
 	h.Maximums.Width = unlimited.Width
 	h.Maximums.Height = unlimited.Height
 	h.Maximums.Area = unlimited.Area
@@ -248,7 +284,7 @@ func BenchmarkRouting(b *testing.B) {
 }
 
 func TestIDToURL(t *testing.T) {
-	var h = NewImageHandler("/var/local/images", "/iiif")
+	var h = NewImageHandler("/var/local/images", "/iiif", iiif.V2)
 	assert.NilError(h.AddSchemeMap("foo", "bar://real-host/prefixed-path"), "added schema map without error", t)
 
 	// Prefer table-driven tests, sirs

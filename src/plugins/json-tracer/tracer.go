@@ -64,7 +64,12 @@ func getReqType(path string) string {
 	}
 
 	var iiifPath = strings.Join(parts[len(parts)-5:], "/")
-	var u, err = iiif.NewURL(iiifPath)
+	// This is only used to classify the request for instrumentation, and the
+	// tracer doesn't know which endpoint (and thus spec version) served it.  We
+	// parse as v2, which is the lenient superset for this purpose: it accepts
+	// both "full" and "max" sizes, and the only thing it rejects ("^" upscaling)
+	// doesn't affect the coarse classification done here.
+	var u, err = iiif.NewURL(iiifPath, iiif.V2)
 	if err != nil || !u.Valid() {
 		return "None"
 	}

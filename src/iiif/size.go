@@ -34,28 +34,40 @@ const (
 	STBestFit
 )
 
-// Size represents the type of scaling as well as the parameters for scaling
-// for a IIIF 2.0 server
+// Size represents the type of scaling as well as the parameters for scaling.
+// Upscale is set when a IIIF 3.0 request uses the "^" prefix to request an image
+// larger than the extracted region.
 type Size struct {
 	Type    SizeType
 	Percent float64
 	W, H    int
+	Upscale bool
 }
 
-// StringToSize creates a Size from a string as seen in a IIIF URL.
+// StringToSize creates a Size from a string as seen in a IIIF URL.  Parsing is
+// version-neutral: both "full" (v2) and "max" (v2/v3) yield a value, and the "^"
+// upscaling prefix (v3) is recorded in Upscale.  Whether a given form is legal
+// for a particular spec version is enforced at the URL level.
 func StringToSize(p string) Size {
 	if p == "" {
 		return Size{}
 	}
 
-	if p == "full" {
-		return Size{Type: STFull}
-	}
-	if p == "max" {
-		return Size{Type: STMax}
+	// The v3 upscaling prefix may precede any of the other size forms
+	var upscale bool
+	if len(p) > 0 && p[0:1] == "^" {
+		upscale = true
+		p = p[1:]
 	}
 
-	s := Size{Type: STNone}
+	if p == "full" {
+		return Size{Type: STFull, Upscale: upscale}
+	}
+	if p == "max" {
+		return Size{Type: STMax, Upscale: upscale}
+	}
+
+	s := Size{Type: STNone, Upscale: upscale}
 
 	if len(p) > 4 && p[0:4] == "pct:" {
 		s.Type = STScalePercent

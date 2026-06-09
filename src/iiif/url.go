@@ -23,6 +23,7 @@ func (id ID) Escaped() string {
 
 // URL represents the different options composed into a IIIF URL request
 type URL struct {
+	Version  Version
 	Path     string
 	ID       ID
 	Region   Region
@@ -59,19 +60,23 @@ func (p *pathParts) rejoin() string {
 // pieces), such as "path%2Fto%2Fsomefile.jp2/full/512,/270/default.jpg", and
 // breaks it down into the different components.  In this example:
 //
-//     - ID:       "path%2Fto%2Fsomefile.jp2" (the server determines how to find the image)
-//     - Region:   "full"                     (the whole image is processed)
-//     - Size:     "512,"                     (the image is resized to a width of 512; aspect ratio is maintained)
-//     - Rotation: "270"                      (the image is rotated 270 degrees clockwise)
-//     - Quality:  "default"                  (the image color space is unchanged)
-//     - Format:   "jpg"                      (the resulting image will be a JPEG)
+//   - ID:       "path%2Fto%2Fsomefile.jp2" (the server determines how to find the image)
+//   - Region:   "full"                     (the whole image is processed)
+//   - Size:     "512,"                     (the image is resized to a width of 512; aspect ratio is maintained)
+//   - Rotation: "270"                      (the image is rotated 270 degrees clockwise)
+//   - Quality:  "default"                  (the image color space is unchanged)
+//   - Format:   "jpg"                      (the resulting image will be a JPEG)
 //
 // It's possible to get a URL and an error since an id-only request could
 // theoretically exist for a resource with *any* id.  In those cases it's up to
 // the caller to figure out what to do - the returned URL will have as much
 // information as we're able to parse.
-func NewURL(path string) (*URL, error) {
-	var u = &URL{Path: path}
+//
+// The version determines which spec rules apply to validity (e.g., a size of
+// "full" is valid in v2 but not v3, and the "^" upscaling prefix is valid in v3
+// but not v2).
+func NewURL(path string, version Version) (*URL, error) {
+	var u = &URL{Path: path, Version: version}
 
 	// Check for an info request first since it's pretty trivial to do
 	if strings.HasSuffix(path, "info.json") {
@@ -124,6 +129,20 @@ func (u *URL) Error() error {
 	}
 	if !u.Size.Valid() {
 		messages = append(messages, "invalid size")
+	} else {
+		// Some size forms are only legal in certain spec versions
+		switch u.Version {
+		case V3:
+			// v3 removed "full" in favor of "max"
+			if u.Size.Type == STFull {
+				messages = append(messages, `invalid size: "full" is not allowed in IIIF 3.0 (use "max")`)
+			}
+		default:
+			// The "^" upscaling prefix was introduced in v3
+			if u.Size.Upscale {
+				messages = append(messages, `invalid size: the "^" upscaling prefix is not allowed in IIIF 2.1`)
+			}
+		}
 	}
 	if !u.Rotation.Valid() {
 		messages = append(messages, "invalid rotation")

@@ -8,7 +8,7 @@ import (
 
 func TestSimpleInfoProfile(t *testing.T) {
 	fs := FeatureSet1()
-	i := fs.Info()
+	i := fs.Info(V2)
 	assert.Equal("http://iiif.io/api/image/2/level1.json", i.Profile.ConformanceURL, "Profile is level 1", t)
 
 	extra := i.Profile.profileElement2
@@ -22,7 +22,7 @@ func TestSimpleInfoProfile(t *testing.T) {
 func TestLevel1MissingFeaturesProfile(t *testing.T) {
 	fs := FeatureSet1()
 	fs.SizeByPct = false
-	i := fs.Info()
+	i := fs.Info(V2)
 	assert.Equal("http://iiif.io/api/image/2/level0.json", i.Profile.ConformanceURL, "Profile is level 0", t)
 
 	extra := i.Profile.profileElement2
@@ -43,7 +43,7 @@ func TestLevel1MissingFeaturesProfile(t *testing.T) {
 	fs.Pdf = true
 	fs.Jp2 = true
 	fs.Gif = true
-	i = fs.Info()
+	i = fs.Info(V2)
 	extra = i.Profile.profileElement2
 	assert.Equal(2, len(extra.Qualities), "There are 2 extra qualities now", t)
 	assert.Equal(4, len(extra.Formats), "There are 4 extra formats now", t)
@@ -57,7 +57,7 @@ func TestLevel1MissingFeaturesProfile(t *testing.T) {
 
 func TestAllFeaturesEnabled(t *testing.T) {
 	fs := AllFeatures()
-	i := fs.Info()
+	i := fs.Info(V2)
 	assert.Equal("http://iiif.io/api/image/2/level2.json", i.Profile.ConformanceURL, "Profile conformance level", t)
 
 	extra := i.Profile.profileElement2
