@@ -109,6 +109,23 @@ func parseConf() {
 		os.Exit(1)
 	}
 
+	// Friendly migration for the old single "IIIFWebPath" setting: if it's still
+	// set (config file or RAIS_IIIFWEBPATH) and neither replacement has been set
+	// explicitly, honor it as the v2 path and disable v3 so existing deployments
+	// keep serving the exact URLs they did before upgrading.
+	if viper.IsSet("IIIFWebPath") && !viper.IsSet("IIIFWebPathV2") && !viper.IsSet("IIIFWebPathV3") {
+		var oldPath = viper.GetString("IIIFWebPath")
+		if oldPath == "" {
+			// The old setting treated empty as the default path
+			oldPath = "/iiif"
+		}
+		fmt.Printf("WARNING: IIIFWebPath has been replaced by IIIFWebPathV2 and IIIFWebPathV3; "+
+			"serving IIIF 2.1 on %q and disabling IIIF 3.0 support.  Set IIIFWebPathV2 to silence "+
+			"this warning, and IIIFWebPathV3 to enable IIIF 3.0.\n", oldPath)
+		viper.Set("IIIFWebPathV2", oldPath)
+		viper.Set("IIIFWebPathV3", "")
+	}
+
 	// Validate the two IIIF web paths.  Either (but not both) may be empty to
 	// disable that spec version, and the two cannot resolve to the same path.
 	var webPathV2 = cleanWebPath(viper.GetString("IIIFWebPathV2"))
