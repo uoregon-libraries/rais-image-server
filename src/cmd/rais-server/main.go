@@ -12,6 +12,7 @@ import (
 	"rais/src/openjpeg"
 	"rais/src/plugins"
 	"rais/src/version"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -128,7 +129,12 @@ func main() {
 	stats.ServerStart = time.Now()
 	stats.RAISVersion = version.Version
 
-	// Set up handlers / listeners
+	// Set up handlers / listeners.  Routes are prefix matchers checked in
+	// registration order, so longer prefixes must be registered first or a
+	// nested path (e.g., v3 on "/iiif/v3" with v2 on "/iiif") would never match.
+	sort.Slice(handlers, func(i, j int) bool {
+		return len(handlers[i].WebPathPrefix) > len(handlers[j].WebPathPrefix)
+	})
 	var pubSrv = servers.New("RAIS", address)
 	pubSrv.AddMiddleware(logMiddleware)
 	for _, ih := range handlers {
