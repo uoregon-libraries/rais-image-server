@@ -43,7 +43,7 @@ func TestParseSchemeMap(t *testing.T) {
 			}
 			var diff = cmp.Diff(expected.schemeMap, actual.schemeMap)
 			if diff != "" {
-				t.Errorf(diff)
+				t.Error(diff)
 			}
 		})
 	}
