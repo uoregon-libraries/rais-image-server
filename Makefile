@@ -33,9 +33,10 @@ rais-server:
 jp2info:
 	go build -ldflags="-s -w -X rais/src/version.Version=$(BUILD)" -o ./bin/jp2info rais/src/cmd/jp2info
 
-# Testing
+# Testing; imagick plugins are excluded because they need ImageMagick dev
+# libraries, which we don't want to require for routine test runs / CI
 test:
-	go test rais/src/...
+	go test $$(go list ./src/... | grep -v 'src/plugins/imagick')
 
 bench:
 	go test -bench=. -benchtime=5s -count=2 rais/src/openjpeg rais/src/cmd/rais-server
@@ -43,9 +44,14 @@ bench:
 format:
 	find src/ -name "*.go" | xargs gofmt -l -w -s
 
-lint:
+# Vet skips the imagick plugins for the same reason "test" does: vet has to
+# compile cgo packages, and we don't want ImageMagick required everywhere
+.PHONY: vet
+vet:
+	go vet $$(go list ./src/... | grep -v 'src/plugins/imagick')
+
+lint: vet
 	go tool revive src/...
-	go vet rais/src/...
 
 # Cleanup
 clean:
