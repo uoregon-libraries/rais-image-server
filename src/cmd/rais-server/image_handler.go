@@ -323,6 +323,9 @@ func newImageResError(err error) *HandlerError {
 	if errors.Is(err, img.ErrDoesNotExist) {
 		return NewError("image resource does not exist", 404)
 	}
+	if errors.Is(err, img.ErrUpscaleNotAllowed) {
+		return NewError(err.Error(), 400)
+	}
 
 	// Unknown / unhandled errors are just general 500s
 	return NewError(err.Error(), 500)

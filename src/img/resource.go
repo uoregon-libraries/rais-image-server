@@ -159,6 +159,14 @@ func (res *Resource) Apply(u *iiif.URL, max Constraint) (image.Image, error) {
 		scale = u.Size.GetResize(crop)
 	}
 
+	// IIIF 3.0 only allows a size larger than the extracted region when the
+	// request opts in via the "^" prefix
+	if u.Version == iiif.V3 && !u.Size.Upscale {
+		if scale.Dx() > crop.Dx() || scale.Dy() > crop.Dy() {
+			return nil, ErrUpscaleNotAllowed
+		}
+	}
+
 	// Determine the final image output dimensions to test size constraints
 	sw, sh := scale.Dx(), scale.Dy()
 	if u.Rotation.Degrees == 90 || u.Rotation.Degrees == 270 {

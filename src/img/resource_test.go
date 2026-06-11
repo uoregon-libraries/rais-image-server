@@ -102,6 +102,42 @@ func TestMaxSizeConstrainHeight(t *testing.T) {
 	assert.Equal(325, d.resizeH, "resize height", t)
 }
 
+func TestUpscaleV3RequiresCaret(t *testing.T) {
+	var d = &fakeDecoder{w: 1000, h: 1000, tw: 128, th: 128, l: 4}
+	var img = &Resource{decoder: d}
+	var url, _ = iiif.NewURL("identifier/full/1522,1522/0/default.jpg", iiif.V3)
+	var _, err = img.Apply(url, unlimited)
+	assert.Equal(ErrUpscaleNotAllowed, err, "v3 upscale without ^ must be rejected", t)
+}
+
+func TestUpscaleV3WithCaret(t *testing.T) {
+	var d = &fakeDecoder{w: 1000, h: 1000, tw: 128, th: 128, l: 4}
+	var img = &Resource{decoder: d}
+	var url, _ = iiif.NewURL("identifier/full/^1522,1522/0/default.jpg", iiif.V3)
+	var _, err = img.Apply(url, unlimited)
+	assert.True(err == nil, "v3 upscale with ^ should not error", t)
+	assert.Equal(1522, d.resizeW, "resize width", t)
+	assert.Equal(1522, d.resizeH, "resize height", t)
+}
+
+func TestUpscaleV2NoCaretNeeded(t *testing.T) {
+	var d = &fakeDecoder{w: 1000, h: 1000, tw: 128, th: 128, l: 4}
+	var img = &Resource{decoder: d}
+	var url, _ = iiif.NewURL("identifier/full/1522,1522/0/default.jpg", iiif.V2)
+	var _, err = img.Apply(url, unlimited)
+	assert.True(err == nil, "v2 upscale without ^ should not error", t)
+	assert.Equal(1522, d.resizeW, "resize width", t)
+	assert.Equal(1522, d.resizeH, "resize height", t)
+}
+
+func TestNoUpscaleV3ExactSize(t *testing.T) {
+	var d = &fakeDecoder{w: 1000, h: 1000, tw: 128, th: 128, l: 4}
+	var img = &Resource{decoder: d}
+	var url, _ = iiif.NewURL("identifier/full/1000,500/0/default.jpg", iiif.V3)
+	var _, err = img.Apply(url, unlimited)
+	assert.True(err == nil, "v3 size within the region should not error", t)
+}
+
 func TestMaxSizeConstrainArea(t *testing.T) {
 	var d = &fakeDecoder{w: 4000, h: 600, tw: 128, th: 128, l: 4}
 	var img = &Resource{decoder: d}

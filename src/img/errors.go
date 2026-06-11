@@ -12,5 +12,6 @@ const (
 	ErrDoesNotExist           imgError = "image file does not exist"
 	ErrInvalidFiletype        imgError = "invalid or unknown file type"
 	ErrDimensionsExceedLimits imgError = "requested image size exceeds server maximums"
+	ErrUpscaleNotAllowed      imgError = `upscaling requires the "^" size prefix in IIIF 3.0`
 	ErrNotStreamable          imgError = "no registered streamers"
 )
