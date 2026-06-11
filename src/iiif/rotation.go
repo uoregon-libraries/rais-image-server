@@ -12,12 +12,13 @@ type Rotation struct {
 	Degrees float64
 }
 
-// StringToRotation creates a Rotation from a string as seen in a IIIF URL.
-// An invalid string would result in a 0-degree rotation as opposed to an error
-// condition.  This is a known issue which needs to be fixed.
+// StringToRotation creates a Rotation from a string as seen in a IIIF URL. A
+// string which can't be parsed as a number (after the optional leading "!")
+// results in a Rotation which reports itself as invalid.
 func StringToRotation(p string) Rotation {
 	r := Rotation{}
 	if p == "" {
+		r.Degrees = -1
 		return r
 	}
 	if p[0:1] == "!" {
@@ -25,7 +26,12 @@ func StringToRotation(p string) Rotation {
 		p = p[1:]
 	}
 
-	r.Degrees, _ = strconv.ParseFloat(p, 64)
+	var err error
+	r.Degrees, err = strconv.ParseFloat(p, 64)
+	if err != nil {
+		r.Degrees = -1
+		return r
+	}
 
 	// This isn't actually to spec, but it makes way more sense than only
 	// allowing 360 for compliance level 2 (and in fact *requiring* it there)
@@ -36,8 +42,8 @@ func StringToRotation(p string) Rotation {
 	return r
 }
 
-// Valid just returns whether or not the degrees value is within a sane range:
-// 0 <= r.Degrees < 360
+// Valid returns false if the rotation string couldn't be parsed as a number,
+// or the degrees value is outside the sane range: 0 <= r.Degrees < 360
 func (r Rotation) Valid() bool {
 	return r.Degrees >= 0 && r.Degrees < 360
 }
