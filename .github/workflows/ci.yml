@@ -57,7 +57,7 @@ jobs:
           curl -sfo /tmp/images/validation.jp2 https://raw.githubusercontent.com/uoregon-libraries/iiif-image-validator/main/validator/iiiftest/reference.jp2
           RAIS_TILEPATH=/tmp/images ./bin/rais-server > /tmp/rais.log 2>&1 &
           for _ in $(seq 1 50); do
-            if curl -sf http://localhost:12415/iiif/validation.jp2/info.json > /dev/null; then
+            if curl -sf http://localhost:12415/iiif/v2/validation.jp2/info.json > /dev/null; then
               exit 0
             fi
             sleep 0.2
@@ -66,6 +66,13 @@ jobs:
           cat /tmp/rais.log
           exit 1
 
-      - name: Run the IIIF validator
+      - name: Validate IIIF 2.0 compliance
         run: |
-          "$(go env GOPATH)/bin/iiif-validate" -s localhost:12415 -p iiif -i validation.jp2 -version 2.0 -level 2
+          "$(go env GOPATH)/bin/iiif-validate" -s localhost:12415 -p iiif/v2 -i validation.jp2 -version 2.0 -level 2
+
+      - name: Validate IIIF 3.0 compliance
+        # Run even when the v2 step fails so one spec's failure doesn't hide
+        # the other's results
+        if: ${{ !cancelled() }}
+        run: |
+          "$(go env GOPATH)/bin/iiif-validate" -s localhost:12415 -p iiif/v3 -i validation.jp2 -version 3.0 -level 2
