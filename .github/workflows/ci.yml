@@ -27,3 +27,45 @@ jobs:
 
       - name: Test
         run: make test
+
+  # Runs a real rais-server against the IIIF Image API validation suite
+  # (https://github.com/uoregon-libraries/iiif-image-validator), so we know
+  # the server actually conforms to the spec, not just that units pass.
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Install libopenjp2
+        run: sudo apt-get update && sudo apt-get install --yes libopenjp2-7-dev
+
+      - name: Build rais-server
+        run: make rais-server
+
+      - name: Install the IIIF validator
+        run: go install github.com/uoregon-libraries/iiif-image-validator/cmd/iiif-validate@latest
+
+      # The validator's content checks only pass against the standard IIIF
+      # reference image, which the validator repo ships as a JP2
+      - name: Start RAIS with the reference image
+        run: |
+          mkdir /tmp/images
+          curl -sfo /tmp/images/validation.jp2 https://raw.githubusercontent.com/uoregon-libraries/iiif-image-validator/main/validator/iiiftest/reference.jp2
+          RAIS_TILEPATH=/tmp/images ./bin/rais-server > /tmp/rais.log 2>&1 &
+          for _ in $(seq 1 50); do
+            if curl -sf http://localhost:12415/iiif/validation.jp2/info.json > /dev/null; then
+              exit 0
+            fi
+            sleep 0.2
+          done
+          echo "RAIS never became ready; log output:"
+          cat /tmp/rais.log
+          exit 1
+
+      - name: Run the IIIF validator
+        run: |
+          "$(go env GOPATH)/bin/iiif-validate" -s localhost:12415 -p iiif -i validation.jp2 -version 2.0 -level 2
