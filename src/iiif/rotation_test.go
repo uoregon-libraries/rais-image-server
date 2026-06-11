@@ -34,3 +34,10 @@ func TestInvalidRotation(t *testing.T) {
 	r = StringToRotation("!360.1")
 	assert.True(!r.Valid(), "!r.Valid", t)
 }
+
+func TestUnparseableRotation(t *testing.T) {
+	for _, s := range []string{"ca canny", "90foo", "!", "!abc", ""} {
+		r := StringToRotation(s)
+		assert.True(!r.Valid(), "StringToRotation("+s+") is invalid", t)
+	}
+}
