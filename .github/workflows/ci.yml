@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      # The openjpeg package binds libopenjp2 via cgo, so the dev library has
+      # to be present even just to compile the tests. The imagick plugins
+      # would additionally need ImageMagick dev libraries, but the vet and
+      # test targets both exclude them.
+      - name: Install libopenjp2
+        run: sudo apt-get update && sudo apt-get install --yes libopenjp2-7-dev
+
+      - name: Vet
+        run: make vet
+
+      - name: Test
+        run: make test
