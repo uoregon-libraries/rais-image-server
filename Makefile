@@ -39,7 +39,7 @@ test:
 	go test $$(go list ./src/... | grep -v 'src/plugins/imagick')
 
 bench:
-	go test -bench=. -benchtime=5s -count=2 rais/src/openjpeg rais/src/cmd/rais-server
+	go test -bench=. -benchmem -count=2 rais/src/openjpeg rais/src/cmd/rais-server
 
 format:
 	find src/ -name "*.go" | xargs gofmt -l -w -s
