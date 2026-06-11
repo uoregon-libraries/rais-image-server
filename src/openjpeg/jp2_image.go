@@ -89,7 +89,11 @@ func (i *JP2Image) DecodeImage() (im image.Image, err error) {
 		return nil, fmt.Errorf("decoding raw JP2 data: %w", err)
 	}
 
-	if i.decodeWidth != i.decodeArea.Dx() || i.decodeHeight != i.decodeArea.Dy() {
+	// Only resample if the decoded image isn't already the target size: the
+	// progression-level decode often hands us exact dimensions, in which case
+	// scaling would be a very expensive no-op
+	var db = decoded.Bounds()
+	if i.decodeWidth != db.Dx() || i.decodeHeight != db.Dy() {
 		var resized draw.Image
 		var rect = image.Rect(0, 0, i.decodeWidth, i.decodeHeight)
 
