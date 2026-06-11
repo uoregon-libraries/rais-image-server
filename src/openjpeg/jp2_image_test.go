@@ -135,3 +135,44 @@ func BenchmarkReadAndDecodeTiledImage(b *testing.B) {
 		}
 	}
 }
+
+// benchmarkTiledImageResize decodes 2048x2048 regions of the tiled newspaper
+// image scaled down to the given dimensions, cycling through regions the same
+// way BenchmarkReadAndDecodeTiledImage does
+func benchmarkTiledImageResize(b *testing.B, width, height int) {
+	dir, _ := os.Getwd()
+	bigImage, err := img.NewFileStream(dir + "/../../docker/images/jp2tests/sn00063609-19091231.jp2")
+	if err != nil {
+		b.Fatalf("Unable to open file stream for newspaper image: %s", err)
+	}
+
+	for n := 0; n < b.N; n++ {
+		startX := (n % 2) * 2048
+		startY := ((n / 2) % 3) * 2048
+
+		jp2, err := NewJP2Image(bigImage)
+		if err != nil {
+			panic(err)
+		}
+		jp2.SetCrop(image.Rect(startX, startY, startX+2048, startY+2048))
+		jp2.SetResizeWH(width, height)
+		if _, err := jp2.DecodeImage(); err != nil {
+			panic(err)
+		}
+	}
+}
+
+// BenchmarkReadAndDecodeTiledExactResize measures the common tile-serving
+// case where the requested scale lands exactly on a JP2 progression level
+// (2048x2048 down to 1024x1024): openjpeg hands back an image that's already
+// the right size, so resampling should cost (almost) nothing
+func BenchmarkReadAndDecodeTiledExactResize(b *testing.B) {
+	benchmarkTiledImageResize(b, 1024, 1024)
+}
+
+// BenchmarkReadAndDecodeTiledOddResize measures a scale that can't land on a
+// progression level (2048x2048 down to 1000x1000), forcing a real resample of
+// the 1024x1024 progression-level decode
+func BenchmarkReadAndDecodeTiledOddResize(b *testing.B) {
+	benchmarkTiledImageResize(b, 1000, 1000)
+}

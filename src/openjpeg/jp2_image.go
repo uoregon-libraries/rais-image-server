@@ -7,13 +7,11 @@ import "C"
 import (
 	"fmt"
 	"image"
-	"image/color"
 	"rais/src/img"
 	"rais/src/jp2info"
+	"rais/src/transform"
 	"reflect"
 	"unsafe"
-
-	"golang.org/x/image/draw"
 )
 
 // JP2Image is a container for our simple JP2 operations
@@ -89,23 +87,15 @@ func (i *JP2Image) DecodeImage() (im image.Image, err error) {
 		return nil, fmt.Errorf("decoding raw JP2 data: %w", err)
 	}
 
-	if i.decodeWidth != i.decodeArea.Dx() || i.decodeHeight != i.decodeArea.Dy() {
-		var resized draw.Image
-		var rect = image.Rect(0, 0, i.decodeWidth, i.decodeHeight)
-
-		switch decoded.ColorModel() {
-		case color.RGBAModel:
-			resized = image.NewRGBA(rect)
-		case color.GrayModel:
-			resized = image.NewGray(rect)
-		case color.RGBA64Model:
-			resized = image.NewRGBA64(rect)
-		case color.Gray16Model:
-			resized = image.NewGray16(rect)
-		default:
-			return nil, fmt.Errorf("unsupported color model")
+	// Only resample if the decoded image isn't already the target size: the
+	// progression-level decode often hands us exact dimensions, in which case
+	// scaling would be a very expensive no-op
+	var db = decoded.Bounds()
+	if i.decodeWidth != db.Dx() || i.decodeHeight != db.Dy() {
+		var resized = transform.Scale(decoded, i.decodeWidth, i.decodeHeight)
+		if resized == nil {
+			return nil, fmt.Errorf("unsupported image type %T", decoded)
 		}
-		draw.BiLinear.Scale(resized, rect, decoded, decoded.Bounds(), draw.Over, nil)
 		decoded = resized
 	}
 
