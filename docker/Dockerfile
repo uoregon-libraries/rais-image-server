@@ -7,7 +7,12 @@
 #
 #     # Generate the build image to simplify local development
 #     docker build --rm -t uolibraries/rais:build --target build -f ./docker/Dockerfile .
-FROM golang:1 AS build
+
+# NOTE: the build and production stages must use the same Debian release
+# (currently "trixie") so that shared libraries the plugins link against at
+# build time (e.g., ImageMagick's libMagickCore) match what the production
+# image's packages provide at runtime. If you bump one, bump the other.
+FROM golang:1-trixie AS build
 LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 
 # Install all the build dependencies
@@ -31,13 +36,14 @@ RUN make
 
 # Manually build the ImageMagick and DataDog plugins to make this image as full
 # featured as possible, since debian's already pretty bloated.
-RUN make bin/plugins/imagick-decoder.so
+RUN make bin/plugins/imagick7-decoder.so
 RUN make bin/plugins/datadog.so
 
 
 
 # Production image just installs runtime deps and copies in the binaries
-FROM debian:12 AS production
+# NOTE: must be the same Debian release as the build stage above
+FROM debian:trixie AS production
 LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 
 # Stolen from mariadb dockerfile: add our user and group first to make sure
