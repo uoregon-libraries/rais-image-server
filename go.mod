@@ -118,5 +118,6 @@ require (
 
 tool (
 	github.com/mgechev/revive
+	golang.org/x/tools/cmd/goimports
 	golang.org/x/vuln/cmd/govulncheck
 )

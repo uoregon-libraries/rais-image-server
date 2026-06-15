@@ -42,7 +42,7 @@ bench:
 	go test -bench=. -benchmem -count=2 rais/src/openjpeg rais/src/cmd/rais-server
 
 format:
-	find src/ -name "*.go" | xargs gofmt -l -w -s
+	find src/ -name "*.go" | xargs go tool goimports -l -w
 
 # Vet skips the imagick plugins for the same reason "test" does: vet has to
 # compile cgo packages, and we don't want ImageMagick required everywhere
