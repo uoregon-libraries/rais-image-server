@@ -1,4 +1,6 @@
+//go:build ignore
 // +build ignore
+
 //
 // This file builds the rotation code: `go run transform/generator.go`
 

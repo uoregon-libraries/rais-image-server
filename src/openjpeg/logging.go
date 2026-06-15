@@ -16,12 +16,14 @@ import (
 var Logger = logger.Named("rais/openjpeg", logger.Debug)
 
 // GoLogWarning bridges the openjpeg logging with our internal logger
+//
 //export GoLogWarning
 func GoLogWarning(cmessage *C.char) {
 	log(Logger.Warnf, cmessage)
 }
 
 // GoLogError bridges the openjpeg logging with our internal logger
+//
 //export GoLogError
 func GoLogError(cmessage *C.char) {
 	log(Logger.Errorf, cmessage)

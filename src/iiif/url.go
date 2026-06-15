@@ -59,12 +59,12 @@ func (p *pathParts) rejoin() string {
 // pieces), such as "path%2Fto%2Fsomefile.jp2/full/512,/270/default.jpg", and
 // breaks it down into the different components.  In this example:
 //
-//     - ID:       "path%2Fto%2Fsomefile.jp2" (the server determines how to find the image)
-//     - Region:   "full"                     (the whole image is processed)
-//     - Size:     "512,"                     (the image is resized to a width of 512; aspect ratio is maintained)
-//     - Rotation: "270"                      (the image is rotated 270 degrees clockwise)
-//     - Quality:  "default"                  (the image color space is unchanged)
-//     - Format:   "jpg"                      (the resulting image will be a JPEG)
+//   - ID:       "path%2Fto%2Fsomefile.jp2" (the server determines how to find the image)
+//   - Region:   "full"                     (the whole image is processed)
+//   - Size:     "512,"                     (the image is resized to a width of 512; aspect ratio is maintained)
+//   - Rotation: "270"                      (the image is rotated 270 degrees clockwise)
+//   - Quality:  "default"                  (the image color space is unchanged)
+//   - Format:   "jpg"                      (the resulting image will be a JPEG)
 //
 // It's possible to get a URL and an error since an id-only request could
 // theoretically exist for a resource with *any* id.  In those cases it's up to
