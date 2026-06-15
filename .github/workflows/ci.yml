@@ -50,11 +50,15 @@ jobs:
         run: go install github.com/uoregon-libraries/iiif-image-validator/cmd/iiif-validate@latest
 
       # The validator's content checks only pass against the standard IIIF
-      # reference image, which the validator repo ships as a JP2
-      - name: Start RAIS with the reference image
+      # reference image. We serve two pixel-identical copies of it: the 8-bit
+      # JP2 the validator repo ships, and a 16-bit version checked into this
+      # repo, so the validator exercises the 16-bit decode/transform path too
+      # (which previously panicked on rotation).
+      - name: Start RAIS with the reference images
         run: |
           mkdir /tmp/images
           curl -sfo /tmp/images/validation.jp2 https://raw.githubusercontent.com/uoregon-libraries/iiif-image-validator/main/validator/iiiftest/reference.jp2
+          cp docker/images/jp2tests/16-bit-validation-image.jp2 /tmp/images/16-bit-validation.jp2
           RAIS_TILEPATH=/tmp/images ./bin/rais-server > /tmp/rais.log 2>&1 &
           for _ in $(seq 1 50); do
             if curl -sf http://localhost:12415/iiif/validation.jp2/info.json > /dev/null; then
@@ -66,6 +70,10 @@ jobs:
           cat /tmp/rais.log
           exit 1
 
-      - name: Run the IIIF validator
+      - name: Run the IIIF validator (8-bit reference image)
         run: |
           "$(go env GOPATH)/bin/iiif-validate" -s localhost:12415 -p iiif -i validation.jp2 -version 2.0 -level 2
+
+      - name: Run the IIIF validator (16-bit reference image)
+        run: |
+          "$(go env GOPATH)/bin/iiif-validate" -s localhost:12415 -p iiif -i 16-bit-validation.jp2 -version 2.0 -level 2
