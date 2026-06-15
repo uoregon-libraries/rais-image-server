@@ -239,4 +239,224 @@ func (r *RGBARotator) Mirror() {
 	r.Img = dst
 }
 
+// Gray16Rotator decorates *image.Gray16 with rotation functions
+type Gray16Rotator struct {
+	Img *image.Gray16
+}
+
+// Image returns the underlying image as an image.Image value
+func (r *Gray16Rotator) Image() image.Image {
+	return r.Img
+}
+
+// Rotate90 does a simple 90-degree clockwise rotation
+func (r *Gray16Rotator) Rotate90() {
+	src := r.Img
+	srcB := src.Bounds()
+	srcWidth := srcB.Dx()
+	srcHeight := srcB.Dy()
+
+	dst := image.NewGray16(image.Rect(0, 0, srcHeight, srcWidth))
+
+	var x, y, srcIdx, dstIdx int64
+	maxX, maxY := int64(srcWidth), int64(srcHeight)
+	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	srcPix := src.Pix
+	dstPix := dst.Pix
+	for y = 0; y < maxY; y++ {
+		for x = 0; x < maxX; x++ {
+			srcIdx = y*srcStride + (x << 1)
+			dstIdx = x*dstStride + ((maxY - 1 - y) << 1)
+			copy(dstPix[dstIdx:dstIdx+2], srcPix[srcIdx:srcIdx+2])
+		}
+	}
+
+	r.Img = dst
+}
+
+// Rotate180 does a simple 180-degree clockwise rotation
+func (r *Gray16Rotator) Rotate180() {
+	src := r.Img
+	srcB := src.Bounds()
+	srcWidth := srcB.Dx()
+	srcHeight := srcB.Dy()
+
+	dst := image.NewGray16(image.Rect(0, 0, srcWidth, srcHeight))
+
+	var x, y, srcIdx, dstIdx int64
+	maxX, maxY := int64(srcWidth), int64(srcHeight)
+	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	srcPix := src.Pix
+	dstPix := dst.Pix
+	for y = 0; y < maxY; y++ {
+		for x = 0; x < maxX; x++ {
+			srcIdx = y*srcStride + (x << 1)
+			dstIdx = (maxY-1-y)*dstStride + ((maxX - 1 - x) << 1)
+			copy(dstPix[dstIdx:dstIdx+2], srcPix[srcIdx:srcIdx+2])
+		}
+	}
+
+	r.Img = dst
+}
+
+// Rotate270 does a simple 270-degree clockwise rotation
+func (r *Gray16Rotator) Rotate270() {
+	src := r.Img
+	srcB := src.Bounds()
+	srcWidth := srcB.Dx()
+	srcHeight := srcB.Dy()
+
+	dst := image.NewGray16(image.Rect(0, 0, srcHeight, srcWidth))
+
+	var x, y, srcIdx, dstIdx int64
+	maxX, maxY := int64(srcWidth), int64(srcHeight)
+	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	srcPix := src.Pix
+	dstPix := dst.Pix
+	for y = 0; y < maxY; y++ {
+		for x = 0; x < maxX; x++ {
+			srcIdx = y*srcStride + (x << 1)
+			dstIdx = (maxX-1-x)*dstStride + (y << 1)
+			copy(dstPix[dstIdx:dstIdx+2], srcPix[srcIdx:srcIdx+2])
+		}
+	}
+
+	r.Img = dst
+}
+
+// Mirror flips the image around its vertical axis
+func (r *Gray16Rotator) Mirror() {
+	src := r.Img
+	srcB := src.Bounds()
+	srcWidth := srcB.Dx()
+	srcHeight := srcB.Dy()
+
+	dst := image.NewGray16(image.Rect(0, 0, srcWidth, srcHeight))
+
+	var x, y, srcIdx, dstIdx int64
+	maxX, maxY := int64(srcWidth), int64(srcHeight)
+	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	srcPix := src.Pix
+	dstPix := dst.Pix
+	for y = 0; y < maxY; y++ {
+		for x = 0; x < maxX; x++ {
+			srcIdx = y*srcStride + (x << 1)
+			dstIdx = y*dstStride + ((maxX - 1 - x) << 1)
+			copy(dstPix[dstIdx:dstIdx+2], srcPix[srcIdx:srcIdx+2])
+		}
+	}
+
+	r.Img = dst
+}
+
+// RGBA64Rotator decorates *image.RGBA64 with rotation functions
+type RGBA64Rotator struct {
+	Img *image.RGBA64
+}
+
+// Image returns the underlying image as an image.Image value
+func (r *RGBA64Rotator) Image() image.Image {
+	return r.Img
+}
+
+// Rotate90 does a simple 90-degree clockwise rotation
+func (r *RGBA64Rotator) Rotate90() {
+	src := r.Img
+	srcB := src.Bounds()
+	srcWidth := srcB.Dx()
+	srcHeight := srcB.Dy()
+
+	dst := image.NewRGBA64(image.Rect(0, 0, srcHeight, srcWidth))
+
+	var x, y, srcIdx, dstIdx int64
+	maxX, maxY := int64(srcWidth), int64(srcHeight)
+	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	srcPix := src.Pix
+	dstPix := dst.Pix
+	for y = 0; y < maxY; y++ {
+		for x = 0; x < maxX; x++ {
+			srcIdx = y*srcStride + (x << 3)
+			dstIdx = x*dstStride + ((maxY - 1 - y) << 3)
+			copy(dstPix[dstIdx:dstIdx+8], srcPix[srcIdx:srcIdx+8])
+		}
+	}
+
+	r.Img = dst
+}
+
+// Rotate180 does a simple 180-degree clockwise rotation
+func (r *RGBA64Rotator) Rotate180() {
+	src := r.Img
+	srcB := src.Bounds()
+	srcWidth := srcB.Dx()
+	srcHeight := srcB.Dy()
+
+	dst := image.NewRGBA64(image.Rect(0, 0, srcWidth, srcHeight))
+
+	var x, y, srcIdx, dstIdx int64
+	maxX, maxY := int64(srcWidth), int64(srcHeight)
+	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	srcPix := src.Pix
+	dstPix := dst.Pix
+	for y = 0; y < maxY; y++ {
+		for x = 0; x < maxX; x++ {
+			srcIdx = y*srcStride + (x << 3)
+			dstIdx = (maxY-1-y)*dstStride + ((maxX - 1 - x) << 3)
+			copy(dstPix[dstIdx:dstIdx+8], srcPix[srcIdx:srcIdx+8])
+		}
+	}
+
+	r.Img = dst
+}
+
+// Rotate270 does a simple 270-degree clockwise rotation
+func (r *RGBA64Rotator) Rotate270() {
+	src := r.Img
+	srcB := src.Bounds()
+	srcWidth := srcB.Dx()
+	srcHeight := srcB.Dy()
+
+	dst := image.NewRGBA64(image.Rect(0, 0, srcHeight, srcWidth))
+
+	var x, y, srcIdx, dstIdx int64
+	maxX, maxY := int64(srcWidth), int64(srcHeight)
+	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	srcPix := src.Pix
+	dstPix := dst.Pix
+	for y = 0; y < maxY; y++ {
+		for x = 0; x < maxX; x++ {
+			srcIdx = y*srcStride + (x << 3)
+			dstIdx = (maxX-1-x)*dstStride + (y << 3)
+			copy(dstPix[dstIdx:dstIdx+8], srcPix[srcIdx:srcIdx+8])
+		}
+	}
+
+	r.Img = dst
+}
+
+// Mirror flips the image around its vertical axis
+func (r *RGBA64Rotator) Mirror() {
+	src := r.Img
+	srcB := src.Bounds()
+	srcWidth := srcB.Dx()
+	srcHeight := srcB.Dy()
+
+	dst := image.NewRGBA64(image.Rect(0, 0, srcWidth, srcHeight))
+
+	var x, y, srcIdx, dstIdx int64
+	maxX, maxY := int64(srcWidth), int64(srcHeight)
+	srcStride, dstStride := int64(src.Stride), int64(dst.Stride)
+	srcPix := src.Pix
+	dstPix := dst.Pix
+	for y = 0; y < maxY; y++ {
+		for x = 0; x < maxX; x++ {
+			srcIdx = y*srcStride + (x << 3)
+			dstIdx = y*dstStride + ((maxX - 1 - x) << 3)
+			copy(dstPix[dstIdx:dstIdx+8], srcPix[srcIdx:srcIdx+8])
+		}
+	}
+
+	r.Img = dst
+}
+
 // GENERATED CODE; DO NOT EDIT!

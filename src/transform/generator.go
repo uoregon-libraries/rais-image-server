@@ -97,6 +97,22 @@ var typeRGBA = imageType{
 	ByteSize:          4,
 }
 
+var typeGray16 = imageType{
+	String:            "*image.Gray16",
+	Shortstring:       "Gray16",
+	ConstructorMethod: "image.NewGray16",
+	CopyStatement:     "copy(dstPix[dstIdx:dstIdx+2], srcPix[srcIdx:srcIdx+2])",
+	ByteSize:          2,
+}
+
+var typeRGBA64 = imageType{
+	String:            "*image.RGBA64",
+	Shortstring:       "RGBA64",
+	ConstructorMethod: "image.NewRGBA64",
+	CopyStatement:     "copy(dstPix[dstIdx:dstIdx+8], srcPix[srcIdx:srcIdx+8])",
+	ByteSize:          8,
+}
+
 type page struct {
 	Rotations []rotation
 	Types     []imageType
@@ -111,7 +127,7 @@ func main() {
 
 	p := page{
 		Rotations: []rotation{rotate90, rotate180, rotate270, rotateMirror},
-		Types:     []imageType{typeGray, typeRGBA},
+		Types:     []imageType{typeGray, typeRGBA, typeGray16, typeRGBA64},
 	}
 
 	err = t.Execute(f, p)
