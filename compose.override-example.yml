@@ -7,8 +7,8 @@ services:
   rais:
     # Uncomment one of these if you'd like to use an image built by `make
     # docker` rather than testing out the latest uploaded image
-    #image: uolibraries/rais:dev
-    #image: uolibraries/rais:dev-alpine
+    #image: rais:dev
+    #image: rais:dev-alpine
 
     environment:
       # These next lines would allow you to pass the various S3 configuration

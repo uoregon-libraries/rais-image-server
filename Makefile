@@ -60,23 +60,20 @@ clean:
 
 distclean: clean
 	go clean -modcache -testcache -cache
-	docker rmi uolibraries/rais:build || true
-	docker rmi uolibraries/rais:build-alpine || true
-	docker rmi uolibraries/rais:dev || true
-	docker rmi uolibraries/rais:dev-alpine || true
+	docker image ls | grep rais | awk '{print $$1 ":" $$2}' | xargs docker image rm
 
 # Generate the docker images
 docker: | generate
 	docker pull golang:1
 	docker pull golang:1-alpine
 	docker build --rm --target build -f $(MakefileDir)/docker/Dockerfile -t rais:build $(MakefileDir)
-	docker build --rm -f $(MakefileDir)/docker/Dockerfile -t uolibraries/rais:dev $(MakefileDir)
+	docker build --rm -f $(MakefileDir)/docker/Dockerfile -t rais:dev $(MakefileDir)
 	make docker-alpine
 
 # Build just the alpine image for cases where we want to get this updated / cranked out fast
 docker-alpine: | generate
 	docker build --rm --target build -f $(MakefileDir)/docker/Dockerfile-alpine -t rais:build-alpine $(MakefileDir)
-	docker build --rm -f $(MakefileDir)/docker/Dockerfile-alpine -t uolibraries/rais:dev-alpine $(MakefileDir)
+	docker build --rm -f $(MakefileDir)/docker/Dockerfile-alpine -t rais:dev-alpine $(MakefileDir)
 
 # Build plugins on any change to their directory or their go files
 bin/plugins/%.so : src/plugins/% src/plugins/%/*.go

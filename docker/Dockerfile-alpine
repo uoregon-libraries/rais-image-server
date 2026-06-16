@@ -2,7 +2,7 @@
 #
 # Example:
 #
-#     docker build --rm -t uolibraries/rais:latest-alpine -f ./docker/Dockerfile-alpine .
+#     docker build --rm -t rais:latest-alpine -f ./docker/Dockerfile-alpine .
 FROM golang:1-alpine AS build
 LABEL maintainer="Jeremy Echols <jechols@uoregon.edu>"
 

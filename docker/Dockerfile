@@ -3,10 +3,10 @@
 # Examples:
 #
 #     # Simple case: just build the latest production image
-#     docker build --rm -t uolibraries/rais:latest -f ./docker/Dockerfile .
+#     docker build --rm -t rais:latest -f ./docker/Dockerfile .
 #
 #     # Generate the build image to simplify local development
-#     docker build --rm -t uolibraries/rais:build --target build -f ./docker/Dockerfile .
+#     docker build --rm -t rais:build --target build -f ./docker/Dockerfile .
 
 # NOTE: the build and production stages must use the same Debian release
 # (currently "trixie") so that shared libraries the plugins link against at

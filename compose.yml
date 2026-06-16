@@ -1,14 +1,15 @@
 # This describes a self-contained demo of RAIS, using nginx to serve up the
 # static pages.  This isn't a production configuration file!!
 #
-# If you don't set up an override file (compose.override-example.yml,
-# for instance), this will just use the stable version of RAIS from dockerhub.
+# If you don't set up an override file (compose.override-example.yml, for
+# instance), this will just use the stable version of RAIS from the GitHub
+# Container Registry.
 #
 # Put JP2s into docker/images and the apache entrypoint script will add them to
 # the images served by from RAIS.
 services:
   rais:
-    image: uolibraries/rais
+    image: ghcr.io/uoregon-libraries/rais
     environment:
       - URL
       - RAIS_ADDRESS
