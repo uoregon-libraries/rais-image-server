@@ -87,7 +87,7 @@ func (j *opjp2) decodeRGB16() image.Image {
 	var blue = jp2ComponentData16(j.comps[2])
 
 	var offset = 0
-	var pixels = j.width*j.height
+	var pixels = j.width * j.height
 	var realData = make([]uint8, j.width*j.height*8)
 	for i := 0; i < pixels; i++ {
 		offset = i << 3

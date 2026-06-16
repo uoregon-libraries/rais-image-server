@@ -209,9 +209,9 @@ var errOffset = errors.New("Seek: invalid offset")
 //
 // Valid whence values:
 //
-//     - io.SeekStart means relative to the start of the file
-//     - io.SeekCurrent means relative to the current offset
-//     - io.SeekEnd means relative to the end
+//   - io.SeekStart means relative to the start of the file
+//   - io.SeekCurrent means relative to the current offset
+//   - io.SeekEnd means relative to the end
 //
 // Seek returns the new offset relative to the start of the
 // file and an error, if any.  If the final offset ends up being below zero, an

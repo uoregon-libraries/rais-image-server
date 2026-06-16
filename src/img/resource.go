@@ -177,7 +177,10 @@ func (res *Resource) Apply(u *iiif.URL, max Constraint) (image.Image, error) {
 	}
 
 	if u.Rotation.Mirror || u.Rotation.Degrees != 0 {
-		img = rotate(img, u.Rotation)
+		img, err = rotate(img, u.Rotation)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Unless I'm missing something, QColor doesn't actually change an image -
@@ -193,13 +196,19 @@ func (res *Resource) Apply(u *iiif.URL, max Constraint) (image.Image, error) {
 	return img, nil
 }
 
-func rotate(img image.Image, rot iiif.Rotation) image.Image {
+func rotate(img image.Image, rot iiif.Rotation) (image.Image, error) {
 	var r transform.Rotator
 	switch img0 := img.(type) {
 	case *image.Gray:
 		r = &transform.GrayRotator{Img: img0}
 	case *image.RGBA:
 		r = &transform.RGBARotator{Img: img0}
+	case *image.Gray16:
+		r = &transform.Gray16Rotator{Img: img0}
+	case *image.RGBA64:
+		r = &transform.RGBA64Rotator{Img: img0}
+	default:
+		return nil, fmt.Errorf("unable to rotate image: unsupported image type %T", img)
 	}
 
 	if rot.Mirror {
@@ -215,7 +224,7 @@ func rotate(img image.Image, rot iiif.Rotation) image.Image {
 		r.Rotate270()
 	}
 
-	return r.Image()
+	return r.Image(), nil
 }
 
 func grayscale(img image.Image) image.Image {

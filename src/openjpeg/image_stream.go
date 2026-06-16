@@ -81,9 +81,9 @@ func opjStreamRead(writeBuffer unsafe.Pointer, numBytes C.OPJ_SIZE_T, id uint64)
 	return C.OPJ_SIZE_T(n)
 }
 
-//export opjStreamSkip
-//
 // opjStreamSkip jumps numBytes ahead in the stream, discarding any data that would be read
+//
+//export opjStreamSkip
 func opjStreamSkip(numBytes C.OPJ_OFF_T, id uint64) C.OPJ_SIZE_T {
 	var i, ok = lookupImage(id)
 	if !ok {
@@ -100,9 +100,9 @@ func opjStreamSkip(numBytes C.OPJ_OFF_T, id uint64) C.OPJ_SIZE_T {
 	return C.OPJ_SIZE_T(numBytes)
 }
 
-//export opjStreamSeek
-//
 // opjStreamSeek jumps to the absolute position offset in the stream
+//
+//export opjStreamSeek
 func opjStreamSeek(offset C.OPJ_OFF_T, id uint64) C.OPJ_BOOL {
 	var i, ok = lookupImage(id)
 	if !ok {

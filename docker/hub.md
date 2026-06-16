@@ -1,7 +1,18 @@
+# This image has moved
+
+RAIS images are now published to the GitHub Container Registry. This Docker
+Hub repository is no longer updated; existing tags remain pullable, but new
+releases appear only at the new location:
+
+    docker pull ghcr.io/uoregon-libraries/rais
+
+All tags follow the same scheme as before (`latest`, `4`, `4.2`, `4.2.4`,
+`alpine`, `4-alpine`, ...).
+
 # Supported tags and respective `Dockerfile` links
 
-- [`4`, `4.2`, `4.2.1`, `latest` (*docker/Dockerfile*)](https://github.com/uoregon-libraries/rais-image-server/blob/v4.2.1/docker/Dockerfile)
-- [`4-alpine`, `4.2-alpine`, `4.2.1-alpine`, `alpine` (*docker/Dockerfile-alpine*)](https://github.com/uoregon-libraries/rais-image-server/blob/v4.2.1/docker/Dockerfile-alpine)
+- [`4`, `4.2`, `4.2.4`, `latest` (*docker/Dockerfile*)](https://github.com/uoregon-libraries/rais-image-server/blob/v4.2.4/docker/Dockerfile)
+- [`4-alpine`, `4.2-alpine`, `4.2.4-alpine`, `alpine` (*docker/Dockerfile-alpine*)](https://github.com/uoregon-libraries/rais-image-server/blob/v4.2.4/docker/Dockerfile-alpine)
 - [`3`, `3.3`, `3.3.2`, (*docker/Dockerfile*)](https://github.com/uoregon-libraries/rais-image-server/blob/v3.3.2/docker/Dockerfile)
 - [`3-alpine`, `3.3-alpine`, `3.3.2-alpine` (*docker/Dockerfile*)](https://github.com/uoregon-libraries/rais-image-server/blob/v3.3.2/docker/Dockerfile-alpine)
 
